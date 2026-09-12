@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as autenticar_sessao, logout as encerrar_sessao
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.contrib import messages
+from alunos.models import Aluno
 
 def entrar(request):
     if request.method == 'POST':
@@ -49,8 +49,6 @@ def painel(request):
 
 #telas de cada perfil, só entra quem tem o tipo certo
 @login_required(login_url='entrar')
-@login_required(login_url='entrar')
-@login_required(login_url='entrar')
 def painel_aluno(request):
     if request.user.perfil.tipo != 'aluno':
         raise PermissionDenied
@@ -69,7 +67,21 @@ def painel_professor(request):
 def painel_recepcao(request):
     if request.user.perfil.tipo != 'recepcao':
         raise PermissionDenied
-    return render(request, 'accounts/painel_recepcao.html')
+
+    # Busca todos os alunos cadastrados ordenados pelos mais recentes
+    alunos = Aluno.objects.all().order_by('-id')
+
+    # Placeholder para inadimplência do dia (será conectado ao app financeiro futuramente)
+    # Por enquanto passamos uma lista vazia para cumprir o contrato da tela
+    inadimplentes_hoje = []
+
+    contexto = {
+        'alunos': alunos,
+        'inadimplentes_hoje': inadimplentes_hoje,
+        'total_alunos': alunos.count(),
+    }
+
+    return render(request, 'accounts/painel_recepcao.html', contexto)
 
 @login_required(login_url='entrar')
 def painel_financeiro(request):

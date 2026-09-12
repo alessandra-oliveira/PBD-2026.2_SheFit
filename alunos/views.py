@@ -83,3 +83,25 @@ def consultar_anamnese(request, aluno_id):
         'aluno': aluno,
         'anamnese': anamnese
     })
+
+@login_required
+@perfil_requerido('recepcao')
+def editar_aluno(request, aluno_id):
+    """
+    Edição cadastral: permite que a recepção atualize os dados básicos da aluna.
+    """
+    aluno = get_object_or_404(Aluno, pk=aluno_id)
+
+    if request.method == 'POST':
+        form = AlunoForm(request.POST, request.FILES, instance=aluno)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Dados de {aluno.nome} atualizados com sucesso!')
+            return redirect('painel_recepcao')
+    else:
+        form = AlunoForm(instance=aluno)
+
+    return render(request, 'alunos/editar_aluno.html', {
+        'form': form,
+        'aluno': aluno
+    })
