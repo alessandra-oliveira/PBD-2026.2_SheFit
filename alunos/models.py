@@ -28,8 +28,8 @@ class Aluno(models.Model):
     cpf = models.CharField(max_length=11, unique=True, validators=[validador_cpf])
     data_nascimento = models.DateField()
     endereco = models.CharField(max_length=255)
-    telefone = models.CharField(max_length=11, validators=[validador_telefone])
-    email = models.EmailField()
+    telefone = models.CharField(max_length=11, unique=True, validators=[validador_telefone])
+    email = models.EmailField(unique=True)
     foto = models.ImageField(upload_to='alunos/fotos/', blank=True, null=True)
 
     contato_emergencia_nome = models.CharField(max_length=150)

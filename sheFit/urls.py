@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from accounts.views import (
     entrar, sair, painel,
     painel_aluno, painel_professor, painel_recepcao, painel_financeiro
@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('entrar/', entrar, name='entrar'),
     path('sair/', sair, name='sair'),
+    path('alunos/', include('alunos.urls')),
 
     #rotas dos paineis
     path('painel/', painel, name='painel'),
