@@ -5,10 +5,12 @@ from django.db import transaction
 from django.shortcuts import render, redirect
 
 from accounts.models import Perfil
+from accounts.decorators import perfil_requerido
 from .forms import AlunoForm
 
 
 @login_required
+@perfil_requerido('recepcao')
 def cadastrar_aluno(request):
     if request.method == 'POST':
         form = AlunoForm(request.POST, request.FILES)
