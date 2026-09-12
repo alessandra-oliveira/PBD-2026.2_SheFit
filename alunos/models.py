@@ -58,3 +58,66 @@ class Aluno(models.Model):
 
     class Meta:
         ordering = ['nome']
+
+    @property
+    def status_matricula(self):
+        """Retorna o status real da matrícula baseado na anamnese."""
+        if not hasattr(self, 'anamnese'):
+            return "Pendente de Anamnese"
+        if not self.anamnese.autorizacao_atividade_fisica:
+            return "Bloqueado (Sem autorização médica)"
+        if not self.ativo:
+            return "Desativado"
+        return "Ativo"
+
+    @property
+    def apto_para_treino(self):
+        """Retorna True apenas se tiver anamnese e autorização confirmadas."""
+        return (
+            hasattr(self, 'anamnese') 
+            and self.anamnese.autorizacao_atividade_fisica 
+            and self.ativo
+        )
+
+class Anamnese(models.Model):
+    aluno = models.OneToOneField(
+        Aluno,
+        on_delete=models.CASCADE,
+        related_name='anamnese',
+        verbose_name="Aluno"
+    )
+
+    restricoes_medicas = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Restrições Médicas",
+        help_text="Problemas cardíacos, respiratórios, restrições articulares, etc."
+    )
+    historico_lesoes = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Histórico de Lesões",
+        help_text="Fraturas, luxações, entorses, cirurgias ortopédicas prévias."
+    )
+    condicoes_cronicas = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Condições Crônicas",
+        help_text="Hipertensão, diabetes, asma ou uso contínuo de medicação."
+    )
+    autorizacao_atividade_fisica = models.BooleanField(
+        default=False,
+        verbose_name="Autorização para prática de atividade física",
+        help_text="Declaração de aptidão e autorização para os treinos na academia."
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Anamnese"
+        verbose_name_plural = "Anamneses"
+
+    def __str__(self):
+        status = "Autorizado" if self.autorizacao_atividade_fisica else "Não autorizado"
+        return f"Anamnese de {self.aluno.nome} - {status}"

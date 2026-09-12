@@ -74,6 +74,18 @@
             background: #fee2e2;
             color: #dc2626;
         }
+
+        .alerta-aviso {
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        color: #92400e;
+        padding: 12px 14px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        margin: 16px 0;
+        text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -82,6 +94,11 @@
         <div class="badge">Aluna</div>
         <h2 class="saudacao">Olá, {{ request.user.username }}!</h2>
         <p class="descricao">Bem-vinda ao seu espaço de treinos e evolução na SheFit.</p>
+        {% if aluno and not aluno.apto_para_treino %}
+            <div class="alerta-aviso">
+                <strong>Aviso de Matrícula:</strong> Sua matrícula está pendente de anamnese médica. Por favor, procure a recepção para regularizar seu cadastro.
+            </div>
+        {% endif %}
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
     </div>
 </body>
