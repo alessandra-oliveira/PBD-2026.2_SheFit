@@ -1,0 +1,207 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de Anamnese - SheFit</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #7c3aed;
+            text-align: center;
+            margin-bottom: 4px;
+            font-size: 1.8rem;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .aluno-badge {
+            background: #f3e8ff;
+            color: #6b21a8;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .status-apto {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-bloqueado {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .secao {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border: 1px solid #f3f4f6;
+        }
+
+        .secao h4 {
+            margin: 0 0 6px 0;
+            font-size: 0.85rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .secao p {
+            margin: 0;
+            color: #1f2937;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .btn-voltar {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 14px;
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #e5e7eb;
+        }
+
+        .sucesso {
+            background: #dcfce7;
+            color: #166534;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+
+        .erro-box {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 24px 20px;
+                border-radius: 12px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>SheFit</h1>
+        <p class="subtitle">Consulta de Anamnese</p>
+
+        <div class="aluno-badge">
+            Aluno(a): {{ aluno.nome }}
+        </div>
+
+    {% if messages %}
+        {% with message=messages|last %}
+            <div class="{% if message.tags == 'error' %}erro-box{% else %}sucesso{% endif %}">
+                {{ message }}
+            </div>
+        {% endwith %}
+    {% endif %}
+
+        {% if anamnese %}
+            {% if anamnese.autorizacao_atividade_fisica %}
+                <div class="status-badge status-apto">
+                    Apto para Atividade Física
+                </div>
+            {% else %}
+                <div class="status-badge status-bloqueado">
+                    Não Autorizado / Pendente
+                </div>
+            {% endif %}
+
+            <div class="secao">
+                <h4>Restrições Médicas</h4>
+                <p>{{ anamnese.restricoes_medicas|default:"Nenhuma restrição informada."|linebreaksbr }}</p>
+            </div>
+
+            <div class="secao">
+                <h4>Histórico de Lesões</h4>
+                <p>{{ anamnese.historico_lesoes|default:"Nenhum histórico informado."|linebreaksbr }}</p>
+            </div>
+
+            <div class="secao">
+                <h4>Condições Crônicas</h4>
+                <p>{{ anamnese.condicoes_cronicas|default:"Nenhuma condição informada."|linebreaksbr }}</p>
+            </div>
+        {% else %}
+            <div class="status-badge status-bloqueado">
+                Ficha de Anamnese não cadastrada.
+            </div>
+        {% endif %}
+
+        <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
+    </div>
+</body>
+
+</html>

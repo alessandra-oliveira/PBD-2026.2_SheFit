@@ -1,0 +1,224 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Anamnese e Matrícula - SheFit</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #7c3aed;
+            text-align: center;
+            margin-bottom: 4px;
+            font-size: 1.8rem;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .aluno-badge {
+            background: #f3e8ff;
+            color: #6b21a8;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 14px;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: Arial, sans-serif;
+            resize: vertical;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 18px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #7c3aed;
+            cursor: pointer;
+            margin: 2px 0 0 0;
+        }
+
+        .checkbox-container label {
+            margin: 0;
+            font-weight: normal;
+            font-size: 0.9rem;
+            color: #92400e;
+            cursor: pointer;
+            line-height: 1.35;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 14px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background: #6d28d9;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.35);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(124, 58, 237, 0.35);
+        }
+
+        .erro {
+            color: #b91c1c;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        .sucesso {
+            background: #dcfce7;
+            color: #166534;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+
+        .erro-box {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        font-size: 0.9rem;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 24px 20px;
+                border-radius: 12px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>SheFit</h1>
+        <p class="subtitle">Ficha de Anamnese e Saúde</p>
+
+        <div class="aluno-badge">
+            Aluno(a): {{ aluno.nome }}
+        </div>
+
+    {% if messages %}
+        {% with message=messages|last %}
+            <div class="{% if message.tags == 'error' %}erro-box{% else %}sucesso{% endif %}">
+                {{ message }}
+            </div>
+        {% endwith %}
+    {% endif %}
+
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+
+            <label for="{{ form.restricoes_medicas.id_for_label }}">{{ form.restricoes_medicas.label }}</label>
+            {{ form.restricoes_medicas }}
+            {% if form.restricoes_medicas.errors %}
+                <div class="erro">{{ form.restricoes_medicas.errors.0 }}</div>
+            {% endif %}
+
+            <label for="{{ form.historico_lesoes.id_for_label }}">{{ form.historico_lesoes.label }}</label>
+            {{ form.historico_lesoes }}
+            {% if form.historico_lesoes.errors %}
+                <div class="erro">{{ form.historico_lesoes.errors.0 }}</div>
+            {% endif %}
+
+            <label for="{{ form.condicoes_cronicas.id_for_label }}">{{ form.condicoes_cronicas.label }}</label>
+            {{ form.condicoes_cronicas }}
+            {% if form.condicoes_cronicas.errors %}
+                <div class="erro">{{ form.condicoes_cronicas.errors.0 }}</div>
+            {% endif %}
+
+            <div class="checkbox-container">
+                {{ form.autorizacao_atividade_fisica }}
+                <label for="{{ form.autorizacao_atividade_fisica.id_for_label }}">
+                    <strong>Termo de Autorização:</strong> O aluno declara estar apto para a prática de atividades físicas sob orientação.
+                </label>
+            </div>
+            {% if form.autorizacao_atividade_fisica.errors %}
+                <div class="erro">{{ form.autorizacao_atividade_fisica.errors.0 }}</div>
+            {% endif %}
+
+            <button type="submit">Salvar e Liberar Matrícula</button>
+        </form>
+    </div>
+</body>
+
+</html>

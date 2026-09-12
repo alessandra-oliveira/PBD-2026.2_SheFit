@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as autenticar_sessao, logout as encerrar_sessao
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.contrib import messages
 
 def entrar(request):
     if request.method == 'POST':
@@ -48,10 +49,15 @@ def painel(request):
 
 #telas de cada perfil, só entra quem tem o tipo certo
 @login_required(login_url='entrar')
+@login_required(login_url='entrar')
+@login_required(login_url='entrar')
 def painel_aluno(request):
     if request.user.perfil.tipo != 'aluno':
         raise PermissionDenied
-    return render(request, 'accounts/painel_aluno.html')
+
+    aluno = getattr(request.user.perfil, 'aluno', None)
+
+    return render(request, 'accounts/painel_aluno.html', {'aluno': aluno})
 
 @login_required(login_url='entrar')
 def painel_professor(request):
