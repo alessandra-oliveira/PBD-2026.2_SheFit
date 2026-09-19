@@ -82,7 +82,12 @@
         <div class="badge">Professor</div>
         <h2 class="saudacao">Olá, {{ request.user.username }}!</h2>
         <p class="descricao">Área de acompanhamento de treinos e fichas dos alunos.</p>
+
+        <a href="{% url 'listar_turmas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
+            Minhas Turmas
+        </a>
+
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
-    </div>
+        </div>
 </body>
 </html>
