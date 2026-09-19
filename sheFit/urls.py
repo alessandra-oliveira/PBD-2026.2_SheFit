@@ -11,6 +11,7 @@ urlpatterns = [
     path('sair/', sair, name='sair'),
     path('alunos/', include('alunos.urls')),
     path('', include('turmas.urls')),
+    path('financeiro/', include('financeiro.urls')),
 
     #rotas dos paineis
     path('painel/', painel, name='painel'),

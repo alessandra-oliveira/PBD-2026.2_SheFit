@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos - Financeiro SheFit</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
+        .navbar {
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        .container { max-width: 1200px; margin: 32px auto; padding: 0 20px; }
+        .header-acoes { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .card-tabela { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; color: #64748b; font-size: 0.8rem; text-transform: uppercase; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; }
+        .badge-ativo { background: #dcfce7; color: #166534; }
+        .badge-inativo { background: #fee2e2; color: #991b1b; }
+        .btn-link { color: #7c3aed; text-decoration: none; font-weight: bold; margin-right: 10px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <h2>SheFit <span>Financeiro</span></h2>
+        <a href="{% url 'sair' %}" style="color:white; text-decoration:none;">Sair</a>
+    </header>
+
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: #fdf2f8; color: #9d174d; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="header-acoes">
+            <div>
+                <h1>Gestão de Planos</h1>
+                <p style="color: #64748b;">Definição de valores, periodicidades e taxas.</p>
+            </div>
+            <a href="{% url 'cadastrar_plano' %}" class="btn-primary">+ Novo Plano</a>
+        </div>
+
+        <div class="card-tabela">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Periodicidade</th>
+                        <th>Valor (R$)</th>
+                        <th>Fidelidade</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for plano in planos %}
+                        <tr>
+                            <td><strong>{{ plano.nome }}</strong></td>
+                            <td>{{ plano.get_periodicidade_display }}</td>
+                            <td>R$ {{ plano.valor }}</td>
+                            <td>{% if plano.fidelidade_meses %}{{ plano.fidelidade_meses }} meses{% else %}Sem fidelidade{% endif %}</td>
+                            <td>Dia {{ plano.dia_vencimento }}</td>
+                            <td>
+                                {% if plano.ativo %}
+                                    <span class="badge badge-ativo">Ativo</span>
+                                {% else %}
+                                    <span class="badge badge-inativo">Desativado</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{% url 'editar_plano' plano.id %}" class="btn-link">Editar</a>
+                                <a href="{% url 'alternar_status_plano' plano.id %}" class="btn-link" style="color: #64748b;">
+                                    {% if plano.ativo %}Desativar{% else %}Ativar{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">
+                                Nenhum plano cadastrado.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
