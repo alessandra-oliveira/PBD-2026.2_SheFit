@@ -10,6 +10,7 @@ urlpatterns = [
     path('entrar/', entrar, name='entrar'),
     path('sair/', sair, name='sair'),
     path('alunos/', include('alunos.urls')),
+    path('', include('turmas.urls')),
 
     #rotas dos paineis
     path('painel/', painel, name='painel'),

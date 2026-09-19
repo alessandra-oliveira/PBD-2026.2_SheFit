@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel da Recepção - SheFit</title>
+    <title>Turmas - SheFit</title>
     <style>
         * {
             box-sizing: border-box;
@@ -20,7 +20,6 @@
             min-height: 100vh;
         }
 
-        /* Topo / Navbar */
         .navbar {
             background: linear-gradient(135deg, #7c3aed, #ec4899);
             padding: 16px 32px;
@@ -60,14 +59,12 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        /* Container Principal */
         .container {
             max-width: 1200px;
             margin: 32px auto;
             padding: 0 20px;
         }
 
-        /* Ações Rápidas */
         .acoes-rapidas {
             display: flex;
             justify-content: space-between;
@@ -75,6 +72,16 @@
             margin-bottom: 24px;
             flex-wrap: wrap;
             gap: 16px;
+        }
+
+        .acoes-rapidas p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .grupo-botoes {
+            display: flex;
+            gap: 12px;
         }
 
         .btn-primary {
@@ -89,6 +96,9 @@
             gap: 8px;
             box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
             transition: opacity 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
         }
 
         .btn-primary:hover {
@@ -104,38 +114,13 @@
             border-radius: 8px;
             font-weight: bold;
             font-size: 0.95rem;
-            display: inline-flex;
-            align-items: center;
             transition: background 0.2s;
-}
-
-.btn-secondary:hover {
-    background: #f5f3ff;
-}
-        /* Card de Inadimplência do Dia (História T01) */
-        .alerta-inadimplencia {
-            background: #fffbeb;
-            border: 1px solid #fef3c7;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 32px;
         }
 
-        .alerta-inadimplencia h3 {
-            font-size: 1rem;
-            color: #92400e;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .btn-secondary:hover {
+            background: #f5f3ff;
         }
 
-        .alerta-inadimplencia p {
-            font-size: 0.9rem;
-            color: #b45309;
-        }
-
-        /* Tabela de Alunos */
         .card-tabela {
             background: white;
             border-radius: 16px;
@@ -191,29 +176,20 @@
             background: #fcfcfd;
         }
 
-        /* Badges de Status */
-        .badge-status {
+        .badge-vagas {
             display: inline-block;
             padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.8rem;
             font-weight: bold;
-        }
-
-        .status-ativo {
             background: #dcfce7;
             color: #166534;
         }
 
-        .status-pendente {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        /* Botões de Ação */
         .acoes-col {
             display: flex;
             gap: 8px;
+            justify-content: flex-end;
         }
 
         .btn-acao {
@@ -225,25 +201,25 @@
             transition: background 0.2s;
         }
 
-        .btn-anamnese {
+        .btn-editar {
             background: #ede9fe;
             color: #6d28d9;
         }
 
-        .btn-anamnese:hover {
+        .btn-editar:hover {
             background: #ddd6fe;
         }
 
-        .btn-detalhes {
-            background: #f1f5f9;
-            color: #475569;
+        .btn-desativar {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
-        .btn-detalhes:hover {
-            background: #e2e8f0;
+        .btn-desativar:hover {
+            background: #fecaca;
         }
 
-        .sem-alunos {
+        .sem-turmas {
             text-align: center;
             padding: 32px;
             color: #94a3b8;
@@ -252,10 +228,9 @@
 </head>
 
 <body>
-    <!-- Navbar Superior -->
     <header class="navbar">
         <div class="navbar-brand">
-            <h1>SheFit <span>Recepção</span></h1>
+            <h1>SheFit <span>{{ request.user.perfil.get_tipo_display }}</span></h1>
         </div>
         <div>
             <span style="font-size: 0.9rem; margin-right: 16px;">Operador: <strong>{{ request.user.username }}</strong></span>
@@ -264,80 +239,64 @@
     </header>
 
     <main class="container">
-        <!-- Barra de Ações Rápidas -->
         <div class="acoes-rapidas">
             <div>
-                <h2>Gerenciamento Operacional</h2>
-                <p style="color: #64748b; font-size: 0.9rem;">Matrículas, cadastros e controle diário de acesso.</p>
+                <h2>Turmas e Modalidades</h2>
+                <p>Horários, professores e capacidade de cada turma.</p>
             </div>
-            <div>
-                 <div style="display: flex; gap: 12px;">
-                 <a href="{% url 'listar_turmas' %}" class="btn-secondary">
-                     Ver Turmas
-                 </a>
-                <a href="{% url 'cadastrar_aluno' %}" class="btn-primary">
-                    + Nova Matrícula
-                </a>
-                </div>
-
-                </a>
+            {% if request.user.perfil.tipo != 'professor' %}
+            <div class="grupo-botoes">
+                <a href="{% url 'criar_modalidade' %}" class="btn-secondary">+ Modalidade</a>
+                <a href="{% url 'criar_turma' %}" class="btn-primary">+ Nova Turma</a>
             </div>
+            {% endif %}
         </div>
 
-        <!-- Seção: Inadimplência do Dia (Atende História T01) -->
-        <section class="alerta-inadimplencia">
-            <h3>⚠️ Inadimplência do Dia</h3>
-            {% if inadimplentes_hoje %}
-                <p>Existem cobranças pendentes para o dia de hoje que requerem atenção na recepção.</p>
-                <!-- Lista de inadimplentes quando integrado -->
-            {% else %}
-                <p>Nenhuma pendência financeira ou mensalidade vencida registrada para hoje.</p>
-            {% endif %}
-        </section>
-
-        <!-- Seção: Tabela Geral de Alunos -->
         <section class="card-tabela">
             <div class="tabela-cabecalho">
-                <h2>Alunas Cadastradas</h2>
-                <span class="contador-badge">{{ total_alunos }} cadastradas</span>
+                <h2>{% if request.user.perfil.tipo == 'professor' %}Minhas Turmas{% else %}Todas as Turmas{% endif %}</h2>
+                <span class="contador-badge">{{ turmas|length }} turma{{ turmas|length|pluralize }}</span>
             </div>
 
             <table>
                 <thead>
                     <tr>
-                        <th>Nome</th>
-                        <th>CPF</th>
-                        <th>Telefone</th>
-                        <th>Situação da Matrícula</th>
-                        <th style="text-align: right;">Ações</th>
+                        <th>Modalidade</th>
+                        <th>Dia</th>
+                        <th>Horário</th>
+                        <th>Professor</th>
+                        <th>Sala</th>
+                        <th>Vagas</th>
+                        {% if request.user.perfil.tipo != 'professor' %}
+                            <th style="text-align: right;">Ações</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for aluno in alunos %}
+                    {% for turma in turmas %}
                         <tr>
-                            <td><strong>{{ aluno.nome }}</strong></td>
-                            <td>{{ aluno.cpf|default:"Não informado" }}</td>
-                            <td>{{ aluno.telefone|default:"Não informado" }}</td>
+                            <td><strong>{{ turma.modalidade.nome }}</strong></td>
+                            <td>{{ turma.get_dia_semana_display }}</td>
+                            <td>{{ turma.horario }}</td>
+                            <td>{{ turma.professor.username }}</td>
+                            <td>{{ turma.sala }}</td>
+                            <td><span class="badge-vagas">{{ turma.vagas_restantes }} / {{ turma.capacidade_maxima }}</span></td>
+                            {% if request.user.perfil.tipo != 'professor' %}
                             <td>
-                                {% if aluno.apto_para_treino %}
-                                    <span class="badge-status status-ativo">Ativa</span>
-                                {% else %}
-                                    <span class="badge-status status-pendente">{{ aluno.status_matricula }}</span>
-                                {% endif %}
-                            </td>
-                            <td style="text-align: right;">
-                                <div class="acoes-col" style="justify-content: flex-end;">
-                                    <a href="{% url 'editar_aluno' aluno.id %}" class="btn-acao btn-detalhes">Editar</a>
-                                    <a href="{% url 'preencher_anamnese' aluno.id %}" class="btn-acao btn-anamnese" title="Preencher ou atualizar ficha médica">
-                                        Ficha / Anamnese
-                                    </a>
+                                <div class="acoes-col">
+                                    <a href="{% url 'editar_turma' turma.id %}" class="btn-acao btn-editar">Editar</a>
+                                    <a href="{% url 'desativar_turma' turma.id %}" class="btn-acao btn-desativar">Desativar</a>
                                 </div>
                             </td>
+                            {% endif %}
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5" class="sem-alunos">
-                                Nenhuma aluna cadastrada até o momento. Clique em <strong>+ Nova Matrícula</strong> para iniciar.
+                            <td colspan="7" class="sem-turmas">
+                                Nenhuma turma cadastrada até o momento.
+                                {% if request.user.perfil.tipo != 'professor' %}
+                                    Clique em <strong>+ Nova Turma</strong> para começar.
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}
