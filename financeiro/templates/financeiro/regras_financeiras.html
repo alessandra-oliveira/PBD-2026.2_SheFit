@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regras Financeiras - Financeiro SheFit</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
+        .navbar {
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        .container { max-width: 900px; margin: 32px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        h1 { color: #1e293b; font-size: 1.6rem; }
+        h2 { color: #7c3aed; font-size: 1.2rem; margin-bottom: 14px; }
+        .subtitulo { color: #64748b; margin: 6px 0 24px; line-height: 1.4; }
+        .aviso { background: #f5f3ff; color: #5b21b6; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 18px; line-height: 1.4; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.85rem; color: #334155; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+        .btn-salvar {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-voltar { color: #64748b; text-decoration: none; font-size: 0.9rem; margin-left: 16px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; color: #64748b; font-size: 0.8rem; text-transform: uppercase; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        .tabela-scroll { overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <h2 style="color: white; margin: 0;">SheFit <span>Financeiro</span></h2>
+        <a href="{% url 'sair' %}" style="color:white; text-decoration:none;">Sair</a>
+    </header>
+
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: #fdf2f8; color: #9d174d; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <h1>Regras Financeiras</h1>
+            <p class="subtitulo">
+                Esses quatro números valem para toda a academia e são usados pelo cálculo do pagamento atrasado,
+                pela situação da matrícula e pelo controle de acesso.
+            </p>
+
+            <div class="aviso">
+                Mudar uma regra vale apenas para o que vem depois. Pagamentos já realizados não são recalculados.
+            </div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div style="color: #dc2626; font-size: 0.85rem; margin-bottom: 12px;">{{ form.non_field_errors|striptags }}</div>
+                {% endif %}
+                <div class="grid">
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small style="color: #64748b; font-size: 0.75rem;">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div style="color: #dc2626; font-size: 0.8rem;">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn-salvar">Salvar Regras</button>
+                <a href="{% url 'painel_financeiro' %}" class="btn-voltar">Voltar ao painel</a>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Histórico de alterações</h2>
+            <div class="tabela-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Quando</th>
+                            <th>Quem</th>
+                            <th>Regra</th>
+                            <th>De</th>
+                            <th>Para</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in historico %}
+                            <tr>
+                                <td>{{ item.alterado_em|date:"d/m/Y H:i" }}</td>
+                                <td>{{ item.alterado_por_nome }}</td>
+                                <td>{{ item.get_campo_display }}</td>
+                                <td>{{ item.valor_anterior }}</td>
+                                <td><strong>{{ item.valor_novo }}</strong></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 24px; color: #94a3b8;">
+                                    Nenhuma alteração registrada ainda.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
