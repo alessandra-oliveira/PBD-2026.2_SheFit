@@ -104,6 +104,33 @@
             font-size: 0.9rem;
         }
 
+        .btn-voltar {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            text-align: center;
+            text-decoration: none;
+            color: #7c3aed;
+            border: 2px solid #7c3aed;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #7c3aed;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.35);
+        }
+
+        .btn-voltar:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(124, 58, 237, 0.35);
+        }
+
         /* Telas pequenas (celular) */
         @media (max-width: 480px) {
             .card {
@@ -116,6 +143,10 @@
             }
 
             button {
+                padding: 12px;
+            }
+
+            .btn-voltar {
                 padding: 12px;
             }
         }
@@ -144,6 +175,8 @@
             {% endfor %}
             <button type="submit">Avançar para Anamnese</button>
         </form>
+
+        <a href="{% url 'painel_recepcao' %}" class="btn-voltar">Voltar ao painel</a>
     </div>
 </body>
 
