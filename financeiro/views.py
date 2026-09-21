@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from accounts.decorators import perfil_requerido
-from .models import Plano
-from .forms import PlanoForm
+from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
+from .forms import PlanoForm, RegraFinanceiraForm
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
@@ -71,3 +71,31 @@ def alternar_status_plano(request, plano_id):
     status_str = "ativado" if plano.ativo else "desativado (oculto para novas matrículas)"
     messages.info(request, f'O plano "{plano.nome}" foi {status_str}.')
     return redirect('listar_planos')
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def regras_financeiras(request):
+    """
+    T05 - Tela das regras financeiras globais (tolerância, juros, multa e bloqueio).
+    Só o perfil financeiro acessa. Toda alteração fica registrada no histórico.
+    """
+    regras = RegraFinanceira.obter()
+
+    if request.method == 'POST':
+        form = RegraFinanceiraForm(request.POST, instance=regras)
+        if form.is_valid():
+            alterados = form.salvar(request.user)
+            if alterados:
+                messages.success(request, 'Regras financeiras atualizadas com sucesso!')
+            else:
+                messages.info(request, 'Nenhuma alteração foi feita nas regras.')
+            return redirect('regras_financeiras')
+    else:
+        form = RegraFinanceiraForm(instance=regras)
+
+    historico = HistoricoRegraFinanceira.objects.all()[:50]
+    return render(request, 'financeiro/regras_financeiras.html', {
+        'form': form,
+        'regras': regras,
+        'historico': historico,
+    })
