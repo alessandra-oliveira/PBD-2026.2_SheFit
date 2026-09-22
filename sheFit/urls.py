@@ -4,6 +4,7 @@ from accounts.views import (
     entrar, sair, painel,
     painel_aluno, painel_professor, painel_recepcao, painel_financeiro
 )
+from financeiro import views as financeiro_views  
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -13,7 +14,7 @@ urlpatterns = [
     path('', include('turmas.urls')),
     path('financeiro/', include('financeiro.urls')),
 
-    #rotas dos paineis
+    # rotas dos paineis
     path('painel/', painel, name='painel'),
     path('painel/aluno/', painel_aluno, name='painel_aluno'),
     path('painel/professor/', painel_professor, name='painel_professor'),

@@ -1,8 +1,7 @@
-from django import forms
-from .models import Plano
 from decimal import Decimal
+from django import forms
 from django.db import transaction
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
+from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula
 
 class PlanoForm(forms.ModelForm):
     class Meta:
@@ -82,3 +81,15 @@ class RegraFinanceiraForm(forms.ModelForm):
                 for campo in alterados
             ])
         return alterados
+
+
+class MatriculaForm(forms.ModelForm):
+    class Meta:
+        model = Matricula
+        fields = ['aluno', 'plano', 'data_inicio', 'forma_pagamento']
+        widgets = {
+            'aluno': forms.Select(attrs={'class': 'form-control'}),
+            'plano': forms.Select(attrs={'class': 'form-control'}),
+            'data_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'forma_pagamento': forms.Select(attrs={'class': 'form-control'}),
+        }

@@ -107,11 +107,12 @@
             display: inline-flex;
             align-items: center;
             transition: background 0.2s;
-}
+        }
 
-.btn-secondary:hover {
-    background: #f5f3ff;
-}
+        .btn-secondary:hover {
+            background: #f5f3ff;
+        }
+
         /* Card de Inadimplência do Dia (História T01) */
         .alerta-inadimplencia {
             background: #fffbeb;
@@ -275,12 +276,11 @@
                  <a href="{% url 'listar_turmas' %}" class="btn-secondary">
                      Ver Turmas
                  </a>
-                <a href="{% url 'cadastrar_aluno' %}" class="btn-primary">
+                <!-- Alterado aqui para chamar a rota da matrícula financeira com as cobranças automáticas (T06) -->
+                <a href="{% url 'criar_matricula' %}" class="btn-primary">
                     + Nova Matrícula
                 </a>
                 </div>
-
-                </a>
             </div>
         </div>
 
@@ -289,7 +289,6 @@
             <h3>⚠️ Inadimplência do Dia</h3>
             {% if inadimplentes_hoje %}
                 <p>Existem cobranças pendentes para o dia de hoje que requerem atenção na recepção.</p>
-                <!-- Lista de inadimplentes quando integrado -->
             {% else %}
                 <p>Nenhuma pendência financeira ou mensalidade vencida registrada para hoje.</p>
             {% endif %}

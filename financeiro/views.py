@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from accounts.decorators import perfil_requerido
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
-from .forms import PlanoForm, RegraFinanceiraForm
+from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula
+from .forms import PlanoForm, RegraFinanceiraForm, MatriculaForm
+from .servicos import realizar_matricula
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
@@ -99,3 +101,29 @@ def regras_financeiras(request):
         'regras': regras,
         'historico': historico,
     })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao') # Ajuste o perfil conforme a regra de acesso da recepção no seu projeto
+def criar_matricula(request):
+    """
+    T06 - Realiza a matrícula do aluno, gerando as cobranças automáticas de vigência e adesão.
+    """
+    if request.method == 'POST':
+        form = MatriculaForm(request.POST)
+        if form.is_valid():
+            try:
+                realizar_matricula(
+                    aluno=form.cleaned_data['aluno'],
+                    plano=form.cleaned_data['plano'],
+                    data_inicio=form.cleaned_data['data_inicio'],
+                    forma_pagamento=form.cleaned_data['forma_pagamento']
+                )
+                messages.success(request, "Matrícula realizada com sucesso e cobranças geradas automaticamente!")
+                return redirect('criar_matricula')
+            except ValidationError as e:
+                messages.error(request, e.message)
+    else:
+        form = MatriculaForm()
+
+    return render(request, 'financeiro/criar_matricula.html', {'form': form})

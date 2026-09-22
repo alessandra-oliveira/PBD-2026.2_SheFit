@@ -107,7 +107,6 @@ class RegraFinanceira(models.Model):
         related_name='+',
     )
 
-    # valores iniciais, usados só na primeira vez, pra nunca ter campo em branco
     PADRAO = {
         'dias_tolerancia': 3,
         'juros_diario': Decimal('0.033'),
@@ -131,7 +130,6 @@ class RegraFinanceira(models.Model):
 
     @classmethod
     def obter(cls):
-        """Devolve as regras vigentes (cria com os valores padrão se ainda não existirem)."""
         regras, _ = cls.objects.get_or_create(pk=1, defaults=cls.PADRAO)
         return regras
 
@@ -153,7 +151,6 @@ class HistoricoRegraFinanceira(models.Model):
         on_delete=models.SET_NULL,
         related_name='+',
     )
-    # guarda o nome também, pro registro continuar legível se o usuário for apagado
     alterado_por_nome = models.CharField(max_length=150)
     alterado_em = models.DateTimeField(auto_now_add=True)
 
@@ -164,3 +161,54 @@ class HistoricoRegraFinanceira(models.Model):
 
     def __str__(self):
         return f"{self.get_campo_display()}: {self.valor_anterior} -> {self.valor_novo} ({self.alterado_por_nome})"
+
+
+class Matricula(models.Model):
+    FORMA_PAGAMENTO_CHOICES = [
+        ('cartao', 'Cartão de Crédito'),
+        ('pix', 'PIX'),
+        ('boleto', 'Boleto Bancário'),
+        ('dinheiro', 'Dinheiro'),
+    ]
+
+    aluno = models.ForeignKey('alunos.Aluno', on_delete=models.PROTECT, verbose_name="Aluno")
+    plano = models.ForeignKey(Plano, on_delete=models.PROTECT, verbose_name="Plano")
+    data_inicio = models.DateField(verbose_name="Data de Início")
+    forma_pagamento = models.CharField(max_length=20, choices=FORMA_PAGAMENTO_CHOICES, verbose_name="Forma de Pagamento")
+    status = models.CharField(max_length=20, default='ATIVA', verbose_name="Status da Matrícula")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Matrícula"
+        verbose_name_plural = "Matrículas"
+
+    def __str__(self):
+        return f"Matrícula #{self.id} - {self.aluno} ({self.plano.nome})"
+
+
+class Cobranca(models.Model):
+    TIPO_CHOICES = [
+        ('adesao', 'Taxa de Adesão'),
+        ('mensalidade', 'Mensalidade'),
+    ]
+
+    matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='cobrancas', verbose_name="Matrícula")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, verbose_name="Tipo de Cobrança")
+    valor = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Valor (R$)")
+    vencimento = models.DateField(verbose_name="Data de Vencimento")
+    competencia = models.CharField(max_length=7, null=True, blank=True, verbose_name="Competência (AAAA-MM)")
+    paga = models.BooleanField(default=False, verbose_name="Paga?")
+
+    class Meta:
+        verbose_name = "Cobrança"
+        verbose_name_plural = "Cobranças"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['matricula', 'competencia'], 
+                name='uq_matricula_competencia_mensalidade',
+                condition=models.Q(tipo='mensalidade')
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.competencia or 'À vista'} - R$ {self.valor}"

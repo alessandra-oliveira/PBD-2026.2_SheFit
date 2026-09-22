@@ -1,13 +1,15 @@
-from django.test import TestCase
-
 from decimal import Decimal
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
+from datetime import date
 
 from accounts.models import Perfil
-from .models import RegraFinanceira, HistoricoRegraFinanceira
+from alunos.models import Aluno
+from .models import RegraFinanceira, HistoricoRegraFinanceira, Plano, Matricula, Cobranca
+from .servicos import realizar_matricula
 
 
 def criar_usuario(username, tipo):
@@ -127,6 +129,7 @@ class RegrasFinanceirasTests(TestCase):
         resp = self.client.get(self.url)
         self.assertEqual(len(resp.context['historico']), 4)
 
+
 class ServicosRegrasTests(TestCase):
     def test_dentro_da_tolerancia_nao_cobra_nada(self):
         from .servicos import calcular_encargos, esta_inadimplente
@@ -151,3 +154,43 @@ class ServicosRegrasTests(TestCase):
         regras.save()
         self.assertEqual(antigo['multa'], Decimal('2.00'))
         self.assertEqual(calcular_encargos('100.00', 10)['multa'], Decimal('5.00'))
+
+
+class TarefaT06MatriculaServicosTests(TestCase):
+    def setUp(self):
+        self.aluno = Aluno.objects.create(nome="Aluno Teste")
+        if hasattr(self.aluno, 'tem_anamnese'):
+            self.aluno.tem_anamnese = True
+        if hasattr(self.aluno, 'tem_autorizacao'):
+            self.aluno.tem_autorizacao = True
+        self.aluno.save()
+
+        self.plano = Plano.objects.create(
+            nome="Trimestral",
+            periodicidade="trimestral",
+            valor=Decimal('150.00'),
+            taxa_adesao=Decimal('40.00'),
+            dia_vencimento=10
+        )
+
+    def test_realizar_matricula_gera_cobrancas_e_idempotencia(self):
+        data_inicio = date(2027, 2, 1)
+        
+        matricula = realizar_matricula(self.aluno, self.plano, data_inicio, 'pix')
+        
+        # 1 taxa de adesão + 3 mensalidades (trimestral) = 4 cobranças
+        total_cobrancas = Cobranca.objects.filter(matricula=matricula).count()
+        self.assertEqual(total_cobrancas, 4)
+        
+        # Valida idempotência: rodar de novo não pode duplicar as cobranças de mensalidade
+        realizar_matricula(self.aluno, self.plano, data_inicio, 'pix')
+        total_cobrancas_reaplicado = Cobranca.objects.filter(matricula=matricula).count()
+        self.assertEqual(total_cobrancas, total_cobrancas_reaplicado)
+
+    def test_bloqueio_aluno_sem_liberacao(self):
+        if hasattr(self.aluno, 'tem_anamnese'):
+            self.aluno.tem_anamnese = False
+            self.aluno.save()
+            
+        with self.assertRaises(ValidationError):
+            realizar_matricula(self.aluno, self.plano, date(2027, 2, 1), 'pix')
