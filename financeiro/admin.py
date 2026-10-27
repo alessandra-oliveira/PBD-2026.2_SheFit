@@ -1,5 +1,8 @@
 from django.contrib import admin
 from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
+from .models import (
+    Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Trancamento, Cancelamento,
+)
 
 @admin.register(Plano)
 class PlanoAdmin(admin.ModelAdmin):
@@ -35,3 +38,22 @@ class HistoricoRegraFinanceiraAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+@admin.register(Matricula)
+class MatriculaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'aluno', 'plano', 'data_inicio', 'situacao_display')
+    readonly_fields = ('situacao_display',)
+
+    @admin.display(description='Situação')
+    def situacao_display(self, obj):
+        return obj.situacao_display
+
+
+@admin.register(Trancamento)
+class TrancamentoAdmin(admin.ModelAdmin):
+    list_display = ('matricula', 'data_inicio', 'data_fim')
+
+
+@admin.register(Cancelamento)
+class CancelamentoAdmin(admin.ModelAdmin):
+    list_display = ('matricula', 'data', 'motivo')

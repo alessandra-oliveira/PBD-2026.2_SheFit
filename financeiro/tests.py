@@ -4,18 +4,50 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
-from datetime import date
+from django.utils import timezone
+from datetime import date, timedelta
+from itertools import count
 
 from accounts.models import Perfil
-from alunos.models import Aluno
-from .models import RegraFinanceira, HistoricoRegraFinanceira, Plano, Matricula, Cobranca
-from .servicos import realizar_matricula
+from alunos.forms import MatriculaForm as MatriculaFormDoApp
+from alunos.models import Aluno, Anamnese
+from .forms import MatriculaForm
+from .models import (
+    RegraFinanceira, HistoricoRegraFinanceira, Plano, Matricula, Cobranca,
+    Trancamento, Cancelamento, SituacaoMatricula,
+)
+from .servicos import realizar_matricula, calcular_situacao, avaliar_situacao_financeira_aluno
 
 
 def criar_usuario(username, tipo):
     usuario = User.objects.create_user(username=username, password='senha12345')
     Perfil.objects.create(usuario=usuario, tipo=tipo)
     return usuario
+
+
+_sequencia = count(1)
+
+
+def criar_anamnese(aluno, autorizada=True):
+    # Se o Anamnese tiver outros campos obrigatórios, acrescente-os aqui.
+    return Anamnese.objects.create(
+        aluno=aluno, autorizacao_atividade_fisica=autorizada,
+    )
+
+
+def criar_aluno_valido(com_anamnese=True, autorizada=True):
+    n = next(_sequencia)
+    usuario = User.objects.create_user(username=f'aluna{n}', password='senha12345')
+    perfil = Perfil.objects.create(usuario=usuario, tipo=Perfil.ALUNO)
+    aluno = Aluno.objects.create(
+        perfil=perfil, nome=f'Aluna {n}', cpf=f'{n:011d}',
+        data_nascimento=date(2000, 1, 1), endereco='Rua A, 1',
+        telefone=f'8199{n:07d}', email=f'aluna{n}@exemplo.com',
+        contato_emergencia_nome='Contato', contato_emergencia_telefone='81988887777',
+    )
+    if com_anamnese:
+        criar_anamnese(aluno, autorizada=autorizada)
+    return aluno
 
 
 DADOS_VALIDOS = {
@@ -158,13 +190,7 @@ class ServicosRegrasTests(TestCase):
 
 class TarefaT06MatriculaServicosTests(TestCase):
     def setUp(self):
-        self.aluno = Aluno.objects.create(nome="Aluno Teste")
-        if hasattr(self.aluno, 'tem_anamnese'):
-            self.aluno.tem_anamnese = True
-        if hasattr(self.aluno, 'tem_autorizacao'):
-            self.aluno.tem_autorizacao = True
-        self.aluno.save()
-
+        self.aluno = criar_aluno_valido()
         self.plano = Plano.objects.create(
             nome="Trimestral",
             periodicidade="trimestral",
@@ -172,25 +198,347 @@ class TarefaT06MatriculaServicosTests(TestCase):
             taxa_adesao=Decimal('40.00'),
             dia_vencimento=10
         )
+        self.data_inicio = date(2027, 2, 1)
 
-    def test_realizar_matricula_gera_cobrancas_e_idempotencia(self):
-        data_inicio = date(2027, 2, 1)
-        
-        matricula = realizar_matricula(self.aluno, self.plano, data_inicio, 'pix')
-        
-        # 1 taxa de adesão + 3 mensalidades (trimestral) = 4 cobranças
-        total_cobrancas = Cobranca.objects.filter(matricula=matricula).count()
-        self.assertEqual(total_cobrancas, 4)
-        
-        # Valida idempotência: rodar de novo não pode duplicar as cobranças de mensalidade
-        realizar_matricula(self.aluno, self.plano, data_inicio, 'pix')
-        total_cobrancas_reaplicado = Cobranca.objects.filter(matricula=matricula).count()
-        self.assertEqual(total_cobrancas, total_cobrancas_reaplicado)
+    def test_gera_adesao_e_uma_mensalidade_por_mes_da_periodicidade(self):
+        matricula = realizar_matricula(self.aluno, self.plano, self.data_inicio, 'pix')
 
-    def test_bloqueio_aluno_sem_liberacao(self):
-        if hasattr(self.aluno, 'tem_anamnese'):
-            self.aluno.tem_anamnese = False
-            self.aluno.save()
-            
+        adesoes = matricula.cobrancas.filter(tipo='adesao')
+        self.assertEqual(adesoes.count(), 1)
+        self.assertEqual(adesoes[0].valor, Decimal('40.00'))
+
+        mensalidades = matricula.cobrancas.filter(tipo='mensalidade').order_by('vencimento')
+        self.assertEqual(
+            [c.competencia for c in mensalidades], ['2027-02', '2027-03', '2027-04'],
+        )
+        self.assertEqual(
+            [c.vencimento for c in mensalidades],
+            [date(2027, 2, 10), date(2027, 3, 10), date(2027, 4, 10)],
+        )
+        self.assertTrue(all(c.valor == Decimal('150.00') for c in mensalidades))
+
+    def test_sem_taxa_de_adesao_nao_gera_cobranca_de_adesao(self):
+        self.plano.taxa_adesao = Decimal('0.00')
+        self.plano.save()
+        matricula = realizar_matricula(self.aluno, self.plano, self.data_inicio, 'pix')
+        self.assertFalse(matricula.cobrancas.filter(tipo='adesao').exists())
+        self.assertEqual(matricula.cobrancas.count(), 3)
+
+    def test_mensalidade_da_mesma_competencia_nao_duplica(self):
+        """A idempotência vale por (matrícula, competência): repetir a mesma
+        competência na mesma matrícula não cria outra cobrança."""
+        matricula = realizar_matricula(self.aluno, self.plano, self.data_inicio, 'pix')
+        antes = matricula.cobrancas.count()
+
+        existente = matricula.cobrancas.filter(tipo='mensalidade').first()
+        _, criada = Cobranca.objects.get_or_create(
+            matricula=matricula, competencia=existente.competencia,
+            defaults={'tipo': 'mensalidade', 'valor': self.plano.valor,
+                      'vencimento': existente.vencimento},
+        )
+        self.assertFalse(criada)
+        self.assertEqual(matricula.cobrancas.count(), antes)
+
+    def test_nova_matricula_nao_mexe_nas_cobrancas_da_anterior(self):
+        primeira = realizar_matricula(self.aluno, self.plano, self.data_inicio, 'pix')
+        antes = primeira.cobrancas.count()
+        segunda = realizar_matricula(self.aluno, self.plano, self.data_inicio, 'pix')
+        self.assertNotEqual(primeira.pk, segunda.pk)
+        self.assertEqual(primeira.cobrancas.count(), antes)
+
+    def test_bloqueio_aluno_sem_anamnese(self):
+        aluno = criar_aluno_valido(com_anamnese=False)
         with self.assertRaises(ValidationError):
-            realizar_matricula(self.aluno, self.plano, date(2027, 2, 1), 'pix')
+            realizar_matricula(aluno, self.plano, self.data_inicio, 'pix')
+        self.assertEqual(Matricula.objects.count(), 0)  # nada foi gravado
+
+    def test_bloqueio_aluno_sem_autorizacao_na_anamnese(self):
+        aluno = criar_aluno_valido(autorizada=False)
+        with self.assertRaises(ValidationError):
+            realizar_matricula(aluno, self.plano, self.data_inicio, 'pix')
+        self.assertEqual(Matricula.objects.count(), 0)
+
+
+class TarefaT08SituacaoMatriculaTests(TestCase):
+    """A situação nunca é digitada: nasce de cancelamento, trancamento e cobranças.
+    Regras padrão: tolerância 3 dias, bloqueio a partir de 15 dias."""
+
+    def setUp(self):
+        RegraFinanceira.obter()  # cria as regras padrão (3 / 15)
+        self.hoje = date(2027, 3, 20)
+        self.plano = Plano.objects.create(
+            nome='Mensal', periodicidade='mensal', valor=Decimal('100.00'), dia_vencimento=10,
+        )
+        self.matricula = Matricula.objects.create(
+            aluno=criar_aluno_valido(), plano=self.plano,
+            data_inicio=date(2027, 1, 1), forma_pagamento='pix',
+        )
+        self._n = count(1)
+
+    # ---- apoio -------------------------------------------------------
+    def cobranca(self, dias_de_atraso, paga=False):
+        """Cria uma mensalidade que venceu há `dias_de_atraso` dias (negativo = vence no futuro)."""
+        return Cobranca.objects.create(
+            matricula=self.matricula, tipo='mensalidade', valor=Decimal('100.00'),
+            vencimento=self.hoje - timedelta(days=dias_de_atraso),
+            competencia=f'2026-{next(self._n):02d}', paga=paga,
+        )
+
+    def situacao(self, hoje=None):
+        return calcular_situacao(self.matricula, hoje=hoje or self.hoje)
+
+    # ---- ativa -------------------------------------------------------
+    def test_sem_nenhuma_cobranca_esta_ativa(self):
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_cobranca_que_ainda_vai_vencer_nao_afeta(self):
+        self.cobranca(-5)
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_cobranca_que_vence_hoje_ainda_nao_esta_atrasada(self):
+        self.cobranca(0)
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_cobranca_vencida_mas_paga_continua_ativa(self):
+        self.cobranca(40, paga=True)
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_cobranca_vencida_dentro_da_tolerancia_continua_ativa(self):
+        self.cobranca(3)
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    # ---- inadimplente ------------------------------------------------
+    def test_um_dia_alem_da_tolerancia_fica_inadimplente(self):
+        self.cobranca(4)
+        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
+
+    def test_ate_o_dia_anterior_ao_limite_ainda_e_inadimplente(self):
+        self.cobranca(14)
+        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
+
+    # ---- bloqueada ---------------------------------------------------
+    def test_no_limite_de_bloqueio_fica_bloqueada(self):
+        self.cobranca(15)
+        self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
+
+    def test_muito_alem_do_limite_continua_bloqueada(self):
+        self.cobranca(90)
+        self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
+
+    def test_vale_a_cobranca_em_aberto_mais_antiga(self):
+        self.cobranca(4)
+        self.cobranca(20)
+        self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
+
+    def test_passar_dos_dias_leva_de_ativa_a_inadimplente_e_a_bloqueada(self):
+        self.cobranca(0)  # vence hoje
+        self.assertEqual(self.situacao(self.hoje), SituacaoMatricula.ATIVA)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=3)), SituacaoMatricula.ATIVA)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=4)), SituacaoMatricula.INADIMPLENTE)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=15)), SituacaoMatricula.BLOQUEADA)
+
+    # ---- trancada ----------------------------------------------------
+    def test_trancamento_em_curso_fica_trancada(self):
+        Trancamento.objects.create(
+            matricula=self.matricula,
+            data_inicio=self.hoje - timedelta(days=1), data_fim=self.hoje + timedelta(days=30),
+        )
+        self.assertEqual(self.situacao(), SituacaoMatricula.TRANCADA)
+
+    def test_trancamento_sem_data_de_fim_esta_em_curso(self):
+        Trancamento.objects.create(matricula=self.matricula, data_inicio=self.hoje, data_fim=None)
+        self.assertEqual(self.situacao(), SituacaoMatricula.TRANCADA)
+
+    def test_trancamento_que_ja_terminou_nao_conta(self):
+        Trancamento.objects.create(
+            matricula=self.matricula,
+            data_inicio=self.hoje - timedelta(days=30), data_fim=self.hoje - timedelta(days=1),
+        )
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_trancamento_que_ainda_nao_comecou_nao_conta(self):
+        Trancamento.objects.create(
+            matricula=self.matricula,
+            data_inicio=self.hoje + timedelta(days=1), data_fim=self.hoje + timedelta(days=30),
+        )
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_trancamento_vence_o_atraso(self):
+        self.cobranca(60)
+        Trancamento.objects.create(matricula=self.matricula, data_inicio=self.hoje, data_fim=None)
+        self.assertEqual(self.situacao(), SituacaoMatricula.TRANCADA)
+
+    def test_ao_fim_do_trancamento_volta_a_situacao_financeira(self):
+        self.cobranca(60)
+        Trancamento.objects.create(
+            matricula=self.matricula, data_inicio=self.hoje, data_fim=self.hoje + timedelta(days=10),
+        )
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=10)), SituacaoMatricula.TRANCADA)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=11)), SituacaoMatricula.BLOQUEADA)
+
+    def test_trancamento_nao_aceita_fim_antes_do_inicio(self):
+        t = Trancamento(matricula=self.matricula, data_inicio=self.hoje,
+                        data_fim=self.hoje - timedelta(days=1))
+        with self.assertRaises(ValidationError):
+            t.full_clean()
+
+    # ---- cancelada ---------------------------------------------------
+    def test_cancelamento_registrado_fica_cancelada(self):
+        Cancelamento.objects.create(matricula=self.matricula, data=self.hoje)
+        self.assertEqual(self.situacao(), SituacaoMatricula.CANCELADA)
+
+    def test_cancelada_vence_trancamento_e_atraso(self):
+        self.cobranca(90)
+        Trancamento.objects.create(matricula=self.matricula, data_inicio=self.hoje, data_fim=None)
+        Cancelamento.objects.create(matricula=self.matricula, data=self.hoje)
+        self.assertEqual(self.situacao(), SituacaoMatricula.CANCELADA)
+
+    # ---- pagamento devolve a ativa ----------------------------------
+    def test_pagamento_devolve_inadimplente_a_ativa(self):
+        c = self.cobranca(8)
+        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
+        c.paga = True
+        c.save()
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_pagamento_devolve_bloqueada_a_ativa(self):
+        c = self.cobranca(30)
+        self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
+        c.paga = True
+        c.save()
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_so_volta_a_ativa_quando_quita_todas_as_pendencias(self):
+        antiga = self.cobranca(30)
+        recente = self.cobranca(8)
+        self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
+        antiga.paga = True
+        antiga.save()
+        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)  # sobrou a de 8 dias
+        recente.paga = True
+        recente.save()
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_pagar_nao_destranca_matricula_trancada(self):
+        c = self.cobranca(30)
+        Trancamento.objects.create(matricula=self.matricula, data_inicio=self.hoje, data_fim=None)
+        self.assertEqual(self.situacao(), SituacaoMatricula.TRANCADA)
+        c.paga = True
+        c.save()
+        # quitar a pendência não encerra o trancamento: só ele o encerra
+        self.assertEqual(self.situacao(), SituacaoMatricula.TRANCADA)
+
+    def test_pagar_nao_reativa_matricula_cancelada(self):
+        c = self.cobranca(30)
+        Cancelamento.objects.create(matricula=self.matricula, data=self.hoje)
+        c.paga = True
+        c.save()
+        self.assertEqual(self.situacao(), SituacaoMatricula.CANCELADA)
+
+    # ---- regras mudam, situação acompanha ---------------------------
+    def test_mudar_a_tolerancia_muda_a_situacao_sem_editar_a_matricula(self):
+        self.cobranca(5)
+        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
+        regras = RegraFinanceira.obter()
+        regras.dias_tolerancia = 10
+        regras.save()
+        self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
+
+    def test_mudar_o_limite_de_bloqueio_muda_a_situacao(self):
+        self.cobranca(20)
+        self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
+        regras = RegraFinanceira.obter()
+        regras.dias_bloqueio = 30
+        regras.save()
+        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
+
+    # ---- ninguém edita a situação -----------------------------------
+    def test_situacao_nao_pode_ser_atribuida(self):
+        with self.assertRaises(AttributeError):
+            self.matricula.situacao = 'ativa'
+
+    def test_matricula_nao_guarda_a_situacao_no_banco(self):
+        campos = {f.name for f in Matricula._meta.get_fields()}
+        self.assertNotIn('status', campos)
+        self.assertNotIn('situacao', campos)
+
+    def test_formulario_de_matricula_nao_expoe_a_situacao(self):
+        self.assertEqual(
+            set(MatriculaForm().fields), {'aluno', 'plano', 'data_inicio', 'forma_pagamento'},
+        )
+
+    def test_matricula_criada_pelo_servico_tem_situacao_valida(self):
+        m = realizar_matricula(criar_aluno_valido(), self.plano, date(2027, 3, 1), 'pix')
+        self.assertIn(m.situacao, SituacaoMatricula.values)
+        self.assertIn(m.situacao_display, SituacaoMatricula.labels)
+
+
+class TarefaT08ConsumoPelaRecepcaoTests(TestCase):
+    """A porta da academia (T09) tem que obedecer à situação calculada (T08).
+    Aqui "hoje" é o dia real, porque o serviço da recepção usa a data de hoje."""
+
+    def setUp(self):
+        RegraFinanceira.obter()  # tolerância 3, bloqueio 15
+        self.hoje = timezone.localdate()
+        self.plano = Plano.objects.create(
+            nome='Mensal', periodicidade='mensal', valor=Decimal('100.00'), dia_vencimento=10,
+        )
+        self.aluno = criar_aluno_valido()
+        self.matricula = Matricula.objects.create(
+            aluno=self.aluno, plano=self.plano,
+            data_inicio=self.hoje - timedelta(days=90), forma_pagamento='pix',
+        )
+        self._n = count(1)
+
+    def cobranca(self, dias_de_atraso, paga=False):
+        return Cobranca.objects.create(
+            matricula=self.matricula, tipo='mensalidade', valor=Decimal('100.00'),
+            vencimento=self.hoje - timedelta(days=dias_de_atraso),
+            competencia=f'2026-{next(self._n):02d}', paga=paga,
+        )
+
+    def test_aluno_sem_matricula_e_bloqueado(self):
+        outro = criar_aluno_valido()
+        r = avaliar_situacao_financeira_aluno(outro)
+        self.assertEqual(r['status'], 'bloqueado')
+
+    def test_matricula_ativa_e_liberada(self):
+        r = avaliar_situacao_financeira_aluno(self.aluno)
+        self.assertEqual(r['status'], 'liberado')
+
+    def test_inadimplente_entra_com_aviso(self):
+        self.cobranca(5)
+        r = avaliar_situacao_financeira_aluno(self.aluno)
+        self.assertEqual(r['status'], 'liberado_com_aviso')
+        self.assertEqual(r['detalhes']['dias_atraso'], 5)
+        self.assertEqual(r['detalhes']['dias_restantes_bloqueio'], 10)
+
+    def test_bloqueada_nao_entra(self):
+        self.cobranca(20)
+        r = avaliar_situacao_financeira_aluno(self.aluno)
+        self.assertEqual(r['status'], 'bloqueado')
+        self.assertEqual(r['detalhes']['dias_atraso'], 20)
+
+    def test_trancada_nao_entra_mesmo_sem_atraso(self):
+        Trancamento.objects.create(matricula=self.matricula, data_inicio=self.hoje, data_fim=None)
+        r = avaliar_situacao_financeira_aluno(self.aluno)
+        self.assertEqual(r['status'], 'bloqueado')
+        self.assertIn('TRANCADA', r['motivo'])
+
+    def test_cancelada_nao_entra_mesmo_sem_atraso(self):
+        Cancelamento.objects.create(matricula=self.matricula)
+        r = avaliar_situacao_financeira_aluno(self.aluno)
+        self.assertEqual(r['status'], 'bloqueado')
+        self.assertIn('CANCELADA', r['motivo'])
+
+    def test_pagar_a_pendencia_libera_a_entrada_de_novo(self):
+        c = self.cobranca(30)
+        self.assertEqual(avaliar_situacao_financeira_aluno(self.aluno)['status'], 'bloqueado')
+        c.paga = True
+        c.save()
+        self.assertEqual(avaliar_situacao_financeira_aluno(self.aluno)['status'], 'liberado')
+
+    def test_formulario_de_matricula_do_app_alunos_nao_expoe_a_situacao(self):
+        self.assertEqual(
+            set(MatriculaFormDoApp().fields), {'aluno', 'plano', 'data_inicio', 'forma_pagamento'},
+        )
