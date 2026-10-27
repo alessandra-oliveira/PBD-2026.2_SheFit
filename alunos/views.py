@@ -3,11 +3,13 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.exceptions import ValidationError
 
 from accounts.models import Perfil
 from accounts.decorators import perfil_requerido
+from financeiro.servicos import realizar_matricula
 from .models import Aluno, Anamnese
-from .forms import AlunoForm, AnamneseForm
+from .forms import AlunoForm, AnamneseForm, MatriculaForm
 
 
 @login_required
@@ -105,3 +107,29 @@ def editar_aluno(request, aluno_id):
         'form': form,
         'aluno': aluno
     })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def criar_matricula(request):
+    """
+    Realiza a matrícula do aluno, acionando o serviço financeiro para gerar as cobranças automáticas.
+    """
+    if request.method == 'POST':
+        form = MatriculaForm(request.POST)
+        if form.is_valid():
+            try:
+                realizar_matricula(
+                    aluno=form.cleaned_data['aluno'],
+                    plano=form.cleaned_data['plano'],
+                    data_inicio=form.cleaned_data['data_inicio'],
+                    forma_pagamento=form.cleaned_data['forma_pagamento']
+                )
+                messages.success(request, "Matrícula realizada com sucesso e cobranças geradas automaticamente!")
+                return redirect('criar_matricula')
+            except ValidationError as e:
+                messages.error(request, e.message)
+    else:
+        form = MatriculaForm()
+
+    return render(request, 'alunos/nova_matricula.html', {'form': form})

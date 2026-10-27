@@ -2,8 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-from .models import Aluno
 from .models import Aluno, Anamnese
+from financeiro.models import Matricula
 
 
 
@@ -97,3 +97,15 @@ class AnamneseForm(forms.ModelForm):
                 'A autorização para a prática de atividade física é obrigatória para liberar o aluno.'
             )
         return autorizado
+
+
+class MatriculaForm(forms.ModelForm):
+    class Meta:
+        model = Matricula
+        fields = ['aluno', 'plano', 'data_inicio', 'forma_pagamento']
+        widgets = {
+            'aluno': forms.Select(attrs={'class': 'form-control'}),
+            'plano': forms.Select(attrs={'class': 'form-control'}),
+            'data_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'forma_pagamento': forms.Select(attrs={'class': 'form-control'}),
+        }
