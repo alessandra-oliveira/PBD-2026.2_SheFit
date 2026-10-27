@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 from django.conf import settings
+from django.utils import timezone
 
 class Plano(models.Model):
     PERIODICIDADE_CHOICES = [
@@ -163,6 +164,16 @@ class HistoricoRegraFinanceira(models.Model):
         return f"{self.get_campo_display()}: {self.valor_anterior} -> {self.valor_novo} ({self.alterado_por_nome})"
 
 
+class SituacaoMatricula(models.TextChoices):
+    """Os estados possíveis de uma matrícula. NÃO é um campo do banco:
+    o estado é sempre calculado por servicos.calcular_situacao()."""
+    ATIVA = 'ativa', 'Ativa'
+    INADIMPLENTE = 'inadimplente', 'Inadimplente'
+    BLOQUEADA = 'bloqueada', 'Bloqueada'
+    TRANCADA = 'trancada', 'Trancada'
+    CANCELADA = 'cancelada', 'Cancelada'
+
+
 class Matricula(models.Model):
     FORMA_PAGAMENTO_CHOICES = [
         ('cartao', 'Cartão de Crédito'),
@@ -175,12 +186,23 @@ class Matricula(models.Model):
     plano = models.ForeignKey(Plano, on_delete=models.PROTECT, verbose_name="Plano")
     data_inicio = models.DateField(verbose_name="Data de Início")
     forma_pagamento = models.CharField(max_length=20, choices=FORMA_PAGAMENTO_CHOICES, verbose_name="Forma de Pagamento")
-    status = models.CharField(max_length=20, default='ATIVA', verbose_name="Status da Matrícula")
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Matrícula"
         verbose_name_plural = "Matrículas"
+
+    @property
+    def situacao(self):
+        """Situação de HOJE, calculada na hora. Sem setter de propósito:
+        ninguém consegue gravar a situação, só os fatos (cobranças,
+        trancamento, cancelamento) que a produzem."""
+        from .servicos import calcular_situacao
+        return calcular_situacao(self)
+
+    @property
+    def situacao_display(self):
+        return SituacaoMatricula(self.situacao).label
 
     def __str__(self):
         return f"Matrícula #{self.id} - {self.aluno} ({self.plano.nome})"
@@ -212,3 +234,40 @@ class Cobranca(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.competencia or 'À vista'} - R$ {self.valor}"
+
+
+class Trancamento(models.Model):
+    """Um período em que a matrícula fica trancada.
+    Em curso = começou (data_inicio <= hoje) e não terminou (data_fim vazia ou >= hoje)."""
+    matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='trancamentos')
+    data_inicio = models.DateField(verbose_name="Início do trancamento")
+    data_fim = models.DateField(null=True, blank=True, verbose_name="Fim do trancamento",
+                                help_text="Deixe em branco se ainda não há data para voltar.")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Trancamento"
+        verbose_name_plural = "Trancamentos"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.data_fim and self.data_inicio and self.data_fim < self.data_inicio:
+            raise ValidationError({'data_fim': 'O fim não pode ser antes do início.'})
+
+    def __str__(self):
+        fim = self.data_fim or 'sem data de retorno'
+        return f"Trancamento #{self.matricula_id}: {self.data_inicio} até {fim}"
+
+
+class Cancelamento(models.Model):
+    """Registro de que a matrícula foi cancelada. Existir = cancelada."""
+    matricula = models.OneToOneField(Matricula, on_delete=models.CASCADE, related_name='cancelamento')
+    data = models.DateField(default=timezone.localdate, verbose_name="Data do cancelamento")
+    motivo = models.TextField(blank=True, verbose_name="Motivo")
+
+    class Meta:
+        verbose_name = "Cancelamento"
+        verbose_name_plural = "Cancelamentos"
+
+    def __str__(self):
+        return f"Cancelamento da matrícula #{self.matricula_id} em {self.data}"
