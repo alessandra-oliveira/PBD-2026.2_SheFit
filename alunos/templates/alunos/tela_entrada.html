@@ -1,0 +1,223 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Recepção - Controle de Entrada - SheFit</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #7c3aed;
+            text-align: center;
+            margin-bottom: 4px;
+            font-size: 1.8rem;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #7c3aed;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background: #6d28d9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(124, 58, 237, 0.35);
+        }
+
+        /* Alertas estilizados mantendo a identidade visual */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-warning {
+            background: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fef08a;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert h4 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            margin: 12px 0;
+        }
+
+        .btn-voltar {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: #7c3aed;
+            border: 2px solid #7c3aed;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.2s, color 0.2s, transform 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #7c3aed;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 24px 20px;
+            }
+            .search-box {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>SheFit</h1>
+        <p class="subtitle">Recepção - Controle de Entrada</p>
+
+        <!-- Formulário de Pesquisa -->
+        <form method="GET" action="" autocomplete="off">
+            <label for="q">Identificar Aluno (CPF ou Nome):</label>
+            <div class="search-box">
+                <input type="text" id="q" name="q" placeholder="Digite o CPF ou Nome..." value="{{ query|default:'' }}" required>
+                <button type="submit">Buscar</button>
+            </div>
+        </form>
+
+        <!-- Resultados da Validação -->
+        {% if resultado %}
+            {% if resultado.sucesso %}
+                {% if resultado.status == 'liberado_com_aviso' %}
+                    <div class="alert alert-warning">
+                        <h4>⚠️ Atenção: Acesso Liberado com Aviso[cite: 3]</h4>
+                        <p><strong>Aluno(a):</strong> {{ resultado.aluno.nome }}</p>
+                        <p><strong>Situação:</strong> {{ resultado.mensagem }}</p>
+                        <hr>
+                        <p style="margin: 0;">
+                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}[cite: 3]<br>
+                            <strong>Vencimento:</strong> {{ resultado.detalhes.vencimento|date:"d/m/Y" }}<br>
+                            <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}<br>
+                            <strong>Prazo para bloqueio:</strong> Faltam <strong>{{ resultado.detalhes.dias_restantes_bloqueio }} dias</strong>[cite: 3].
+                        </p>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success">
+                        <h4>✅ Acesso Liberado[cite: 3]</h4>
+                        <p><strong>Aluno(a):</strong> {{ resultado.aluno.nome }}</p>
+                        <p style="margin: 0;"><strong>Status:</strong> {{ resultado.mensagem }} (Presença registada com sucesso)[cite: 3].</p>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-danger">
+                    <h4>🚫 Acesso Bloqueado[cite: 3]</h4>
+                    <p><strong>Aluno(a):</strong> {{ resultado.aluno.nome|default:"Não encontrado" }}</p>
+                    <p><strong>Motivo:</strong> {{ resultado.mensagem }}</p>
+                    {% if resultado.detalhes %}
+                        <hr>
+                        <p style="margin: 0;">
+                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}[cite: 3]<br>
+                            <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}
+                        </p>
+                    {% endif %}
+                    <hr>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;">Oriente o aluno a dirigir-se à recepção/tesouraria para regularizar[cite: 3].</p>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <a href="{% url 'painel_recepcao' %}" class="btn-voltar">Voltar ao painel</a>
+    </div>
+</body>
+
+</html>

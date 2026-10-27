@@ -272,7 +272,10 @@
                 <p style="color: #64748b; font-size: 0.9rem;">Matrículas, cadastros e controle diário de acesso.</p>
             </div>
             <div>
-                 <div style="display: flex; gap: 12px;">
+                 <div style="display: flex; gap: 12px; align-items: center;">
+                 <a href="{% url 'tela_entrada_recepcao' %}" class="btn-secondary">
+                    Controle de Entrada
+                 </a>
                  <a href="{% url 'listar_turmas' %}" class="btn-secondary">
                      Ver Turmas
                  </a>

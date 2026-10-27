@@ -96,3 +96,79 @@ def realizar_matricula(aluno, plano, data_inicio, forma_pagamento):
         data_atual += relativedelta(months=1)
 
     return matricula
+
+
+def avaliar_situacao_financeira_aluno(aluno):
+    """
+    Avalia a situação financeira da matrícula mais recente do aluno,
+    utilizando as funções de tolerância e bloqueio já existentes (Tarefa T09).
+    """
+    matricula = Matricula.objects.filter(aluno=aluno).order_by('-data_inicio').first()
+    
+    if not matricula:
+        return {
+            'status': 'bloqueado',
+            'motivo': 'Aluno sem matrícula registrada.'
+        }
+
+    # Verificar status da matrícula
+    status_matricula = getattr(matricula, 'status', '').upper()
+    if status_matricula in ['TRANCADA', 'CANCELADA', 'VENCIDA']:
+        return {
+            'status': 'bloqueado',
+            'motivo': f'Matrícula com status: {status_matricula}.'
+        }
+
+    # Buscar cobranças em aberto (não pagas) ordenadas pela mais antiga
+    cobrancas_abertas = Cobranca.objects.filter(matricula=matricula, paga=False).order_by('vencimento')
+    regras = RegraFinanceira.obter()
+    hoje = timezone.now().date()
+
+    if not cobrancas_abertas.exists():
+        return {
+            'status': 'liberado',
+            'motivo': 'Matrícula ativa e em dia.'
+        }
+
+    cobranca_mais_antiga = cobrancas_abertas.first()
+    dias_atraso = (hoje - cobranca_mais_antiga.vencimento).days
+
+    if dias_atraso <= 0:
+        return {
+            'status': 'liberado',
+            'motivo': 'Matrícula ativa e em dia.'
+        }
+
+    # Utiliza a função acesso_bloqueado já existente no serviço
+    if acesso_bloqueado(dias_atraso, regras):
+        return {
+            'status': 'bloqueado',
+            'motivo': 'Inadimplente além do limite permitido.',
+            'detalhes': {
+                'valor_pendente': cobranca_mais_antiga.valor,
+                'vencimento': cobranca_mais_antiga.vencimento,
+                'dias_atraso': dias_atraso
+            }
+        }
+
+    # Se está com atraso mas dentro da tolerância
+    if esta_inadimplente(dias_atraso, regras):
+        encargos = calcular_encargos(cobranca_mais_antiga.valor, dias_atraso, regras)
+        valor_total_atualizado = cobranca_mais_antiga.valor + encargos['juros'] + encargos['multa']
+        dias_restantes_bloqueio = regras.dias_bloqueio - dias_atraso
+
+        return {
+            'status': 'liberado_com_aviso',
+            'motivo': 'Ativa com atraso, dentro do período de tolerância.',
+            'detalhes': {
+                'valor_pendente': valor_total_atualizado,
+                'vencimento': cobranca_mais_antiga.vencimento,
+                'dias_atraso': dias_atraso,
+                'dias_restantes_bloqueio': dias_restantes_bloqueio
+            }
+        }
+
+    return {
+        'status': 'liberado',
+        'motivo': 'Matrícula ativa e em dia.'
+    }
