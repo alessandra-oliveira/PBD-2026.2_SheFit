@@ -5,8 +5,6 @@ from django.contrib.auth.password_validation import validate_password
 from .models import Aluno, Anamnese
 from financeiro.models import Matricula
 
-
-
 class AlunoForm(forms.ModelForm):
     username = forms.CharField(label='Nome de usuário', max_length=150)
     password = forms.CharField(label='Senha', widget=forms.PasswordInput)

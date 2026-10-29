@@ -1,4 +1,3 @@
-from xml.dom import ValidationErr
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -38,7 +37,7 @@ class Turma(models.Model):
     horario = models.TimeField()
 
     professor = models.ForeignKey(
-        User(),
+        User,
         on_delete=models.PROTECT,
         related_name='turmas_lecionadas',
         limit_choices_to={'perfil__tipo':'professor'}
