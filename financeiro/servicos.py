@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from dateutil.relativedelta import relativedelta
 from django.db import transaction, IntegrityError
@@ -5,7 +6,8 @@ from django.db.models import Min, Q
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import (
-    RegraFinanceira, Matricula, Cobranca, SituacaoMatricula, Trancamento, Cancelamento,
+    RegraFinanceira, Matricula, Cobranca, Pagamento, Estorno,
+    SituacaoMatricula, Trancamento, Cancelamento,
 )
 
 CENTAVOS = Decimal('0.01')
@@ -71,6 +73,229 @@ def calcular_encargos(valor, dias_atraso, regras=None):
     juros = _centavos(valor * regras.juros_diario / 100 * dias_atraso)
     multa = _centavos(valor * regras.multa_atraso / 100)
     return {'juros': juros, 'multa': multa}
+
+
+def total_estornado(pagamento):
+    return sum((item.valor for item in pagamento.estornos.all()), Decimal('0.00'))
+
+
+def _alocacao_estorno(pagamento, valor_estorno, valor_disponivel):
+    estornos = list(pagamento.estornos.all())
+    juros_restantes = pagamento.juros - sum(
+        (item.juros_estornados for item in estornos), Decimal('0.00'),
+    )
+    multa_restante = pagamento.multa - sum(
+        (item.multa_estornada for item in estornos), Decimal('0.00'),
+    )
+    principal_restante = pagamento.principal_aplicado - sum(
+        (item.principal_estornado for item in estornos), Decimal('0.00'),
+    )
+    if valor_estorno == valor_disponivel:
+        return principal_restante, juros_restantes, multa_restante
+
+    juros = min(
+        valor_estorno,
+        _centavos(juros_restantes * valor_estorno / valor_disponivel),
+    )
+    restante = valor_estorno - juros
+    multa = min(
+        restante,
+        _centavos(multa_restante * valor_estorno / valor_disponivel),
+    )
+    principal = restante - multa
+    if principal > principal_restante:
+        excesso = principal - principal_restante
+        principal = principal_restante
+        multa = min(multa_restante, multa + excesso)
+    return principal, juros, multa
+
+
+def _estado_cobranca(cobranca, data_referencia=None):
+    data_referencia = data_referencia or timezone.localdate()
+    regras = RegraFinanceira.obter()
+    principal = cobranca.valor
+    juros_devido = Decimal('0.00')
+    multa_devida = Decimal('0.00')
+    multa_calculada = False
+    inicio_juros = None
+    ultima_data = cobranca.vencimento
+    limite_tolerancia = cobranca.vencimento + timedelta(days=regras.dias_tolerancia)
+    eventos = []
+
+    pagamentos = cobranca.pagamentos.prefetch_related('estornos')
+    for pagamento in pagamentos:
+        eventos.append((
+            pagamento.data_pagamento,
+            pagamento.ordem_evento,
+            pagamento,
+            None,
+        ))
+        for estorno in pagamento.estornos.all():
+            eventos.append((
+                estorno.data_estorno,
+                estorno.ordem_evento,
+                pagamento,
+                estorno,
+            ))
+    eventos.sort(key=lambda evento: evento[:2])
+
+    def atualizar_encargos(data_evento):
+        nonlocal juros_devido, multa_devida, multa_calculada, inicio_juros, ultima_data
+        data_evento = min(data_evento, data_referencia)
+        if data_evento <= ultima_data:
+            return
+        if data_evento > limite_tolerancia and principal > 0:
+            if not multa_calculada:
+                multa_devida += _centavos(principal * regras.multa_atraso / 100)
+                multa_calculada = True
+            data_inicio = inicio_juros or cobranca.vencimento
+            dias = (data_evento - data_inicio).days
+            if dias > 0:
+                juros_devido += _centavos(principal * regras.juros_diario / 100 * dias)
+                inicio_juros = data_evento
+        ultima_data = data_evento
+
+    for data_evento, _, pagamento, estorno in eventos:
+        if data_evento > data_referencia:
+            break
+        atualizar_encargos(data_evento)
+        if estorno is None:
+            juros_devido = max(Decimal('0.00'), juros_devido - pagamento.juros)
+            multa_devida = max(Decimal('0.00'), multa_devida - pagamento.multa)
+            principal = max(Decimal('0.00'), principal - pagamento.principal_aplicado)
+        else:
+            principal += estorno.principal_estornado
+            juros_devido += estorno.juros_estornados
+            multa_devida += estorno.multa_estornada
+
+    atualizar_encargos(data_referencia)
+    principal = max(Decimal('0.00'), principal)
+    juros_devido = max(Decimal('0.00'), juros_devido)
+    multa_devida = max(Decimal('0.00'), multa_devida)
+    return {
+        'principal': principal,
+        'juros': juros_devido,
+        'multa': multa_devida,
+        'total': principal + juros_devido + multa_devida,
+    }
+
+
+def saldo_cobranca(cobranca, data_referencia=None):
+    return _estado_cobranca(cobranca, data_referencia)['total']
+
+
+def simular_pagamento(cobranca, valor, data_pagamento=None):
+    data_pagamento = data_pagamento or timezone.localdate()
+    valor = _centavos(Decimal(str(valor)))
+    if valor <= 0:
+        raise ValidationError("O valor recebido deve ser maior que zero.")
+    if data_pagamento > timezone.localdate():
+        raise ValidationError("A data do pagamento não pode estar no futuro.")
+    if cobranca.paga and not cobranca.pagamentos.exists():
+        raise ValidationError("Esta cobrança já está quitada.")
+
+    estado = _estado_cobranca(cobranca, data_pagamento)
+    if estado['total'] <= 0:
+        raise ValidationError("Esta cobrança já está quitada.")
+    if valor > estado['total']:
+        raise ValidationError(
+            f"Valor recebido maior que o saldo atualizado da cobrança (R$ {estado['total']})."
+        )
+
+    juros = min(valor, estado['juros'])
+    restante = valor - juros
+    multa = min(restante, estado['multa'])
+    principal_aplicado = min(restante - multa, estado['principal'])
+    return {
+        'juros': juros,
+        'multa': multa,
+        'principal_aplicado': principal_aplicado,
+        'total': valor,
+        'saldo_total': estado['total'],
+        'saldo_restante': estado['total'] - valor,
+    }
+
+
+def atualizar_situacao(cobranca):
+    paga = saldo_cobranca(cobranca) <= 0
+    if cobranca.paga != paga:
+        cobranca.paga = paga
+        cobranca.save(update_fields=['paga'])
+
+
+def _proxima_ordem_evento(cobranca):
+    cobranca.ultima_sequencia_evento += 1
+    cobranca.save(update_fields=['ultima_sequencia_evento'])
+    return cobranca.ultima_sequencia_evento
+
+
+@transaction.atomic
+def registrar_pagamento(cobranca, valor, forma_pagamento, data_pagamento=None, observacoes='',
+                        usuario=None):
+    cobranca = Cobranca.objects.select_for_update().get(pk=cobranca.pk)
+    data_pagamento = data_pagamento or timezone.localdate()
+    formas_validas = dict(Matricula.FORMA_PAGAMENTO_CHOICES)
+    if forma_pagamento not in formas_validas:
+        raise ValidationError("Forma de pagamento inválida.")
+    simulacao = simular_pagamento(cobranca, valor, data_pagamento)
+    ordem_evento = _proxima_ordem_evento(cobranca)
+    nome = (
+        usuario.get_full_name() or usuario.get_username()
+        if usuario is not None else 'Sistema'
+    )
+    pagamento = Pagamento.objects.create(
+        cobranca=cobranca,
+        ordem_evento=ordem_evento,
+        valor_pago=simulacao['total'],
+        data_pagamento=data_pagamento,
+        forma_pagamento=forma_pagamento,
+        juros=simulacao['juros'],
+        multa=simulacao['multa'],
+        principal_aplicado=simulacao['principal_aplicado'],
+        observacoes=observacoes,
+        registrado_por=usuario,
+        registrado_por_nome=nome,
+    )
+    atualizar_situacao(cobranca)
+    return pagamento
+
+
+@transaction.atomic
+def registrar_estorno(pagamento, valor, motivo, usuario):
+    pagamento_id = pagamento.pk
+    cobranca_id = Pagamento.objects.values_list(
+        'cobranca_id', flat=True,
+    ).get(pk=pagamento_id)
+    cobranca = Cobranca.objects.select_for_update().get(pk=cobranca_id)
+    pagamento = Pagamento.objects.select_for_update().get(pk=pagamento_id)
+    if pagamento.cobranca_id != cobranca.pk:
+        raise ValidationError("O pagamento foi associado a outra cobrança durante o estorno.")
+    valor = _centavos(Decimal(str(valor)))
+    motivo = (motivo or '').strip()
+    disponivel = pagamento.valor_pago - total_estornado(pagamento)
+
+    if valor <= 0:
+        raise ValidationError("O valor do estorno deve ser maior que zero.")
+    if not motivo:
+        raise ValidationError("O motivo do estorno é obrigatório.")
+    if valor > disponivel:
+        raise ValidationError(f"Estorno maior que o disponível (máximo R$ {disponivel}).")
+
+    principal, juros, multa = _alocacao_estorno(pagamento, valor, disponivel)
+    ordem_evento = _proxima_ordem_evento(cobranca)
+    estorno = Estorno.objects.create(
+        pagamento=pagamento,
+        ordem_evento=ordem_evento,
+        valor=valor,
+        principal_estornado=principal,
+        juros_estornados=juros,
+        multa_estornada=multa,
+        motivo=motivo,
+        estornado_por=usuario,
+        estornado_por_nome=usuario.get_full_name() or usuario.get_username(),
+    )
+    atualizar_situacao(pagamento.cobranca)
+    return estorno
 
 
 def obter_total_meses_periodicidade(periodicidade):
@@ -214,27 +439,26 @@ def avaliar_situacao_financeira_aluno(aluno):
         paga=False, vencimento__lt=hoje,
     ).order_by('vencimento').first()
     dias_atraso = (hoje - cobranca_mais_antiga.vencimento).days
+    valor_pendente = saldo_cobranca(cobranca_mais_antiga, hoje)
 
     if situacao == SituacaoMatricula.BLOQUEADA:
         return {
             'status': 'bloqueado',
             'motivo': 'Inadimplente além do limite permitido.',
             'detalhes': {
-                'valor_pendente': cobranca_mais_antiga.valor,
+                'valor_pendente': valor_pendente,
                 'vencimento': cobranca_mais_antiga.vencimento,
                 'dias_atraso': dias_atraso
             }
         }
 
     # Inadimplente, mas ainda abaixo do limite de bloqueio
-    encargos = calcular_encargos(cobranca_mais_antiga.valor, dias_atraso, regras)
-    valor_total_atualizado = cobranca_mais_antiga.valor + encargos['juros'] + encargos['multa']
     dias_restantes = regras.dias_bloqueio - dias_atraso
     return {
         'status': 'liberado_com_aviso',
         'motivo': f'Mensalidade em atraso. O acesso será bloqueado em {dias_restantes} dia(s).',
         'detalhes': {
-            'valor_pendente': valor_total_atualizado,
+            'valor_pendente': valor_pendente,
             'vencimento': cobranca_mais_antiga.vencimento,
             'dias_atraso': dias_atraso,
             'dias_restantes_bloqueio': dias_restantes

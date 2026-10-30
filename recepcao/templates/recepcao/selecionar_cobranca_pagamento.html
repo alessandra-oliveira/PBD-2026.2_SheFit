@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registrar pagamento - Recepção SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
+        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+        main { max-width: 1000px; margin: 32px auto; padding: 0 18px; }
+        .card { margin-bottom: 16px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
+        h1 { margin: 0; font-size: 1.5rem; }
+        h2 { margin: 0 0 8px; font-size: 1.1rem; }
+        p { color: #64748b; }
+        .item { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+        .button { display: inline-block; padding: 10px 14px; color: white; text-decoration: none; background: #7c3aed; border-radius: 8px; font-weight: 600; }
+        .muted { color: #64748b; font-size: .9rem; }
+        .amount { font-size: 1.1rem; font-weight: 700; }
+        .message { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
+        @media (max-width: 600px) { .item { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header><h1>SheFit · Recepção</h1></header>
+    <main>
+        {% if messages %}
+            {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+        {% endif %}
+        <section class="card">
+            <h2>Cobranças em aberto</h2>
+            <p>Selecione a cobrança para simular e registrar o pagamento.</p>
+        </section>
+        {% for item in itens %}
+            <article class="card item">
+                <div>
+                    <h2>{{ item.cobranca.matricula.aluno.nome }} · {{ item.cobranca.get_tipo_display }}</h2>
+                    <div class="muted">
+                        Matrícula #{{ item.cobranca.matricula_id }}
+                        {% if item.cobranca.competencia %} · {{ item.cobranca.competencia }}{% endif %}
+                        · Vencimento {{ item.cobranca.vencimento|date:"d/m/Y" }}
+                    </div>
+                    <div class="amount">Saldo atualizado: R$ {{ item.saldo|floatformat:2 }}</div>
+                </div>
+                <a class="button" href="{% url 'registrar_pagamento' item.cobranca.id %}">Registrar pagamento</a>
+            </article>
+        {% empty %}
+            <section class="card">
+                <p>Não há cobranças em aberto no momento.</p>
+            </section>
+        {% endfor %}
+        <a class="muted" href="{% url 'tela_entrada_recepcao' %}">Voltar ao controle de entrada</a>
+    </main>
+</body>
+</html>
