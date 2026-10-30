@@ -177,13 +177,13 @@
             Aluno(a): {{ aluno.nome }}
         </div>
 
-    {% if messages %}
-        {% with message=messages|last %}
-            <div class="{% if message.tags == 'error' %}erro-box{% else %}sucesso{% endif %}">
-                {{ message }}
-            </div>
-        {% endwith %}
-    {% endif %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}erro-box{% else %}sucesso{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
 
         <form method="post" autocomplete="off">
             {% csrf_token %}
@@ -216,7 +216,7 @@
                 <div class="erro">{{ form.autorizacao_atividade_fisica.errors.0 }}</div>
             {% endif %}
 
-            <button type="submit">Salvar e Liberar Matrícula</button>
+            <button type="submit">Salvar Anamnese</button>
         </form>
     </div>
 </body>

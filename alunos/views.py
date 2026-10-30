@@ -17,9 +17,8 @@ def cadastrar_aluno(request):
     if request.method == 'POST':
         form = AlunoForm(request.POST, request.FILES)
         if form.is_valid():
-            aluno = form.save(commit=False)
-            aluno.ativo = False  # Bloqueado até a conclusão da anamnese
-            aluno.save()
+            # Cria User + Perfil + Aluno (inativo até a anamnese ser autorizada)
+            aluno = form.save()
             
             messages.info(
                 request, 
@@ -52,9 +51,10 @@ def preencher_anamnese(request, aluno_id):
             if anamnese.autorizacao_atividade_fisica:
                 aluno.ativo = True
                 aluno.save()
-                messages.success(request, f'Anamnese e autorização confirmadas! Matrícula de {aluno.nome} liberada com sucesso.')
-                # Redireciona para a tela de consulta da anamnese recém-criada
-                return redirect('consultar_anamnese', aluno_id=aluno.id)
+                messages.success(request, f'Anamnese e autorização confirmadas! {aluno.nome} já pode ser matriculada.')
+                # Volta ao painel da recepção. (A tela de consulta é só do
+                # professor: redirecionar para lá daria "sem permissão".)
+                return redirect('painel_recepcao')
             else:
                 aluno.ativo = False
                 aluno.save()

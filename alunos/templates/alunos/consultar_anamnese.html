@@ -161,12 +161,12 @@
             Aluno(a): {{ aluno.nome }}
         </div>
 
-    {% if messages %}
-        {% with message=messages|last %}
+        {% if messages %}
+        {% for message in messages %}
             <div class="{% if message.tags == 'error' %}erro-box{% else %}sucesso{% endif %}">
                 {{ message }}
             </div>
-        {% endwith %}
+        {% endfor %}
     {% endif %}
 
         {% if anamnese %}
