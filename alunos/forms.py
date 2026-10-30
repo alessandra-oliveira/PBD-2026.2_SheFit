@@ -8,8 +8,6 @@ from django.contrib.auth.models import User
 from django.db import transaction   
 from accounts.models import Perfil    
 
-
-
 class AlunoForm(forms.ModelForm):
     """Cadastro e edição de aluno.
 
