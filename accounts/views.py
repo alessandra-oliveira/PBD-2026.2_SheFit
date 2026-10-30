@@ -4,6 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from alunos.models import Aluno
 
+def _tipo_do_usuario(usuario):
+    """Tipo do perfil, ou None se o usuário não tem perfil (ex.: superusuário do admin)."""
+    perfil = getattr(usuario, 'perfil', None)
+    return getattr(perfil, 'tipo', None)
+
 def entrar(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -34,7 +39,7 @@ def sair(request):
 #redireciona cada um pro seu painel de acordo com o tipo
 @login_required(login_url='entrar')
 def painel(request):
-    tipo = getattr(request.user.perfil, 'tipo', None)
+    tipo = _tipo_do_usuario(request.user)
 
     if tipo == 'aluno':
         return redirect('painel_aluno')
