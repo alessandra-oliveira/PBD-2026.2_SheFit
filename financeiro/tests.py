@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from datetime import date, timedelta
@@ -16,7 +16,9 @@ from .models import (
     RegraFinanceira, HistoricoRegraFinanceira, Plano, Matricula, Cobranca,
     Trancamento, Cancelamento, SituacaoMatricula,
 )
-from .servicos import realizar_matricula, calcular_situacao, avaliar_situacao_financeira_aluno
+from .servicos import (
+    realizar_matricula, gerar_cobrancas, calcular_situacao, avaliar_situacao_financeira_aluno,
+)
 
 
 def criar_usuario(username, tipo):
@@ -258,6 +260,12 @@ class TarefaT06MatriculaServicosTests(TestCase):
             realizar_matricula(aluno, self.plano, self.data_inicio, 'pix')
         self.assertEqual(Matricula.objects.count(), 0)
 
+    def test_bloqueio_aluno_desativado_mesmo_com_anamnese_autorizada(self):
+        self.aluno.ativo = False
+        self.aluno.save()
+        with self.assertRaises(ValidationError):
+            realizar_matricula(self.aluno, self.plano, self.data_inicio, 'pix')
+        self.assertEqual(Matricula.objects.count(), 0)
 
 class TarefaT08SituacaoMatriculaTests(TestCase):
     """A situação nunca é digitada: nasce de cancelamento, trancamento e cobranças.
@@ -542,3 +550,105 @@ class TarefaT08ConsumoPelaRecepcaoTests(TestCase):
         self.assertEqual(
             set(MatriculaFormDoApp().fields), {'aluno', 'plano', 'data_inicio', 'forma_pagamento'},
         )
+
+class TarefaT06IdempotenciaTests(TestCase):
+    """Critério do T06: rodar a geração de cobranças de novo NÃO duplica nada.
+    Aqui o serviço é executado de verdade pela segunda vez (não basta
+    não dar erro: é preciso provar que a contagem não mudou)."""
+
+    def setUp(self):
+        self.aluno = criar_aluno_valido()
+        self.plano = Plano.objects.create(
+            nome="Trimestral", periodicidade="trimestral", valor=Decimal('150.00'),
+            taxa_adesao=Decimal('40.00'), dia_vencimento=10,
+        )
+        self.matricula = realizar_matricula(self.aluno, self.plano, date(2027, 2, 1), 'pix')
+
+    def _snapshot(self):
+        return sorted(
+            matricula_cobranca for matricula_cobranca in
+            self.matricula.cobrancas.values_list('id', 'tipo', 'competencia', 'valor', 'vencimento')
+        )
+
+    def test_rodar_o_servico_de_novo_nao_aumenta_a_quantidade(self):
+        # 1 adesão + 3 mensalidades
+        antes = self.matricula.cobrancas.count()
+        self.assertEqual(antes, 4)
+
+        criadas = gerar_cobrancas(self.matricula)
+
+        self.assertEqual(criadas, 0)
+        self.assertEqual(self.matricula.cobrancas.count(), antes)
+
+    def test_cada_competencia_continua_aparecendo_uma_unica_vez(self):
+        gerar_cobrancas(self.matricula)
+        gerar_cobrancas(self.matricula)
+
+        competencias = list(
+            self.matricula.cobrancas.filter(tipo='mensalidade')
+            .values_list('competencia', flat=True)
+        )
+        self.assertEqual(sorted(competencias), ['2027-02', '2027-03', '2027-04'])
+        self.assertEqual(len(competencias), len(set(competencias)))
+        self.assertEqual(self.matricula.cobrancas.filter(tipo='adesao').count(), 1)
+
+    def test_rodar_de_novo_nao_altera_as_cobrancas_ja_geradas(self):
+        antes = self._snapshot()
+        gerar_cobrancas(self.matricula)
+        self.assertEqual(self._snapshot(), antes)
+
+    def test_rodar_de_novo_nao_mexe_em_cobranca_ja_paga(self):
+        paga = self.matricula.cobrancas.filter(tipo='mensalidade').order_by('vencimento').first()
+        paga.paga = True
+        paga.save()
+        gerar_cobrancas(self.matricula)
+        paga.refresh_from_db()
+        self.assertTrue(paga.paga)
+        self.assertEqual(self.matricula.cobrancas.count(), 4)
+
+    def test_se_faltar_uma_cobranca_rodar_de_novo_recria_so_a_que_faltava(self):
+        self.matricula.cobrancas.filter(competencia='2027-03').delete()
+        self.assertEqual(self.matricula.cobrancas.count(), 3)
+        criadas = gerar_cobrancas(self.matricula)
+        self.assertEqual(criadas, 1)
+        self.assertEqual(self.matricula.cobrancas.count(), 4)
+
+    def test_idempotencia_vale_por_matricula(self):
+        outra = realizar_matricula(self.aluno, self.plano, date(2027, 2, 1), 'pix')
+        gerar_cobrancas(outra)
+        self.assertEqual(self.matricula.cobrancas.count(), 4)
+        self.assertEqual(outra.cobrancas.count(), 4)
+
+
+class VencimentoDaPrimeiraMensalidadeTests(TestCase):
+    def setUp(self):
+        self.aluno = criar_aluno_valido()
+        self.plano = Plano.objects.create(
+            nome="Mensal", periodicidade="mensal", valor=Decimal('100.00'),
+            taxa_adesao=Decimal('0.00'), dia_vencimento=10,
+        )
+
+    def test_entrada_depois_do_dia_de_vencimento_nao_nasce_vencida(self):
+        # Início no dia 20 com vencimento dia 10: não pode vencer no passado.
+        matricula = realizar_matricula(self.aluno, self.plano, date(2027, 2, 20), 'pix')
+        primeira = matricula.cobrancas.get(tipo='mensalidade')
+        self.assertEqual(primeira.competencia, '2027-02')
+        self.assertEqual(primeira.vencimento, date(2027, 2, 20))
+        self.assertGreaterEqual(primeira.vencimento, matricula.data_inicio)
+
+    def test_aluna_nao_fica_inadimplente_no_dia_da_matricula(self):
+        inicio = date(2027, 2, 20)
+        matricula = realizar_matricula(self.aluno, self.plano, inicio, 'pix')
+        self.assertEqual(calcular_situacao(matricula, hoje=inicio), SituacaoMatricula.ATIVA)
+
+    def test_entrada_antes_do_dia_de_vencimento_mantem_o_dia_do_plano(self):
+        matricula = realizar_matricula(self.aluno, self.plano, date(2027, 2, 1), 'pix')
+        self.assertEqual(matricula.cobrancas.get().vencimento, date(2027, 2, 10))
+
+    def test_dia_31_em_mes_curto_usa_o_ultimo_dia(self):
+        self.plano.dia_vencimento = 31
+        self.plano.periodicidade = 'trimestral'
+        self.plano.save()
+        matricula = realizar_matricula(self.aluno, self.plano, date(2027, 3, 1), 'pix')
+        vencimentos = [c.vencimento for c in matricula.cobrancas.order_by('vencimento')]
+        self.assertEqual(vencimentos, [date(2027, 3, 31), date(2027, 4, 30), date(2027, 5, 31)])
