@@ -149,6 +149,56 @@
             color: white;
             transform: translateY(-2px);
         }
+        .alert-info {
+            background: #e0f2fe;
+            color: #075985;
+            border: 1px solid #bae6fd;
+        }
+
+        .candidatos {
+            list-style: none;
+            margin: 8px 0 0;
+            padding: 0;
+        }
+
+        .candidatos li {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            padding: 8px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .candidatos a {
+            color: #075985;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .candidatos a:hover {
+            text-decoration: underline;
+        }
+
+        .candidatos span {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .form-registrar {
+            margin-top: 12px;
+        }
+
+        .form-registrar button {
+            width: 100%;
+        }
+
+        .dica {
+            margin: 8px 0 0;
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+        }
 
         @media (max-width: 480px) {
             .card {
@@ -166,7 +216,14 @@
         <h1>SheFit</h1>
         <p class="subtitle">Recepção - Controle de Entrada</p>
 
-        <!-- Formulário de Pesquisa -->
+        <!-- Mensagens (resultado do registro de entrada) -->
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <!-- Formulário de Pesquisa (só consulta: não registra entrada) -->
         <form method="GET" action="" autocomplete="off">
             <label for="q">Identificar Aluno (CPF ou Nome):</label>
             <div class="search-box">
@@ -175,43 +232,75 @@
             </div>
         </form>
 
-        <!-- Resultados da Validação -->
+        {% if nao_encontrado %}
+            <div class="alert alert-danger">
+                <h4>🔎 Aluna não encontrada</h4>
+                <p style="margin: 0;">Confira o CPF (11 números) ou digite parte do nome.</p>
+            </div>
+        {% endif %}
+
+        {% if candidatos %}
+            <div class="alert alert-info">
+                <h4>Mais de uma aluna encontrada</h4>
+                <p style="margin: 0;">
+                    Escolha a aluna correta{% if truncado %} (mostrando as primeiras {{ limite }}; refine a busca){% endif %}:
+                </p>
+                <ul class="candidatos">
+                    {% for a in candidatos %}
+                        <li>
+                            <a href="?q={{ query|urlencode }}&aluno={{ a.id }}">{{ a.nome }}</a>
+                            <span>CPF final {{ a.cpf|slice:"-4:" }}{% if not a.ativo %} · inativa{% endif %}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- Resultado da validação de acesso -->
         {% if resultado %}
             {% if resultado.sucesso %}
                 {% if resultado.status == 'liberado_com_aviso' %}
                     <div class="alert alert-warning">
-                        <h4>⚠️ Atenção: Acesso Liberado com Aviso[cite: 3]</h4>
-                        <p><strong>Aluno(a):</strong> {{ resultado.aluno.nome }}</p>
+                        <h4>⚠️ Atenção: Acesso Liberado com Aviso</h4>
+                        <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
                         <p><strong>Situação:</strong> {{ resultado.mensagem }}</p>
                         <hr>
                         <p style="margin: 0;">
-                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}[cite: 3]<br>
+                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}<br>
                             <strong>Vencimento:</strong> {{ resultado.detalhes.vencimento|date:"d/m/Y" }}<br>
                             <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}<br>
-                            <strong>Prazo para bloqueio:</strong> Faltam <strong>{{ resultado.detalhes.dias_restantes_bloqueio }} dias</strong>[cite: 3].
+                            <strong>Prazo para bloqueio:</strong> Faltam <strong>{{ resultado.detalhes.dias_restantes_bloqueio }} dias</strong>.
                         </p>
                     </div>
                 {% else %}
                     <div class="alert alert-success">
-                        <h4>✅ Acesso Liberado[cite: 3]</h4>
-                        <p><strong>Aluno(a):</strong> {{ resultado.aluno.nome }}</p>
-                        <p style="margin: 0;"><strong>Status:</strong> {{ resultado.mensagem }} (Presença registada com sucesso)[cite: 3].</p>
+                        <h4>✅ Acesso Liberado</h4>
+                        <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
+                        <p style="margin: 0;"><strong>Situação:</strong> {{ resultado.mensagem }}</p>
                     </div>
                 {% endif %}
+
+                <!-- A entrada só é gravada aqui (POST), nunca ao buscar ou recarregar -->
+                <form method="post" action="{% url 'tela_entrada_recepcao' %}" class="form-registrar">
+                    {% csrf_token %}
+                    <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">
+                    <button type="submit">Registrar entrada</button>
+                </form>
+                <p class="dica">A presença só é registrada ao clicar em "Registrar entrada".</p>
             {% else %}
                 <div class="alert alert-danger">
-                    <h4>🚫 Acesso Bloqueado[cite: 3]</h4>
-                    <p><strong>Aluno(a):</strong> {{ resultado.aluno.nome|default:"Não encontrado" }}</p>
+                    <h4>🚫 Acesso Bloqueado</h4>
+                    <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
                     <p><strong>Motivo:</strong> {{ resultado.mensagem }}</p>
                     {% if resultado.detalhes %}
                         <hr>
                         <p style="margin: 0;">
-                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}[cite: 3]<br>
+                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}<br>
                             <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}
                         </p>
                     {% endif %}
                     <hr>
-                    <p style="margin: 0; color: #666; font-size: 0.9rem;">Oriente o aluno a dirigir-se à recepção/tesouraria para regularizar[cite: 3].</p>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;">Oriente a aluna a dirigir-se à recepção/tesouraria para regularizar.</p>
                 </div>
             {% endif %}
         {% endif %}

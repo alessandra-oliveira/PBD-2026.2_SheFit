@@ -1,13 +1,11 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from accounts.decorators import perfil_requerido
 from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
 from .forms import PlanoForm, RegraFinanceiraForm
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula
-from .forms import PlanoForm, RegraFinanceiraForm, MatriculaForm
-from .servicos import realizar_matricula
-from django.http import JsonResponse
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
@@ -64,6 +62,7 @@ def editar_plano(request, plano_id):
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
+@require_POST  # muda dados: nunca por GET (um link ou imagem em outra página dispararia)
 def alternar_status_plano(request, plano_id):
     """
     Ativa/Desativa o plano rapidamente. Se desativado, some das novas matrículas.
@@ -75,6 +74,7 @@ def alternar_status_plano(request, plano_id):
     status_str = "ativado" if plano.ativo else "desativado (oculto para novas matrículas)"
     messages.info(request, f'O plano "{plano.nome}" foi {status_str}.')
     return redirect('listar_planos')
+
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
@@ -104,36 +104,9 @@ def regras_financeiras(request):
         'historico': historico,
     })
 
-
-@login_required(login_url='entrar')
-@perfil_requerido('recepcao') # Ajuste o perfil conforme a regra de acesso da recepção no seu projeto
-def criar_matricula(request):
-    """
-    T06 - Realiza a matrícula do aluno, gerando as cobranças automáticas de vigência e adesão.
-    """
-    if request.method == 'POST':
-        form = MatriculaForm(request.POST)
-        if form.is_valid():
-            try:
-                realizar_matricula(
-                    aluno=form.cleaned_data['aluno'],
-                    plano=form.cleaned_data['plano'],
-                    data_inicio=form.cleaned_data['data_inicio'],
-                    forma_pagamento=form.cleaned_data['forma_pagamento']
-                )
-                messages.success(request, "Matrícula realizada com sucesso e cobranças geradas automaticamente!")
-                return redirect('criar_matricula')
-            except ValidationError as e:
-                messages.error(request, e.message)
-    else:
-        form = MatriculaForm()
-
-    return render(request, 'financeiro/criar_matricula.html', {'form': form})
-
 def api_planos(request):
     """
     Retorna os planos ativos em formato JSON para o React.
     """
-    # Filtra apenas os planos ativos e pega o id e o nome
     planos = Plano.objects.filter(ativo=True).values('id', 'nome')
     return JsonResponse(list(planos), safe=False)

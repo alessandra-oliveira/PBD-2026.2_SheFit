@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
-from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 import json
@@ -13,8 +12,6 @@ from accounts.decorators import perfil_requerido
 from financeiro.servicos import realizar_matricula
 from .models import Aluno, Anamnese
 from .forms import AlunoForm, AnamneseForm, MatriculaForm
-from .forms import AlunoForm, AnamneseForm
-
 # =========================================================
 # 1. VIEWS DA API (USADAS PELO NOVO PAINEL EM REACT)
 # =========================================================
@@ -126,10 +123,13 @@ def cadastrar_aluno(request):
     if request.method == 'POST':
         form = AlunoForm(request.POST, request.FILES)
         if form.is_valid():
-            aluno = form.save(commit=False)
-            aluno.ativo = False
-            aluno.save()
-            messages.info(request, 'Cadastro inicial realizado! O aluno só será matriculado após a anamnese.')
+            # Cria User + Perfil + Aluno (inativo até a anamnese ser autorizada)
+            aluno = form.save()
+            
+            messages.info(
+                request, 
+                'Cadastro inicial realizado! O aluno só será matriculado e ativado após o preenchimento da anamnese médica e aceite do termo de aptidão física.'
+            )
             return redirect('preencher_anamnese', aluno_id=aluno.id)
     else:
         form = AlunoForm()
@@ -149,8 +149,10 @@ def preencher_anamnese(request, aluno_id):
             if anamnese.autorizacao_atividade_fisica:
                 aluno.ativo = True
                 aluno.save()
-                messages.success(request, f'Matrícula de {aluno.nome} liberada com sucesso.')
-                return redirect('consultar_anamnese', aluno_id=aluno.id)
+                messages.success(request, f'Anamnese e autorização confirmadas! {aluno.nome} já pode ser matriculada.')
+                # Volta ao painel da recepção. (A tela de consulta é só do
+                # professor: redirecionar para lá daria "sem permissão".)
+                return redirect('painel_recepcao')
             else:
                 aluno.ativo = False
                 aluno.save()
@@ -211,4 +213,4 @@ def criar_matricula(request):
         form = MatriculaForm()
 
     return render(request, 'alunos/nova_matricula.html', {'form': form})
-    return render(request, 'alunos/editar_aluno.html', {'form': form, 'aluno': aluno})
+    

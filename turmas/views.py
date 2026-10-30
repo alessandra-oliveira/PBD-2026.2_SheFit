@@ -2,6 +2,10 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
+
 from accounts.decorators import perfil_requerido
 from .models import Turma, Modalidade
 from .forms import TurmaForm, ModalidadeForm
@@ -36,6 +40,7 @@ DIAS_SEMANA_MAP = {
 }
 
 
+@login_required
 @perfil_requerido('recepcao', 'financeiro', 'professor')
 def listar_turmas(request):
     if request.user.perfil.tipo == 'professor':
@@ -48,6 +53,7 @@ def listar_turmas(request):
     return render(request, 'turmas/listar_turmas.html', {'turmas': turmas})
 
 
+@login_required
 @perfil_requerido('recepcao', 'financeiro')
 def criar_turma(request):
     if request.method == 'POST':
@@ -64,6 +70,7 @@ def criar_turma(request):
     return render(request, 'turmas/form_turma.html', {'form': form})
 
 
+@login_required
 @perfil_requerido('recepcao', 'financeiro')
 def editar_turma(request, turma_id):
     turma = get_object_or_404(Turma, id=turma_id)
@@ -82,19 +89,20 @@ def editar_turma(request, turma_id):
     return render(request, 'turmas/form_turma.html', {'form': form, 'turma': turma})
 
 
+@login_required(login_url='entrar')
+@require_POST
 @perfil_requerido('recepcao', 'financeiro')
 def desativar_turma(request, turma_id):
-    # Substitui a exclusão: sempre desativa, nunca apaga de verdade.
-    # Isso já cobre o critério "turma com aluno agendado não pode ser
-    # excluída, só desativada" — porque simplesmente nunca excluímos,
-    # sempre desativamos, independente de ter aluno ou não.
+    # Desativa a turma, sem excluí-la do banco de dados.
     turma = get_object_or_404(Turma, id=turma_id)
     turma.ativo = False
     turma.save()
+
     messages.success(request, 'Turma desativada.')
+
     return redirect('listar_turmas')
 
-
+@login_required
 @perfil_requerido('recepcao', 'financeiro')
 def criar_modalidade(request):
     if request.method == 'POST':
