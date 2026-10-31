@@ -220,6 +220,7 @@ class Cobranca(models.Model):
     vencimento = models.DateField(verbose_name="Data de Vencimento")
     competencia = models.CharField(max_length=7, null=True, blank=True, verbose_name="Competência (AAAA-MM)")
     paga = models.BooleanField(default=False, verbose_name="Paga?")
+    ultima_sequencia_evento = models.PositiveBigIntegerField(default=0, editable=False)
 
     class Meta:
         verbose_name = "Cobrança"
@@ -234,6 +235,100 @@ class Cobranca(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.competencia or 'À vista'} - R$ {self.valor}"
+
+
+class Pagamento(models.Model):
+    cobranca = models.ForeignKey(
+        Cobranca,
+        on_delete=models.PROTECT,
+        related_name='pagamentos',
+        verbose_name="Cobrança",
+    )
+    valor_pago = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        verbose_name="Valor recebido",
+    )
+    data_pagamento = models.DateField(verbose_name="Data do pagamento")
+    forma_pagamento = models.CharField(
+        max_length=20,
+        choices=Matricula.FORMA_PAGAMENTO_CHOICES,
+        verbose_name="Forma de pagamento",
+    )
+    juros = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        verbose_name="Juros recebidos",
+    )
+    multa = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        verbose_name="Multa recebida",
+    )
+    principal_aplicado = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        verbose_name="Valor aplicado ao principal",
+    )
+    observacoes = models.TextField(blank=True, verbose_name="Observações")
+    ordem_evento = models.PositiveBigIntegerField()
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    registrado_por_nome = models.CharField(max_length=150)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Pagamento"
+        verbose_name_plural = "Pagamentos"
+        ordering = ['data_pagamento', 'id']
+
+    def __str__(self):
+        return f"Pagamento #{self.pk} - R$ {self.valor_pago}"
+
+
+class Estorno(models.Model):
+    pagamento = models.ForeignKey(
+        Pagamento,
+        on_delete=models.PROTECT,
+        related_name='estornos',
+        verbose_name="Pagamento",
+    )
+    valor = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        verbose_name="Valor estornado",
+    )
+    principal_estornado = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+    )
+    juros_estornados = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+    )
+    multa_estornada = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+    )
+    motivo = models.TextField(verbose_name="Motivo do estorno")
+    data_estorno = models.DateField(default=timezone.localdate, verbose_name="Data do estorno")
+    ordem_evento = models.PositiveBigIntegerField()
+    estornado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    estornado_por_nome = models.CharField(max_length=150)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Estorno"
+        verbose_name_plural = "Estornos"
+        ordering = ['data_estorno', 'id']
+
+    def __str__(self):
+        return f"Estorno #{self.pk} - R$ {self.valor}"
 
 
 class Trancamento(models.Model):

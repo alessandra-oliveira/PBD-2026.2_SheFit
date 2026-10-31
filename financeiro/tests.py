@@ -1,12 +1,18 @@
 from decimal import Decimal
+from datetime import date, timedelta
+from itertools import count
+from importlib import import_module
+import threading
+from types import SimpleNamespace
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import Client, TestCase
+from django.db import close_old_connections, connection
+from django.db.migrations.executor import MigrationExecutor
+from django.db.migrations.recorder import MigrationRecorder
+from django.test import Client, TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
-from datetime import date, timedelta
-from itertools import count
 
 from accounts.models import Perfil
 from alunos.forms import MatriculaForm as MatriculaFormDoApp
@@ -14,10 +20,11 @@ from alunos.models import Aluno, Anamnese
 from .forms import MatriculaForm
 from .models import (
     RegraFinanceira, HistoricoRegraFinanceira, Plano, Matricula, Cobranca,
-    Trancamento, Cancelamento, SituacaoMatricula,
+    Trancamento, Cancelamento, SituacaoMatricula, Pagamento, Estorno,
 )
 from .servicos import (
     realizar_matricula, gerar_cobrancas, calcular_situacao, avaliar_situacao_financeira_aluno,
+    saldo_cobranca, registrar_pagamento, registrar_estorno, total_estornado,
 )
 
 
@@ -521,6 +528,16 @@ class TarefaT08ConsumoPelaRecepcaoTests(TestCase):
         self.assertEqual(r['detalhes']['dias_atraso'], 5)
         self.assertEqual(r['detalhes']['dias_restantes_bloqueio'], 10)
 
+    def test_aviso_mostra_saldo_real_depois_de_pagamento_parcial(self):
+        cobranca = self.cobranca(5)
+        registrar_pagamento(
+            cobranca, Decimal('50.00'), 'pix', data_pagamento=self.hoje,
+        )
+
+        resultado = avaliar_situacao_financeira_aluno(self.aluno)
+
+        self.assertEqual(resultado['detalhes']['valor_pendente'], Decimal('52.17'))
+
     def test_bloqueada_nao_entra(self):
         self.cobranca(20)
         r = avaliar_situacao_financeira_aluno(self.aluno)
@@ -652,3 +669,637 @@ class VencimentoDaPrimeiraMensalidadeTests(TestCase):
         matricula = realizar_matricula(self.aluno, self.plano, date(2027, 3, 1), 'pix')
         vencimentos = [c.vencimento for c in matricula.cobrancas.order_by('vencimento')]
         self.assertEqual(vencimentos, [date(2027, 3, 31), date(2027, 4, 30), date(2027, 5, 31)])
+
+
+def criar_cenario_t07():
+    RegraFinanceira.obter()
+    recepcionista = criar_usuario('recepcao_t07', Perfil.RECEPCAO)
+    aluno = criar_aluno_valido()
+    plano = Plano.objects.create(
+        nome='Mensal T07', periodicidade='mensal', valor=Decimal('100.00'),
+        dia_vencimento=10,
+    )
+    matricula = Matricula.objects.create(
+        aluno=aluno, plano=plano,
+        data_inicio=timezone.localdate() - timedelta(days=60),
+        forma_pagamento='pix',
+    )
+    hoje = timezone.localdate()
+    cobranca = Cobranca.objects.create(
+        matricula=matricula,
+        tipo='mensalidade',
+        valor=Decimal('100.00'),
+        vencimento=hoje - timedelta(days=10),
+        competencia='2026-10',
+    )
+    return recepcionista, aluno, plano, matricula, cobranca, hoje
+
+
+class TarefaT07RegistroPagamentoTests(TestCase):
+    def setUp(self):
+        (
+            self.recepcionista, self.aluno, self.plano, self.matricula,
+            self.cobranca, self.hoje,
+        ) = criar_cenario_t07()
+        self.url = reverse(
+            'registrar_pagamento', kwargs={'cobranca_id': self.cobranca.pk},
+        )
+        self.client.force_login(self.recepcionista)
+
+    def dados_pagamento(self, valor='102.33', data=None):
+        return {
+            'valor': valor,
+            'data_pagamento': (data or self.hoje).isoformat(),
+            'forma_pagamento': 'pix',
+            'observacoes': '',
+        }
+
+    def test_somente_recepcao_pode_acessar_o_fluxo(self):
+        self.assertTrue(
+            reverse('listar_cobrancas_pagamento').startswith('/recepcao/pagamentos/'),
+        )
+        outro_cliente = Client()
+        self.assertEqual(
+            outro_cliente.get(reverse('listar_cobrancas_pagamento')).status_code,
+            302,
+        )
+        financeiro = criar_usuario('financeiro_t07', Perfil.FINANCEIRO)
+        outro_cliente.force_login(financeiro)
+        resposta = outro_cliente.get(reverse('listar_cobrancas_pagamento'))
+        self.assertRedirects(
+            resposta, reverse('painel'), fetch_redirect_response=False,
+        )
+
+    def test_pagamento_atrasado_mostra_total_antes_da_confirmacao(self):
+        proxima = Cobranca.objects.create(
+            matricula=self.matricula,
+            tipo='mensalidade',
+            valor=Decimal('100.00'),
+            vencimento=self.hoje + timedelta(days=20),
+            competencia='2026-11',
+        )
+        vencimento_proxima = proxima.vencimento
+        resposta = self.client.post(self.url, self.dados_pagamento())
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context['preview']['saldo_total'], Decimal('102.33'))
+        self.assertEqual(Pagamento.objects.count(), 0)
+        self.assertContains(resposta, 'Confira antes de confirmar')
+
+        resposta = self.client.post(
+            self.url, dict(self.dados_pagamento(), confirmar='1'),
+        )
+        self.assertRedirects(resposta, self.url)
+        resposta = self.client.get(self.url)
+        self.assertContains(resposta, 'Cobrança quitada')
+        self.assertContains(resposta, 'Estornar')
+        pagamento = Pagamento.objects.get(cobranca=self.cobranca)
+        self.assertEqual((pagamento.juros, pagamento.multa), (
+            Decimal('0.33'), Decimal('2.00'),
+        ))
+        self.cobranca.refresh_from_db()
+        self.assertTrue(self.cobranca.paga)
+        self.assertEqual(
+            calcular_situacao(self.matricula, hoje=self.hoje),
+            SituacaoMatricula.ATIVA,
+        )
+        proxima.refresh_from_db()
+        self.assertEqual(proxima.vencimento, vencimento_proxima)
+
+    def test_pagamento_parcial_mantem_cobranca_aberta_com_saldo(self):
+        pagamento = registrar_pagamento(
+            self.cobranca, Decimal('50.00'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+        self.assertEqual(pagamento.valor_pago, Decimal('50.00'))
+        self.assertEqual(saldo_cobranca(self.cobranca, self.hoje), Decimal('52.33'))
+        self.cobranca.refresh_from_db()
+        self.assertFalse(self.cobranca.paga)
+
+    def test_pagamento_antecipado_e_aceito_sem_mover_outros_vencimentos(self):
+        self.cobranca.vencimento = self.hoje + timedelta(days=5)
+        self.cobranca.save(update_fields=['vencimento'])
+        proxima = Cobranca.objects.create(
+            matricula=self.matricula,
+            tipo='mensalidade',
+            valor=Decimal('100.00'),
+            vencimento=self.hoje + timedelta(days=35),
+            competencia='2026-11',
+        )
+        vencimento_proxima = proxima.vencimento
+
+        pagamento = registrar_pagamento(
+            self.cobranca, Decimal('100.00'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+
+        self.assertEqual(pagamento.juros, Decimal('0.00'))
+        self.assertEqual(pagamento.multa, Decimal('0.00'))
+        self.cobranca.refresh_from_db()
+        proxima.refresh_from_db()
+        self.assertTrue(self.cobranca.paga)
+        self.assertEqual(proxima.vencimento, vencimento_proxima)
+
+    def test_estorno_preserva_pagamento_e_reabre_saldo_com_motivo(self):
+        pagamento = registrar_pagamento(
+            self.cobranca, Decimal('102.33'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+
+        estorno = registrar_estorno(
+            pagamento, Decimal('102.33'), 'Lançamento feito por engano',
+            self.recepcionista,
+        )
+
+        self.assertEqual(estorno.motivo, 'Lançamento feito por engano')
+        self.assertTrue(Pagamento.objects.filter(pk=pagamento.pk).exists())
+        self.assertEqual(saldo_cobranca(self.cobranca, self.hoje), Decimal('102.33'))
+        self.cobranca.refresh_from_db()
+        self.assertFalse(self.cobranca.paga)
+
+    
+    def test_estorno_integral_permite_pagar_novamente(self):
+        # 1. Registra o pagamento integral da cobrança.
+        pagamento = registrar_pagamento(
+            self.cobranca,
+            Decimal('102.33'),
+            'pix',
+            data_pagamento=self.hoje,
+            usuario=self.recepcionista,
+        )
+
+        self.cobranca.refresh_from_db()
+
+        print("\n--- DIAGNÓSTICO DO PAGAMENTO ---")
+        print("Data de hoje:", self.hoje)
+        print("Vencimento:", self.cobranca.vencimento)
+        print("Valor da cobrança:", self.cobranca.valor)
+        print("Valor registrado:", pagamento.valor_pago)
+        print("Principal aplicado:", pagamento.principal_aplicado)
+        print("Juros registrados:", pagamento.juros)
+        print("Multa registrada:", pagamento.multa)
+        print("Saldo na data do teste:", saldo_cobranca(self.cobranca, self.hoje))
+        print("Saldo na data atual:", saldo_cobranca(self.cobranca))
+        print("Cobrança marcada como paga:", self.cobranca.paga)
+
+        self.cobranca.refresh_from_db()
+
+        valor_paga = self.cobranca.paga
+
+        print("Valor:", repr(valor_paga))
+        print("Tipo:", type(valor_paga))
+        print("É True:", valor_paga is True)
+
+        self.assertIs(valor_paga, True)
+
+        self.cobranca.refresh_from_db()
+        self.assertTrue(self.cobranca.paga)
+        self.assertEqual(
+            saldo_cobranca(self.cobranca, self.hoje),
+            Decimal('0.00'),
+        )
+
+        # 2. Estorna integralmente o pagamento.
+        registrar_estorno(
+            pagamento,
+            Decimal('102.33'),
+            'Teste de estorno integral',
+            self.recepcionista,
+        )
+
+        self.cobranca.refresh_from_db()
+        self.assertFalse(self.cobranca.paga)
+        self.assertEqual(
+            saldo_cobranca(self.cobranca, self.hoje),
+            Decimal('102.33'),
+        )
+
+        # 3. Registra novamente o pagamento.
+        novo_pagamento = registrar_pagamento(
+            self.cobranca,
+            Decimal('102.33'),
+            'pix',
+            data_pagamento=self.hoje,
+            usuario=self.recepcionista,
+        )
+
+        self.cobranca.refresh_from_db()
+        self.assertTrue(self.cobranca.paga)
+        self.assertEqual(
+            saldo_cobranca(self.cobranca, self.hoje),
+            Decimal('0.00'),
+        )
+
+        # O pagamento original e o novo continuam no histórico.
+        self.assertTrue(
+            Pagamento.objects.filter(pk=pagamento.pk).exists()
+        )
+        self.assertTrue(
+            Pagamento.objects.filter(pk=novo_pagamento.pk).exists()
+        )
+        self.assertEqual(
+            Estorno.objects.filter(pagamento=pagamento).count(),
+            1,
+        )
+
+    def test_estorno_parcial_nao_ultrapassa_o_valor_original(self):
+        pagamento = registrar_pagamento(
+            self.cobranca, Decimal('1.00'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+        primeiro_estorno = registrar_estorno(
+            pagamento, Decimal('0.25'), 'Primeiro estorno parcial',
+            self.recepcionista,
+        )
+        segundo_estorno = registrar_estorno(
+            pagamento, Decimal('0.25'), 'Segundo estorno parcial',
+            self.recepcionista,
+        )
+        self.assertEqual(
+            primeiro_estorno.principal_estornado
+            + primeiro_estorno.juros_estornados
+            + primeiro_estorno.multa_estornada,
+            primeiro_estorno.valor,
+        )
+        self.assertEqual(
+            segundo_estorno.principal_estornado
+            + segundo_estorno.juros_estornados
+            + segundo_estorno.multa_estornada,
+            segundo_estorno.valor,
+        )
+        self.assertEqual(total_estornado(pagamento), Decimal('0.50'))
+        self.assertEqual(
+            [pagamento.ordem_evento, primeiro_estorno.ordem_evento,
+             segundo_estorno.ordem_evento],
+            [1, 2, 3],
+        )
+
+    def test_pagar_estornar_pagar_preserva_ordem_com_timestamps_iguais(self):
+        instante = timezone.now()
+        pagamento = registrar_pagamento(
+            self.cobranca, Decimal('102.33'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+        estorno = registrar_estorno(
+            pagamento, Decimal('102.33'), 'Estorno de teste',
+            self.recepcionista,
+        )
+        novo_pagamento = registrar_pagamento(
+            self.cobranca, Decimal('102.33'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+        Pagamento.objects.filter(pk__in=[pagamento.pk, novo_pagamento.pk]).update(
+            criado_em=instante,
+        )
+        Estorno.objects.filter(pk=estorno.pk).update(criado_em=instante)
+
+        self.assertEqual(
+            [pagamento.ordem_evento, estorno.ordem_evento, novo_pagamento.ordem_evento],
+            [1, 2, 3],
+        )
+        self.assertEqual(
+            Pagamento.objects.get(pk=pagamento.pk).criado_em,
+            Estorno.objects.get(pk=estorno.pk).criado_em,
+        )
+        self.assertEqual(
+            Estorno.objects.get(pk=estorno.pk).criado_em,
+            Pagamento.objects.get(pk=novo_pagamento.pk).criado_em,
+        )
+        self.assertEqual(saldo_cobranca(self.cobranca, self.hoje), Decimal('0.00'))
+
+    def test_data_contabil_precede_sequencia_na_ordem_dos_eventos(self):
+        regras = RegraFinanceira.obter()
+        regras.dias_tolerancia = 0
+        regras.juros_diario = Decimal('1.000')
+        regras.multa_atraso = Decimal('0.00')
+        regras.save()
+        self.cobranca.vencimento = self.hoje - timedelta(days=5)
+        self.cobranca.save(update_fields=['vencimento'])
+
+        Pagamento.objects.create(
+            cobranca=self.cobranca,
+            ordem_evento=1,
+            valor_pago=Decimal('50.00'),
+            data_pagamento=self.hoje - timedelta(days=2),
+            forma_pagamento='pix',
+            principal_aplicado=Decimal('50.00'),
+            registrado_por_nome='Teste',
+        )
+        Pagamento.objects.create(
+            cobranca=self.cobranca,
+            ordem_evento=2,
+            valor_pago=Decimal('25.00'),
+            data_pagamento=self.hoje - timedelta(days=3),
+            forma_pagamento='pix',
+            principal_aplicado=Decimal('25.00'),
+            registrado_por_nome='Teste',
+        )
+        self.cobranca.ultima_sequencia_evento = 2
+        self.cobranca.save(update_fields=['ultima_sequencia_evento'])
+
+        self.assertEqual(
+            saldo_cobranca(self.cobranca, self.hoje),
+            Decimal('28.25'),
+        )
+
+    def test_migration_reconstrui_sequencia_sem_empates_ambiguos(self):
+        primeiro = registrar_pagamento(
+            self.cobranca, Decimal('10.00'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+        segundo = registrar_pagamento(
+            self.cobranca, Decimal('10.00'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+        instante = timezone.now()
+        Pagamento.objects.filter(pk=primeiro.pk).update(
+            criado_em=instante,
+            ordem_evento=2,
+        )
+        Pagamento.objects.filter(pk=segundo.pk).update(
+            criado_em=instante + timedelta(seconds=1),
+            ordem_evento=1,
+        )
+        self.cobranca.ultima_sequencia_evento = 10
+        self.cobranca.save(update_fields=['ultima_sequencia_evento'])
+
+        migration = import_module(
+            'financeiro.migrations.0007_sequencia_evento_por_cobranca',
+        )
+        apps = SimpleNamespace(
+            get_model=lambda app_label, model_name: {
+                'Cobranca': Cobranca,
+                'Pagamento': Pagamento,
+                'Estorno': Estorno,
+            }[model_name],
+        )
+        migration.preencher_sequencias_historicas(
+            apps, SimpleNamespace(connection=connection),
+        )
+
+        primeiro.refresh_from_db()
+        segundo.refresh_from_db()
+        self.cobranca.refresh_from_db()
+        self.assertEqual((primeiro.ordem_evento, segundo.ordem_evento), (1, 2))
+        self.assertEqual(self.cobranca.ultima_sequencia_evento, 2)
+
+    def test_migration_recusa_timestamps_historicos_ambiguos_sem_alterar_ordem(self):
+        pagamento = registrar_pagamento(
+            self.cobranca, Decimal('10.00'), 'pix',
+            data_pagamento=self.hoje, usuario=self.recepcionista,
+        )
+        estorno = registrar_estorno(
+            pagamento, Decimal('1.00'), 'Estorno para teste de migração',
+            self.recepcionista,
+        )
+        instante = timezone.now()
+        Pagamento.objects.filter(pk=pagamento.pk).update(criado_em=instante)
+        Estorno.objects.filter(pk=estorno.pk).update(criado_em=instante)
+        ordens_anteriores = (pagamento.ordem_evento, estorno.ordem_evento)
+        migration = import_module(
+            'financeiro.migrations.0007_sequencia_evento_por_cobranca',
+        )
+        apps = SimpleNamespace(
+            get_model=lambda app_label, model_name: {
+                'Cobranca': Cobranca,
+                'Pagamento': Pagamento,
+                'Estorno': Estorno,
+            }[model_name],
+        )
+
+        with self.assertRaisesRegex(RuntimeError, 'timestamp de criação idênticos'):
+            migration.preencher_sequencias_historicas(
+                apps, SimpleNamespace(connection=connection),
+            )
+
+        pagamento.refresh_from_db()
+        estorno.refresh_from_db()
+        self.assertEqual(
+            (pagamento.ordem_evento, estorno.ordem_evento),
+            ordens_anteriores,
+        )
+
+    def test_nao_permite_valor_maior_que_saldo_ou_data_futura(self):
+        resposta = self.client.post(self.url, self.dados_pagamento('103.00'))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(Pagamento.objects.count(), 0)
+
+        with self.assertRaises(ValidationError):
+            registrar_pagamento(
+                self.cobranca, Decimal('1.00'), 'pix',
+                data_pagamento=self.hoje + timedelta(days=1),
+                usuario=self.recepcionista,
+            )
+
+
+class TarefaT07SequenciaConcorrenteTests(TransactionTestCase):
+    def setUp(self):
+        (
+            self.recepcionista, _, _, _, self.cobranca, self.hoje,
+        ) = criar_cenario_t07()
+
+    def test_pagamento_e_estorno_concorrentes_preservam_sequencia_e_saldo(self):
+        if connection.vendor != 'postgresql':
+            self.skipTest("Teste de bloqueio concorrente requer PostgreSQL.")
+
+        pagamento_original = registrar_pagamento(
+            self.cobranca,
+            Decimal('50.00'),
+            'pix',
+            data_pagamento=self.hoje,
+            usuario=self.recepcionista,
+        )
+        barreira = threading.Barrier(2)
+        erros = []
+
+        def registrar_pagamento_concorrente():
+            close_old_connections()
+            try:
+                usuario = User.objects.get(pk=self.recepcionista.pk)
+                barreira.wait(timeout=10)
+                registrar_pagamento(
+                    self.cobranca,
+                    Decimal('50.00'),
+                    'pix',
+                    data_pagamento=self.hoje,
+                    usuario=usuario,
+                )
+            except Exception as erro:
+                erros.append(erro)
+            finally:
+                close_old_connections()
+
+        def registrar_estorno_concorrente():
+            close_old_connections()
+            try:
+                usuario = User.objects.get(pk=self.recepcionista.pk)
+                barreira.wait(timeout=10)
+                registrar_estorno(
+                    pagamento_original,
+                    Decimal('50.00'),
+                    'Estorno concorrente de teste',
+                    usuario,
+                )
+            except Exception as erro:
+                erros.append(erro)
+            finally:
+                close_old_connections()
+
+        threads = [
+            threading.Thread(target=registrar_pagamento_concorrente, daemon=True),
+            threading.Thread(target=registrar_estorno_concorrente, daemon=True),
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=20)
+
+        self.assertFalse(any(thread.is_alive() for thread in threads))
+        self.assertEqual(erros, [])
+        sequencias_pagamentos = Pagamento.objects.filter(
+            cobranca=self.cobranca,
+        ).values_list('ordem_evento', flat=True)
+        sequencias_estornos = Estorno.objects.filter(
+            pagamento__cobranca=self.cobranca,
+        ).values_list('ordem_evento', flat=True)
+        self.assertEqual(
+            sorted([*sequencias_pagamentos, *sequencias_estornos]),
+            [1, 2, 3],
+        )
+        self.cobranca.refresh_from_db()
+        self.assertEqual(self.cobranca.ultima_sequencia_evento, 3)
+        self.assertEqual(
+            saldo_cobranca(self.cobranca, self.hoje),
+            Decimal('52.33'),
+        )
+
+
+class TarefaT07MigrationExecutorTests(TransactionTestCase):
+    def test_migration_0007_ambiguo_faz_rollback_de_schema_e_dados(self):
+        if connection.vendor != 'postgresql':
+            self.skipTest("Verificação de rollback DDL requer PostgreSQL.")
+
+        (
+            recepcionista, _, _, _, cobranca, hoje,
+        ) = criar_cenario_t07()
+        pagamento = registrar_pagamento(
+            cobranca,
+            Decimal('102.33'),
+            'pix',
+            data_pagamento=hoje,
+            usuario=recepcionista,
+        )
+        estorno = registrar_estorno(
+            pagamento,
+            Decimal('102.33'),
+            'Estorno para teste real de migration',
+            recepcionista,
+        )
+        pagamento_id = pagamento.pk
+        estorno_id = estorno.pk
+        cobranca_id = cobranca.pk
+        migrate_from = [('financeiro', '0006_pagamento_estorno')]
+        migrate_to = [('financeiro', '0007_sequencia_evento_por_cobranca')]
+        executor = MigrationExecutor(connection)
+        latest_targets = executor.loader.graph.leaf_nodes()
+
+        try:
+            executor.migrate(migrate_from)
+            apps_0006 = executor.loader.project_state(migrate_from).apps
+            PagamentoHistorico = apps_0006.get_model('financeiro', 'Pagamento')
+            EstornoHistorico = apps_0006.get_model('financeiro', 'Estorno')
+            instante_ambiguo = timezone.now()
+            PagamentoHistorico.objects.filter(pk=pagamento_id).update(
+                criado_em=instante_ambiguo,
+            )
+            EstornoHistorico.objects.filter(pk=estorno_id).update(
+                criado_em=instante_ambiguo,
+            )
+
+            dados_pagamento_antes = PagamentoHistorico.objects.filter(
+                pk=pagamento_id,
+            ).values_list(
+                'cobranca_id', 'valor_pago', 'data_pagamento', 'criado_em',
+            ).get()
+            dados_estorno_antes = EstornoHistorico.objects.filter(
+                pk=estorno_id,
+            ).values_list(
+                'pagamento_id', 'valor', 'data_estorno', 'criado_em',
+            ).get()
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                'timestamp de criação idênticos',
+            ):
+                MigrationExecutor(connection).migrate(migrate_to)
+
+            self.assertNotIn(
+                ('financeiro', '0007_sequencia_evento_por_cobranca'),
+                MigrationRecorder(connection).applied_migrations(),
+            )
+            with connection.cursor() as cursor:
+                cobranca_colunas = {
+                    coluna.name
+                    for coluna in connection.introspection.get_table_description(
+                        cursor, 'financeiro_cobranca',
+                    )
+                }
+                pagamento_colunas = {
+                    coluna.name
+                    for coluna in connection.introspection.get_table_description(
+                        cursor, 'financeiro_pagamento',
+                    )
+                }
+                estorno_colunas = {
+                    coluna.name
+                    for coluna in connection.introspection.get_table_description(
+                        cursor, 'financeiro_estorno',
+                    )
+                }
+            self.assertNotIn('ultima_sequencia_evento', cobranca_colunas)
+            self.assertNotIn('ordem_evento', pagamento_colunas)
+            self.assertNotIn('ordem_evento', estorno_colunas)
+
+            apps_apos_falha = MigrationExecutor(
+                connection,
+            ).loader.project_state(migrate_from).apps
+            PagamentoAposFalha = apps_apos_falha.get_model(
+                'financeiro', 'Pagamento',
+            )
+            EstornoAposFalha = apps_apos_falha.get_model(
+                'financeiro', 'Estorno',
+            )
+            self.assertEqual(
+                PagamentoAposFalha.objects.filter(pk=pagamento_id).values_list(
+                    'cobranca_id', 'valor_pago', 'data_pagamento', 'criado_em',
+                ).get(),
+                dados_pagamento_antes,
+            )
+            self.assertEqual(
+                EstornoAposFalha.objects.filter(pk=estorno_id).values_list(
+                    'pagamento_id', 'valor', 'data_estorno', 'criado_em',
+                ).get(),
+                dados_estorno_antes,
+            )
+            self.assertTrue(
+                apps_apos_falha.get_model(
+                    'financeiro', 'Cobranca',
+                ).objects.filter(pk=cobranca_id).exists(),
+            )
+        finally:
+            migrations_aplicadas = MigrationRecorder(
+                connection,
+            ).applied_migrations()
+            if ('financeiro', '0007_sequencia_evento_por_cobranca') not in migrations_aplicadas:
+                estado_0006 = MigrationExecutor(
+                    connection,
+                ).loader.project_state(migrate_from).apps
+                EstornoHistorico = estado_0006.get_model(
+                    'financeiro', 'Estorno',
+                )
+                timestamp_atual = EstornoHistorico.objects.filter(
+                    pk=estorno_id,
+                ).values_list('criado_em', flat=True).get()
+                EstornoHistorico.objects.filter(pk=estorno_id).update(
+                    criado_em=timestamp_atual + timedelta(microseconds=1),
+                )
+            MigrationExecutor(connection).migrate(latest_targets)

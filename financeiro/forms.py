@@ -1,7 +1,9 @@
 from decimal import Decimal
 from django import forms
 from django.db import transaction
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula
+from .models import (
+    Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula,
+)
 
 class PlanoForm(forms.ModelForm):
     class Meta:
