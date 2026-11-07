@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+<<<<<<< HEAD
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
+=======
+>>>>>>> 942f79e (feat: isola rotas e templates do professor e padroniza layout das turmas)
 from accounts.decorators import perfil_requerido
 from .models import Turma, Modalidade
 from .forms import TurmaForm, ModalidadeForm
@@ -84,3 +87,33 @@ def criar_modalidade(request):
         form = ModalidadeForm()
 
     return render(request, 'turmas/form_modalidade.html', {'form': form})
+
+
+@login_required
+@perfil_requerido('professor')
+def minhas_turmas_professor(request):
+    """
+    Área "Minhas Turmas" do Professor (Critério 4 do Kanban).
+    Filtra exclusivamente as turmas ativas do professor logado e calcula as métricas de ocupação.
+    """
+    turmas_qs = Turma.objects.filter(professor=request.user, ativo=True).select_related('modalidade')
+    turmas = list(turmas_qs)
+
+    total_turmas = len(turmas)
+    total_estudantes = sum(t.capacidade_maxima - t.vagas_restantes() for t in turmas)
+    capacidade_total = sum(t.capacidade_maxima for t in turmas)
+    ocupacao_media = round((total_estudantes / capacidade_total * 100), 1) if capacidade_total > 0 else 0
+
+    for turma in turmas:
+        turma.matriculados = turma.capacidade_maxima - turma.vagas_restantes()
+        turma.ocupacao_pct = round((turma.matriculados / turma.capacidade_maxima * 100), 1) if turma.capacidade_maxima > 0 else 0
+        turma.ocupacao_int = int(turma.ocupacao_pct)
+
+    contexto = {
+        'total_turmas': total_turmas,
+        'total_estudantes': total_estudantes,
+        'ocupacao_media': ocupacao_media,
+        'turmas': turmas,
+    }
+
+    return render(request, 'turmas/minhas_turmas_professor.html', contexto)
