@@ -6,6 +6,8 @@ from django.core.exceptions import PermissionDenied
 from alunos.models import Aluno
 from django.http import JsonResponse
 from accounts.models import Perfil
+from treinos.models import FichaTreino
+from django.utils import timezone
 
 def _tipo_do_usuario(usuario):
     """Tipo do perfil, ou None se o usuário não tem perfil (ex.: superusuário do admin)."""
@@ -62,14 +64,31 @@ def painel_aluno(request):
         raise PermissionDenied
 
     aluno = getattr(request.user.perfil, 'aluno', None)
+    ficha_ativa = None
+    if aluno:
+        ficha_ativa = (
+            FichaTreino.objects.filter(aluno=aluno, ativa=True)
+            .prefetch_related('exercicios')
+            .first()
+        )
 
-    return render(request, 'accounts/painel_aluno.html', {'aluno': aluno})
+    return render(request, 'accounts/painel_aluno.html', {
+        'aluno': aluno,
+        'ficha_ativa': ficha_ativa,
+    })
 
 @login_required(login_url='entrar')
 def painel_professor(request):
     if request.user.perfil.tipo != 'professor':
         raise PermissionDenied
-    return render(request, 'accounts/painel_professor.html')
+    fichas_revisao_pendente = (
+        FichaTreino.objects.filter(ativa=True, data_revisao__lt=timezone.localdate())
+        .select_related('aluno')
+        .order_by('data_revisao', 'aluno__nome')
+    )
+    return render(request, 'accounts/painel_professor.html', {
+        'fichas_revisao_pendente': fichas_revisao_pendente,
+    })
 
 @login_required(login_url='entrar')
 def painel_recepcao(request):

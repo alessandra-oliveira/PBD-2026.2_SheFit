@@ -87,6 +87,24 @@
             Minhas Turmas
         </a>
 
+        <a href="{% url 'criar_ficha' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
+            Montar ficha de treino
+        </a>
+        <a href="{% url 'listar_fichas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
+            Consultar fichas e histórico
+        </a>
+        {% if fichas_revisao_pendente %}
+            <section style="margin: 18px 0; text-align: left;">
+                <h3 style="color: #6d28d9; margin-bottom: 8px;">Revisões pendentes</h3>
+                {% for ficha in fichas_revisao_pendente %}
+                    <p style="font-size: 13px; margin-bottom: 8px;">
+                        <a href="{% url 'detalhe_ficha' ficha.id %}">{{ ficha.aluno.nome }}</a>
+                        — revisão prevista para {{ ficha.data_revisao|date:"d/m/Y" }}
+                    </p>
+                {% endfor %}
+            </section>
+        {% endif %}
+
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
         </div>
 </body>
