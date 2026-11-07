@@ -41,15 +41,13 @@ INSTALLED_APPS = [
     "accounts",
     "alunos",
     "turmas",
-    'financeiro',
-    'recepcao',
-    'corsheaders',
+    "financeiro",
+    "recepcao",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
-    "django.contrib.sessions.middleware.SessionMiddleware",''
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -64,7 +62,6 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
             os.path.join(BASE_DIR, 'templates'),
-            os.path.join(BASE_DIR, 'Front-end', 'SheFit-PainelRecepcao', 'dist'),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -131,11 +128,7 @@ USE_L10N = True
 
 STATIC_URL = "/static/"
 
-REACT_DIST_DIR = os.path.join(BASE_DIR, 'Front-end', 'SheFit-PainelRecepcao', 'dist')
-
-STATICFILES_DIRS = [
-    REACT_DIST_DIR,
-]
+STATICFILES_DIRS = []
 if os.path.exists(os.path.join(BASE_DIR, 'static')):
     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
 
@@ -151,12 +144,3 @@ MAILERS = {
     },
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8443",
-    "http://127.0.0.1:8443"
-]
-
-CORS_ALLOW_CREDENTIALS = True

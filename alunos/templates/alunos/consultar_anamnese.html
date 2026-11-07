@@ -4,204 +4,378 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Anamnese - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
             width: 100%;
-            max-width: 520px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 680px;
+            padding: 36px 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
         }
 
-        h1 {
-            color: #7c3aed;
-            text-align: center;
-            margin-bottom: 4px;
-            font-size: 1.8rem;
-        }
-
-        p.subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 16px;
-        }
-
-        .aluno-badge {
-            background: #f3e8ff;
-            color: #6b21a8;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            text-align: center;
-            margin-bottom: 16px;
-            font-weight: 600;
-        }
-
-        .status-badge {
-            display: block;
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 0.95rem;
+        /* Topo do Modal */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 20px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            color: #a855f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-text h2 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #8b5cf6;
+            line-height: 1.1;
+        }
+
+        .brand-text p {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-close:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        /* Barra de Progresso Dupla */
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .progress-step {
+            flex: 1;
+            height: 100%;
+            border-radius: 6px;
+        }
+
+        .progress-step.step-1 {
+            background: #8b5cf6;
+        }
+
+        .progress-step.step-2 {
+            background: linear-gradient(90deg, #ec4899, #d946ef);
+        }
+
+        /* Faixa/Badge do Estudante */
+        .student-pill {
+            background: #f5f3ff;
+            color: #6d28d9;
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Badge de Situação de Aptidão */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            margin-bottom: 24px;
         }
 
         .status-apto {
             background: #dcfce7;
-            color: #166534;
+            color: #15803d;
             border: 1px solid #bbf7d0;
         }
 
         .status-bloqueado {
             background: #fee2e2;
-            color: #991b1b;
+            color: #b91c1c;
             border: 1px solid #fecaca;
         }
 
-        .secao {
-            background: #f9fafb;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border: 1px solid #f3f4f6;
-        }
-
-        .secao h4 {
-            margin: 0 0 6px 0;
-            font-size: 0.85rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .secao p {
-            margin: 0;
-            color: #1f2937;
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
-        .btn-voltar {
-            display: block;
-            width: 100%;
-            margin-top: 20px;
-            padding: 14px;
-            background: #f3f4f6;
-            color: #374151;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-
-        .btn-voltar:hover {
-            background: #e5e7eb;
-        }
-
-        .sucesso {
-            background: #dcfce7;
-            color: #166534;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-        }
-
-        .erro-box {
+        /* Mensagens */
+        .msg-erro {
             background: #fee2e2;
             color: #991b1b;
             border: 1px solid #fecaca;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             font-size: 0.9rem;
         }
 
-        @media (max-width: 480px) {
-            .card {
+        .msg-sucesso {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        label.field-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* Caixas de Texto Somente Leitura */
+        .readonly-box {
+            width: 100%;
+            min-height: 88px;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            color: #334155;
+            background: #f8fafc;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        .readonly-box.empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Caixa de Termo / Autorização Somente Leitura */
+        .term-box {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .term-box input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: #8b5cf6;
+            cursor: not-allowed;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        .term-box label {
+            font-size: 0.88rem;
+            color: #92400e;
+            line-height: 1.45;
+            cursor: default;
+        }
+
+        .term-box strong {
+            font-weight: 700;
+            color: #78350f;
+        }
+
+        /* Rodapé */
+        .modal-footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn-voltar {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 11px 28px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        @media (max-width: 640px) {
+            .modal-card {
                 padding: 24px 20px;
-                border-radius: 12px;
+                border-radius: 18px;
             }
 
-            h1 {
-                font-size: 1.5rem;
+            .btn-voltar {
+                width: 100%;
+                text-align: center;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>SheFit</h1>
-        <p class="subtitle">Consulta de Anamnese</p>
-
-        <div class="aluno-badge">
-            Aluno(a): {{ aluno.nome }}
+    <div class="modal-card">
+        <!-- Topo com Logo e Fechar -->
+        <div class="modal-header">
+            <div class="header-brand">
+                <div class="brand-icon">
+                    <i data-lucide="dumbbell" style="width: 32px; height: 32px;"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>SheFit</h2>
+                    <p>Consulta de Anamnese e Saúde</p>
+                </div>
+            </div>
+            <a href="javascript:history.back()" class="btn-close" title="Voltar">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </a>
         </div>
 
-    {% if messages %}
-        {% with message=messages|last %}
-            <div class="{% if message.tags == 'error' %}erro-box{% else %}sucesso{% endif %}">
-                {{ message }}
-            </div>
-        {% endwith %}
-    {% endif %}
+        <!-- Barra de Progresso Dupla -->
+        <div class="progress-bar-container">
+            <div class="progress-step step-1"></div>
+            <div class="progress-step step-2"></div>
+        </div>
+
+        <!-- Faixa de identificação da aluna -->
+        <div class="student-pill">
+            Estudante: {{ aluno.nome }}
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}msg-erro{% else %}msg-sucesso{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
 
         {% if anamnese %}
+            <!-- Badge de Status -->
             {% if anamnese.autorizacao_atividade_fisica %}
                 <div class="status-badge status-apto">
+                    <i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i>
                     Apto para Atividade Física
                 </div>
             {% else %}
                 <div class="status-badge status-bloqueado">
-                    Não Autorizado / Pendente
+                    <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                    Não Autorizado / Pendente de Avaliação
                 </div>
             {% endif %}
 
-            <div class="secao">
-                <h4>Restrições Médicas</h4>
-                <p>{{ anamnese.restricoes_medicas|default:"Nenhuma restrição informada."|linebreaksbr }}</p>
+            <!-- Restrições Médicas (Somente Leitura) -->
+            <div class="form-group">
+                <label class="field-title">Restrições médicas</label>
+                <div class="readonly-box {% if not anamnese.restricoes_medicas %}empty{% endif %}">
+                    {{ anamnese.restricoes_medicas|default:"Não possui"|linebreaksbr }}
+                </div>
             </div>
 
-            <div class="secao">
-                <h4>Histórico de Lesões</h4>
-                <p>{{ anamnese.historico_lesoes|default:"Nenhum histórico informado."|linebreaksbr }}</p>
+            <!-- Histórico de Lesões (Somente Leitura) -->
+            <div class="form-group">
+                <label class="field-title">Histórico de lesões</label>
+                <div class="readonly-box {% if not anamnese.historico_lesoes %}empty{% endif %}">
+                    {{ anamnese.historico_lesoes|default:"Nenhuma lesão informada"|linebreaksbr }}
+                </div>
             </div>
 
-            <div class="secao">
-                <h4>Condições Crônicas</h4>
-                <p>{{ anamnese.condicoes_cronicas|default:"Nenhuma condição informada."|linebreaksbr }}</p>
+            <!-- Condições Crônicas (Somente Leitura) -->
+            <div class="form-group">
+                <label class="field-title">Condições crônicas</label>
+                <div class="readonly-box {% if not anamnese.condicoes_cronicas %}empty{% endif %}">
+                    {{ anamnese.condicoes_cronicas|default:"Nenhuma condição informada"|linebreaksbr }}
+                </div>
+            </div>
+
+            <!-- Termo de Autorização (Bloqueado para edição) -->
+            <div class="term-box">
+                <input type="checkbox" disabled {% if anamnese.autorizacao_atividade_fisica %}checked{% endif %}>
+                <label>
+                    <strong>Termo de autorização:</strong> o estudante declara estar apto para a prática de atividades físicas sob orientação profissional.
+                </label>
             </div>
         {% else %}
             <div class="status-badge status-bloqueado">
-                Ficha de Anamnese não cadastrada.
+                <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i>
+                Ficha de anamnese não cadastrada para esta estudante.
             </div>
         {% endif %}
 
-        <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
+        <!-- Rodapé / Botão Voltar -->
+        <div class="modal-footer">
+            <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
+        </div>
     </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>
