@@ -1,0 +1,611 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Estudantes - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Lateral */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        /* Área Central */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Header da Página */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .btn-adicionar {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-adicionar:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+        }
+
+        /* Grid de Métricas (3 Colunas) */
+        .stats-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            padding: 22px 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .stat-box-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+
+        .stat-box-num {
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .num-total { color: #0f172a; }
+        .num-ativos { color: #10b981; }
+        .num-expirados { color: #ef4444; }
+
+        /* Card do Diretório / Tabela */
+        .directory-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .directory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .directory-header h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* Barra de Busca */
+        .search-box {
+            position: relative;
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            width: 18px;
+            height: 18px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #7c3aed;
+            background: white;
+        }
+
+        /* Tabela */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #ffffff;
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .student-name {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .plan-badge {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        /* Badges de Status */
+        .badge-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .status-ativo {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-pendente {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Botões de Ação */
+        .actions-col {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-edit {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-edit:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-anamnese {
+            background: #ede9fe;
+            color: #6d28d9;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-anamnese:hover {
+            background: #ddd6fe;
+        }
+
+        .empty-row {
+            text-align: center;
+            padding: 36px;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Navegação Lateral -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i data-lucide="dumbbell"></i>
+                <span>SheFit</span>
+            </div>
+            <i data-lucide="menu" style="cursor: pointer;"></i>
+        </div>
+
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_recepcao' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'gestao_estudantes' %}">
+                    <i data-lucide="users"></i>
+                    <span>Estudantes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity"></i>
+                    <span>Aulas/Modalidades</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
+                    <div class="role">Recepção</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cabeçalho da Página -->
+        <div class="page-header">
+            <div>
+                <h1>Gestão de Estudantes</h1>
+                <p>Gerencie estudantes, planos e dados cadastrais.</p>
+            </div>
+            <a href="{% url 'cadastrar_aluno' %}" class="btn-adicionar">
+                <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                Adicionar estudante
+            </a>
+        </div>
+
+        <!-- Cards das 3 Métricas de Estudantes -->
+        <section class="stats-grid-3">
+            <div class="stat-box">
+                <div class="stat-box-label">Total de estudantes</div>
+                <div class="stat-box-num num-total">{{ total_estudantes }}</div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-box-label">Estudantes ativos</div>
+                <div class="stat-box-num num-ativos">{{ estudantes_ativos }}</div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-box-label">Planos expirados</div>
+                <div class="stat-box-num num-expirados">{{ planos_expirados }}</div>
+            </div>
+        </section>
+
+        <!-- Card Diretório de Estudantes com Tabela -->
+        <section class="directory-card">
+            <div class="directory-header">
+                <h2>Diretório de Estudantes</h2>
+            </div>
+
+            <div class="search-box">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" id="filtro-estudantes" class="search-input" placeholder="Buscar estudantes...">
+            </div>
+
+            <div class="table-responsive">
+                <table id="tabela-estudantes">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Contato</th>
+                            <th>Plano</th>
+                            <th>Status</th>
+                            <th>Data de entrada</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aluno in alunos %}
+                        <tr>
+                            <td class="student-name">{{ aluno.nome }}</td>
+                            <td>{{ aluno.telefone|default:aluno.cpf|default:"Não informado" }}</td>
+                            <td>
+                                <span class="plan-badge">
+                                    {% if aluno.matricula_ativa and aluno.matricula_ativa.plano %}
+                                        {{ aluno.matricula_ativa.plano.nome }}
+                                    {% elif aluno.plano %}
+                                        {{ aluno.plano.nome }}
+                                    {% else %}
+                                        Mensal Padrão
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if aluno.apto_para_treino %}
+                                    <span class="badge-status status-ativo">Ativa</span>
+                                {% elif aluno.status_matricula %}
+                                    <span class="badge-status status-pendente">{{ aluno.status_matricula }}</span>
+                                {% else %}
+                                    <span class="badge-status status-pendente">Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ aluno.data_cadastro|date:"d/m/Y"|default:aluno.criado_em|date:"d/m/Y"|default:"-" }}</td>
+                            <td>
+                                <div class="actions-col">
+                                    <a href="{% url 'editar_aluno' aluno.id %}" class="btn-edit">Editar</a>
+                                    <a href="{% url 'preencher_anamnese' aluno.id %}" class="btn-anamnese" title="Ficha / Anamnese médica">
+                                        Ficha / Anamnese
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-row">
+                                Nenhuma estudante cadastrada até o momento.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // Data formatada
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataFormatada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        document.getElementById('data-atual').innerText = dataFormatada;
+
+        // Filtro em tempo real no campo de pesquisa
+        document.getElementById('filtro-estudantes').addEventListener('keyup', function () {
+            const termo = this.value.toLowerCase();
+            const linhas = document.querySelectorAll('#tabela-estudantes tbody tr');
+            linhas.forEach(linha => {
+                const texto = linha.innerText.toLowerCase();
+                linha.style.display = texto.includes(termo) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+
+</html>
+
+

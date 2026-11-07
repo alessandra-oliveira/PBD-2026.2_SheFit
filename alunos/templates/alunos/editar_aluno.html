@@ -5,142 +5,449 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Aluna - SheFit</title>
+    <title>Editar Estudante - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
             width: 100%;
-            max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 680px;
+            padding: 36px 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
         }
 
-        h1 {
-            color: #7c3aed;
-            text-align: center;
-            margin-bottom: 4px;
-            font-size: 1.8rem;
+        /* Topo do Modal */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
         }
 
-        p.subtitle {
-            text-align: center;
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            color: #a855f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-text h2 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #8b5cf6;
+            line-height: 1.1;
+        }
+
+        .brand-text p {
+            font-size: 0.88rem;
             color: #64748b;
-            margin-bottom: 24px;
+            margin-top: 2px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-close:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        /* Faixa/Badge do Estudante */
+        .student-pill {
+            background: #f5f3ff;
+            color: #6d28d9;
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: center;
             font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        /* Títulos de Seção */
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 24px 0 16px 0;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Formulário e Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .col-full {
+            grid-column: span 2;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
+        label {
+            font-size: 0.88rem;
             font-weight: 600;
-            font-size: 0.9rem;
-            color: #334155;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
+        .required-star {
+            color: #ec4899;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        input[type="password"],
+        select,
+        textarea {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 0.95rem;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: #1e293b;
+            background: #ffffff;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: #7c3aed;
+        input::placeholder {
+            color: #94a3b8;
         }
 
-        .btn-salvar {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            color: white;
-            border: none;
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+        }
+
+        /* Upload de Foto */
+        .file-upload-box {
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-choose-file {
+            background: #ede9fe;
+            color: #7c3aed;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 8px 16px;
             border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
             cursor: pointer;
-            margin-top: 12px;
-            transition: opacity 0.2s;
-        }
-
-        .btn-salvar:hover {
-            opacity: 0.9;
-        }
-
-        .btn-cancelar {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background: #f1f5f9;
-            color: #475569;
             border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            text-align: center;
-            text-decoration: none;
-            margin-top: 8px;
-            cursor: pointer;
+            display: inline-block;
             transition: background 0.2s;
         }
 
+        .btn-choose-file:hover {
+            background: #ddd6fe;
+        }
+
+        .file-name-text {
+            color: #64748b;
+            font-size: 0.88rem;
+        }
+
+        .current-photo-link {
+            font-size: 0.8rem;
+            color: #6d28d9;
+            margin-top: 4px;
+            text-decoration: none;
+        }
+
+        .current-photo-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Mensagens de Sucesso / Erro */
+        .msg-erro {
+            color: #dc2626;
+            font-size: 0.8rem;
+            margin-top: 3px;
+        }
+
+        .msg-sucesso {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Rodapé com Botões */
+        .modal-footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-cancelar {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
         .btn-cancelar:hover {
-            background: #e2e8f0;
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-salvar {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(217, 70, 239, 0.25);
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn-salvar:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 640px) {
+            .modal-card {
+                padding: 24px 20px;
+                border-radius: 18px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .col-full {
+                grid-column: span 1;
+            }
+
+            .modal-footer {
+                flex-direction: column-reverse;
+                width: 100%;
+            }
+
+            .btn-cancelar,
+            .btn-salvar {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>SheFit</h1>
-        <p class="subtitle">Editar dados cadastrais: <strong>{{ aluno.nome }}</strong></p>
+    <div class="modal-card">
+        <!-- Cabeçalho -->
+        <div class="modal-header">
+            <div class="header-brand">
+                <div class="brand-icon">
+                    <i data-lucide="dumbbell" style="width: 32px; height: 32px;"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>SheFit</h2>
+                    <p>Editar Dados da Estudante</p>
+                </div>
+            </div>
+            <a href="{% url 'gestao_estudantes' %}" class="btn-close" title="Fechar">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </a>
+        </div>
 
-        <form method="POST" enctype="multipart/form-data">
+        <!-- Identificação da Estudante -->
+        <div class="student-pill">
+            Editando cadastro de: {{ aluno.nome }}
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="msg-sucesso">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" autocomplete="off">
             {% csrf_token %}
 
-            {% for field in form %}
-                <div class="form-group">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div style="color: #dc2626; font-size: 0.8rem; margin-top: 4px;">
-                            {{ field.errors|striptags }}
-                        </div>
+            <!-- Seção 1: Dados Pessoais -->
+            <h3 class="section-title">Dados pessoais</h3>
+            <div class="form-grid">
+                <div class="form-group col-full">
+                    <label for="{{ form.nome.id_for_label }}">Nome completo <span class="required-star">*</span></label>
+                    <input type="text" name="{{ form.nome.name }}" id="{{ form.nome.id_for_label }}"
+                        value="{{ form.nome.value|default:aluno.nome|default:'' }}" placeholder="Digite o nome completo" required>
+                    {% if form.nome.errors %}
+                        <span class="msg-erro">{{ form.nome.errors.0 }}</span>
                     {% endif %}
                 </div>
-            {% endfor %}
 
-            <button type="submit" class="btn-salvar">Salvar Alterações</button>
-            <a href="{% url 'painel_recepcao' %}" class="btn-cancelar">Cancelar</a>
+                <div class="form-group">
+                    <label for="{{ form.cpf.id_for_label }}">CPF <span class="required-star">*</span></label>
+                    <input type="text" name="{{ form.cpf.name }}" id="{{ form.cpf.id_for_label }}"
+                        value="{{ form.cpf.value|default:aluno.cpf|default:'' }}" placeholder="000.000.000-00" required>
+                    {% if form.cpf.errors %}
+                        <span class="msg-erro">{{ form.cpf.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.data_nascimento.id_for_label }}">Data de nascimento <span class="required-star">*</span></label>
+                    <input type="date" name="{{ form.data_nascimento.name }}" id="{{ form.data_nascimento.id_for_label }}"
+                        value="{{ form.data_nascimento.value|date:'Y-m-d'|default:form.data_nascimento.value|default:'' }}" required>
+                    {% if form.data_nascimento.errors %}
+                        <span class="msg-erro">{{ form.data_nascimento.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group col-full">
+                    <label for="{{ form.endereco.id_for_label }}">Endereço <span class="required-star">*</span></label>
+                    <input type="text" name="{{ form.endereco.name }}" id="{{ form.endereco.id_for_label }}"
+                        value="{{ form.endereco.value|default:aluno.endereco|default:'' }}" placeholder="Rua, número, bairro e cidade" required>
+                    {% if form.endereco.errors %}
+                        <span class="msg-erro">{{ form.endereco.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.telefone.id_for_label }}">Telefone <span class="required-star">*</span></label>
+                    <input type="text" name="{{ form.telefone.name }}" id="{{ form.telefone.id_for_label }}"
+                        value="{{ form.telefone.value|default:aluno.telefone|default:'' }}" placeholder="(00) 00000-0000" required>
+                    {% if form.telefone.errors %}
+                        <span class="msg-erro">{{ form.telefone.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">E-mail <span class="required-star">*</span></label>
+                    <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}"
+                        value="{{ form.email.value|default:aluno.email|default:'' }}" placeholder="nome@email.com" required>
+                    {% if form.email.errors %}
+                        <span class="msg-erro">{{ form.email.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Foto da Estudante -->
+                <div class="form-group col-full">
+                    <label for="{{ form.foto.id_for_label }}">Foto da estudante</label>
+                    <div class="file-upload-box">
+                        <label for="{{ form.foto.id_for_label }}" class="btn-choose-file">Escolher arquivo</label>
+                        <span id="file-chosen-text" class="file-name-text">
+                            {% if aluno.foto %}Foto atual: {{ aluno.foto.name|slice:":30" }}{% else %}Nenhum arquivo escolhido{% endif %}
+                        </span>
+                        <input type="file" name="{{ form.foto.name }}" id="{{ form.foto.id_for_label }}" style="display: none;"
+                            onchange="document.getElementById('file-chosen-text').innerText = this.files[0] ? this.files[0].name : 'Nenhum arquivo escolhido'">
+                    </div>
+                    {% if aluno.foto %}
+                        <a href="{{ aluno.foto.url }}" target="_blank" class="current-photo-link">Ver foto cadastrada</a>
+                    {% endif %}
+                    {% if form.foto.errors %}
+                        <span class="msg-erro">{{ form.foto.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Seção 2: Contato de Emergência -->
+            <h3 class="section-title">Contato de emergência</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="{{ form.contato_emergencia_nome.id_for_label }}">Nome do contato <span class="required-star">*</span></label>
+                    <input type="text" name="{{ form.contato_emergencia_nome.name }}" id="{{ form.contato_emergencia_nome.id_for_label }}"
+                        value="{{ form.contato_emergencia_nome.value|default:aluno.contato_emergencia_nome|default:'' }}" placeholder="Nome completo" required>
+                    {% if form.contato_emergencia_nome.errors %}
+                        <span class="msg-erro">{{ form.contato_emergencia_nome.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.contato_emergencia_telefone.id_for_label }}">Telefone do contato <span class="required-star">*</span></label>
+                    <input type="text" name="{{ form.contato_emergencia_telefone.name }}" id="{{ form.contato_emergencia_telefone.id_for_label }}"
+                        value="{{ form.contato_emergencia_telefone.value|default:aluno.contato_emergencia_telefone|default:'' }}" placeholder="(00) 00000-0000" required>
+                    {% if form.contato_emergencia_telefone.errors %}
+                        <span class="msg-erro">{{ form.contato_emergencia_telefone.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Rodapé / Ações -->
+            <div class="modal-footer">
+                <a href="{% url 'gestao_estudantes' %}" class="btn-cancelar">Cancelar</a>
+                <button type="submit" class="btn-salvar">Salvar alterações</button>
+            </div>
         </form>
     </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>
