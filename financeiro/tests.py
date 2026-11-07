@@ -730,6 +730,18 @@ class TarefaT07RegistroPagamentoTests(TestCase):
             resposta, reverse('painel'), fetch_redirect_response=False,
         )
 
+    def test_painel_recepcao_django_exibe_acesso_ao_registro_de_pagamento(self):
+        resposta = self.client.get(reverse('painel_recepcao'))
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertTemplateUsed(resposta, 'accounts/painel_recepcao.html')
+        self.assertContains(
+            resposta,
+            f'href="{reverse("listar_cobrancas_pagamento")}"',
+        )
+        self.assertContains(resposta, self.aluno.nome)
+        self.assertEqual(resposta.context['total_alunos'], 1)
+
     def test_pagamento_atrasado_mostra_total_antes_da_confirmacao(self):
         proxima = Cobranca.objects.create(
             matricula=self.matricula,

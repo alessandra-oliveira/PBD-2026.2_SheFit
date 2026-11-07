@@ -38,7 +38,7 @@ urlpatterns = [
     path('painel/', painel, name='painel'),
     path('painel/aluno/', painel_aluno, name='painel_aluno'),
     path('painel/professor/', painel_professor, name='painel_professor'),
-    path('painel/recepcao/', TemplateView.as_view(template_name='index.html'), name='painel_recepcao'),
+    path('painel/recepcao/', accounts_views.painel_recepcao, name='painel_recepcao'),
     path('painel/financeiro/', painel_financeiro, name='painel_financeiro'),
 ]
 
