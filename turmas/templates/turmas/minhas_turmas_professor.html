@@ -1,0 +1,962 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Turmas - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
+            --btn-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ================= SIDEBAR PADRÃO ================= */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            overflow: hidden;
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .nav-item .nav-badge {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .nav-item.active .nav-badge {
+            background: #ede9fe;
+            color: var(--primary-purple);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        /* ================= ÁREA CENTRAL ================= */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            max-width: 1400px;
+        }
+
+        /* Topbar Superior */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            gap: 16px;
+        }
+
+        .topbar-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .date-display {
+            color: var(--text-dark);
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .proxima-aula-aviso {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+            gap: 2px;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 44px;
+            height: 44px;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+        }
+
+        .status-indicator-online {
+            position: absolute;
+            bottom: 1px;
+            right: 1px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            border: 2px solid #ffffff;
+        }
+
+        /* Cabeçalho da Página */
+        .page-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* ================= 3 CARDS DE MÉTRICAS ================= */
+        .metrics-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 160px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+        }
+
+        .metric-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .metric-card-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .metric-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-icon-box.purple {
+            background: #f3e8ff;
+            color: #9333ea;
+        }
+
+        .metric-icon-box.pink {
+            background: #fdf2f8;
+            color: #ec4899;
+        }
+
+        .metric-icon-box.green {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .metric-number {
+            font-size: 2.3rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            margin: 8px 0 12px;
+        }
+
+        .metric-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            padding-top: 10px;
+            border-top: 1px solid #f8fafc;
+        }
+
+        /* ================= AGENDA DE TURMAS ================= */
+        .agenda-container {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            padding: 26px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .agenda-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f8fafc;
+        }
+
+        .agenda-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .agenda-title-box h2 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .badge-semana {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+
+        /* Botões de Filtro */
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            color: var(--text-dark);
+        }
+
+        .filter-btn.active {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Grade de Cards das Turmas */
+        .turmas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .turma-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: all 0.2s ease;
+        }
+
+        /* Borda superior com destaque gradiente SheFit */
+        .turma-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+        }
+
+        .turma-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .turma-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            padding-top: 4px;
+        }
+
+        .turma-card-title {
+            font-size: 1.18rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+
+        .badge-dia-card {
+            background: #f5f3ff;
+            color: #7c3aed;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .turma-detalhes-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .turma-detalhe-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #475569;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        .turma-detalhe-item i {
+            color: #8b5cf6;
+            flex-shrink: 0;
+        }
+
+        /* Área de Ocupação */
+        .turma-ocupacao-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .ocupacao-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .ocupacao-info-row span {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .ocupacao-info-row strong {
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        /* Barra de Progresso Visual da Ocupação */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        .turma-card-footer {
+            margin-top: 4px;
+        }
+
+        .btn-chamada-action {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #f5f3ff;
+            color: #7c3aed;
+            border: 1.5px solid #ddd6fe;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-chamada-action:hover {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+        }
+
+        /* Responsividade */
+        @media (max-width: 960px) {
+            .metrics-grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ================= SIDEBAR PADRÃO ================= -->
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i data-lucide="dumbbell" style="width: 28px; height: 28px;"></i>
+                    <span>SheFit</span>
+                </div>
+            </div>
+
+            <!-- Menu com os 3 itens do professor -->
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                            <span>Painel</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'minhas_turmas_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Minhas Turmas</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item" style="opacity: 0.7; cursor: default;">
+                    <a href="#" onclick="event.preventDefault();" style="cursor: default;">
+                        <div class="nav-item-left">
+                            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+                            <span>Estudantes</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ================= CONTEÚDO PRINCIPAL ================= -->
+    <main class="main-content">
+        <!-- Topbar Superior -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="date-display" id="data-atual">
+                    Hoje
+                </div>
+                <div class="proxima-aula-aviso">
+                    <i data-lucide="clock" style="width: 14px; height: 14px; color: #7c3aed;"></i>
+                    <span>Sua próxima aula começa às {{ proxima_aula|default:"08:00" }}</span>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="user-info">
+                    <div class="name">{{ professor.nome|default:request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="role">Professora / Modalidades</div>
+                </div>
+                <div class="avatar-wrapper">
+                    <div class="avatar">
+                        {% if request.user.first_name %}{{ request.user.first_name|slice:":1"|upper }}{% else %}{{ request.user.username|slice:":1"|upper }}{% endif %}
+                    </div>
+                    <span class="status-indicator-online" title="Online"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cabeçalho -->
+        <section class="page-header">
+            <h1>Minhas Turmas</h1>
+            <p>Consulte sua agenda, acompanhe a ocupação e registre presenças.</p>
+        </section>
+
+        <!-- 3 CARDS DE MÉTRICAS -->
+        <section class="metrics-grid-3">
+            <!-- Card 1: Turmas na semana -->
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span class="metric-card-title">Turmas na semana</span>
+                    <div class="metric-icon-box purple">
+                        <i data-lucide="calendar" style="width: 22px; height: 22px;"></i>
+                    </div>
+                </div>
+                <div class="metric-number">
+                    {{ total_turmas|default:"4" }}
+                </div>
+                <div class="metric-footer">
+                    <i data-lucide="clock" style="width: 15px; height: 15px; color: #7c3aed;"></i>
+                    <span>Grade semanal ativa</span>
+                </div>
+            </article>
+
+            <!-- Card 2: Alunos matriculados -->
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span class="metric-card-title">Alunos matriculados</span>
+                    <div class="metric-icon-box pink">
+                        <i data-lucide="users" style="width: 22px; height: 22px;"></i>
+                    </div>
+                </div>
+                <div class="metric-number">
+                    {{ total_estudantes|default:"28" }}
+                </div>
+                <div class="metric-footer" style="color: #10b981; font-weight: 600;">
+                    <i data-lucide="check-circle-2" style="width: 15px; height: 15px;"></i>
+                    <span>Alunas ativas nas turmas</span>
+                </div>
+            </article>
+
+            <!-- Card 3: Ocupação média -->
+            <article class="metric-card">
+                <div class="metric-card-top">
+                    <span class="metric-card-title">Ocupação média</span>
+                    <div class="metric-icon-box green">
+                        <i data-lucide="trending-up" style="width: 22px; height: 22px;"></i>
+                    </div>
+                </div>
+                <div class="metric-number">
+                    {{ ocupacao_media|default:"75" }}%
+                </div>
+                <div class="metric-footer" style="color: #10b981; font-weight: 600;">
+                    <i data-lucide="bar-chart-3" style="width: 15px; height: 15px;"></i>
+                    <span>Média calculada da capacidade</span>
+                </div>
+            </article>
+        </section>
+
+        <!-- AGENDA DE TURMAS -->
+        <section class="agenda-container">
+            <div class="agenda-top-bar">
+                <div class="agenda-title-box">
+                    <h2>Agenda de turmas</h2>
+                    <span class="badge-semana" id="badge-semana-atual">Semana Atual</span>
+                </div>
+
+                <div class="filter-group">
+                    <button type="button" class="filter-btn active" id="btn-todas" onclick="filtrarTurmas('todas')">Todas</button>
+                    <button type="button" class="filter-btn" id="btn-hoje" onclick="filtrarTurmas('hoje')">Hoje</button>
+                    <button type="button" class="filter-btn" id="btn-proximas" onclick="filtrarTurmas('proximas')">Próximas</button>
+                </div>
+            </div>
+
+            <div class="turmas-grid" id="turmas-grid-container">
+                {% if turmas %}
+                    {% for turma in turmas %}
+                        <article class="turma-card" data-dia="{{ turma.dia_semana }}">
+                            <div class="turma-card-header">
+                                <h3 class="turma-card-title">{{ turma.modalidade.nome }}</h3>
+                                <span class="badge-dia-card">{{ turma.get_dia_semana_display }}</span>
+                            </div>
+
+                            <div class="turma-detalhes-lista">
+                                <div class="turma-detalhe-item">
+                                    <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                                    <span>{{ turma.horario|time:"H:i" }} &bull; 50 min</span>
+                                </div>
+                                <div class="turma-detalhe-item">
+                                    <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
+                                    <span>{{ turma.sala }}</span>
+                                </div>
+                            </div>
+
+                            <div class="turma-ocupacao-box">
+                                <div class="ocupacao-info-row">
+                                    <span>Ocupação da turma</span>
+                                    <strong class="texto-ocupacao-turma" 
+                                            data-capacidade="{{ turma.capacidade_maxima }}" 
+                                            data-restantes="{{ turma.vagas_restantes }}">
+                                        0 / {{ turma.capacidade_maxima }} alunas
+                                    </strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="turma-card-footer">
+                                <button type="button" class="btn-chamada-action">
+                                    <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
+                                    <span>Registrar Presença</span>
+                                </button>
+                            </div>
+                        </article>
+                    {% endfor %}
+                {% else %}
+                    <!-- Cards de demonstração da grade conforme o Figma -->
+                    <article class="turma-card" data-dia="segunda">
+                        <div class="turma-card-header">
+                            <h3 class="turma-card-title">Pilates Solo</h3>
+                            <span class="badge-dia-card">Segunda</span>
+                        </div>
+                        <div class="turma-detalhes-lista">
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                                <span>08:00 - 08:50 &bull; 50 min</span>
+                            </div>
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
+                                <span>Sala 2</span>
+                            </div>
+                        </div>
+                        <div class="turma-ocupacao-box">
+                            <div class="ocupacao-info-row">
+                                <span>Ocupação da turma</span>
+                                <strong>14 / 18 alunas</strong>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: 78%;"></div>
+                            </div>
+                        </div>
+                        <div class="turma-card-footer">
+                            <button type="button" class="btn-chamada-action">
+                                <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
+                                <span>Registrar Presença</span>
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="turma-card" data-dia="terca">
+                        <div class="turma-card-header">
+                            <h3 class="turma-card-title">Ritmos & Dança</h3>
+                            <span class="badge-dia-card">Terça</span>
+                        </div>
+                        <div class="turma-detalhes-lista">
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                                <span>10:00 - 10:50 &bull; 50 min</span>
+                            </div>
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
+                                <span>Sala 1</span>
+                            </div>
+                        </div>
+                        <div class="turma-ocupacao-box">
+                            <div class="ocupacao-info-row">
+                                <span>Ocupação da turma</span>
+                                <strong>20 / 25 alunas</strong>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <div class="turma-card-footer">
+                            <button type="button" class="btn-chamada-action">
+                                <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
+                                <span>Registrar Presença</span>
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="turma-card" data-dia="quarta">
+                        <div class="turma-card-header">
+                            <h3 class="turma-card-title">Yoga Flow</h3>
+                            <span class="badge-dia-card">Quarta</span>
+                        </div>
+                        <div class="turma-detalhes-lista">
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                                <span>16:30 - 17:20 &bull; 50 min</span>
+                            </div>
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
+                                <span>Sala 3</span>
+                            </div>
+                        </div>
+                        <div class="turma-ocupacao-box">
+                            <div class="ocupacao-info-row">
+                                <span>Ocupação da turma</span>
+                                <strong>12 / 15 alunas</strong>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <div class="turma-card-footer">
+                            <button type="button" class="btn-chamada-action">
+                                <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
+                                <span>Registrar Presença</span>
+                            </button>
+                        </div>
+                    </article>
+
+                    <article class="turma-card" data-dia="quinta">
+                        <div class="turma-card-header">
+                            <h3 class="turma-card-title">Musculação Feminina</h3>
+                            <span class="badge-dia-card">Quinta</span>
+                        </div>
+                        <div class="turma-detalhes-lista">
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                                <span>18:00 - 18:50 &bull; 50 min</span>
+                            </div>
+                            <div class="turma-detalhe-item">
+                                <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
+                                <span>Sala Principal</span>
+                            </div>
+                        </div>
+                        <div class="turma-ocupacao-box">
+                            <div class="ocupacao-info-row">
+                                <span>Ocupação da turma</span>
+                                <strong>18 / 20 alunas</strong>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: 90%;"></div>
+                            </div>
+                        </div>
+                        <div class="turma-card-footer">
+                            <button type="button" class="btn-chamada-action">
+                                <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
+                                <span>Registrar Presença</span>
+                            </button>
+                        </div>
+                    </article>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // Formatação dinâmica da data no padrão SheFit
+        const opcoesCompleta = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date();
+        const dataFormatada = dataHoje.toLocaleDateString('pt-BR', opcoesCompleta);
+        const dataCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+
+        const elDataAtual = document.getElementById('data-atual');
+        if (elDataAtual) {
+            elDataAtual.innerText = dataCapitalizada;
+        }
+
+        // Mapeamento dos dias da semana em pt-BR
+        const diasSemanaMap = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        const diaAtualNome = diasSemanaMap[dataHoje.getDay()];
+
+        // Função para filtrar turmas
+        function filtrarTurmas(tipo) {
+            const btns = document.querySelectorAll('.filter-btn');
+            btns.forEach(b => b.classList.remove('active'));
+
+            const cards = document.querySelectorAll('.turma-card');
+
+            if (tipo === 'todas') {
+                document.getElementById('btn-todas').classList.add('active');
+                cards.forEach(c => c.style.display = 'flex');
+            } else if (tipo === 'hoje') {
+                document.getElementById('btn-hoje').classList.add('active');
+                cards.forEach(c => {
+                    const diaCard = c.getAttribute('data-dia') || '';
+                    if (diaCard.toLowerCase() === diaAtualNome) {
+                        c.style.display = 'flex';
+                    } else {
+                        c.style.display = 'none';
+                    }
+                });
+            } else if (tipo === 'proximas') {
+                document.getElementById('btn-proximas').classList.add('active');
+                cards.forEach(c => c.style.display = 'flex');
+            }
+        }
+    </script>
+</body>
+
+</html>
