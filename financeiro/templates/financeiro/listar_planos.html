@@ -89,9 +89,12 @@
                             </td>
                             <td style="text-align: right;">
                                 <a href="{% url 'editar_plano' plano.id %}" class="btn-link">Editar</a>
-                                <a href="{% url 'alternar_status_plano' plano.id %}" class="btn-link" style="color: #64748b;">
+                                <form method="post" action="{% url 'alternar_status_plano' plano.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-link btn-link-botao">
                                     {% if plano.ativo %}Desativar{% else %}Ativar{% endif %}
-                                </a>
+                                </button>
+                            </form>
                             </td>
                         </tr>
                     {% empty %}

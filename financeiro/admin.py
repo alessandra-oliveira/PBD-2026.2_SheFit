@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
 from .models import (
-    Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Trancamento, Cancelamento,
+    Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca,
+    Trancamento, Cancelamento,
 )
 
 @admin.register(Plano)
@@ -39,9 +39,19 @@ class HistoricoRegraFinanceiraAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+
+class CobrancaInline(admin.TabularInline):
+    """Cobranças aparecem dentro da matrícula, para criar/editar na mesma tela."""
+    model = Cobranca
+    extra = 0
+    fields = ('tipo', 'valor', 'vencimento', 'competencia', 'paga')
+
+
 @admin.register(Matricula)
 class MatriculaAdmin(admin.ModelAdmin):
+    inlines = [CobrancaInline]
     list_display = ('id', 'aluno', 'plano', 'data_inicio', 'situacao_display')
+    # a situação é calculada: aparece aqui só para leitura, nunca como campo editável
     readonly_fields = ('situacao_display',)
 
     @admin.display(description='Situação')

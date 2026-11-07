@@ -1,52 +1,124 @@
-from financeiro.servicos import avaliar_situacao_financeira_aluno
+import re
+from datetime import timedelta
+
+from django.db import transaction
+from django.utils import timezone
+
 from alunos.models import Aluno
+from financeiro.servicos import avaliar_situacao_financeira_aluno
 from .models import Frequencia
 
-def processar_entrada_aluno(identificador):
-    """
-    Processa a entrada do aluno na recepção (por CPF ou Nome) (Tarefa T09).
-    """
-    # 1. Tenta encontrar o aluno por CPF exato ou por nome parcial
-    aluno = Aluno.objects.filter(cpf=identificador).first()
-    if not aluno:
-        aluno = Aluno.objects.filter(nome__icontains=identificador).first()
+# Quantas alunas a busca por nome mostra de uma vez.
+LIMITE_RESULTADOS_BUSCA = 10
 
-    if not aluno:
+# Duas entradas da mesma aluna dentro desta janela contam como a mesma
+# (protege contra clique duplo / reenvio). Ajuste se a regra da academia mudar.
+JANELA_ENTRADA_DUPLICADA = timedelta(minutes=10)
+
+STATUS_LIBERADOS = ('liberado', 'liberado_com_aviso')
+
+
+def buscar_alunos(termo):
+    """Identifica alunas por CPF (11 dígitos, com ou sem pontuação) ou por parte
+    do nome (Tarefa T09). NUNCA escolhe uma aluna sozinho: devolve todas as
+    correspondentes para a recepção confirmar.
+
+    Devolve (lista_de_alunas, truncado). `truncado` indica que havia mais
+    resultados que o limite e a busca deve ser refinada.
+    """
+    termo = (termo or '').strip()
+    if not termo:
+        return [], False
+
+    digitos = re.sub(r'\D', '', termo)
+    if len(digitos) == 11:
+        return list(Aluno.objects.filter(cpf=digitos)), False
+
+    encontradas = list(
+        Aluno.objects.filter(nome__icontains=termo).order_by('nome')[:LIMITE_RESULTADOS_BUSCA + 1]
+    )
+    truncado = len(encontradas) > LIMITE_RESULTADOS_BUSCA
+    return encontradas[:LIMITE_RESULTADOS_BUSCA], truncado
+
+
+def avaliar_acesso(aluno):
+    """Diz se a aluna pode entrar AGORA. Só consulta: não grava nada."""
+    if not aluno.ativo:
+        return {
+            'sucesso': False,
+            'status': 'bloqueado',
+            'mensagem': 'Cadastro inativo (anamnese pendente ou aluna desativada).',
+            'detalhes': None,
+            'aluno': aluno,
+        }
+
+    financeiro = avaliar_situacao_financeira_aluno(aluno)
+    status = financeiro['status']
+    return {
+        'sucesso': status in STATUS_LIBERADOS,
+        'status': status,
+        'mensagem': financeiro['motivo'],
+        'detalhes': financeiro.get('detalhes'),
+        'aluno': aluno,
+    }
+
+
+def registrar_entrada(aluno):
+    """Registra a entrada, mas só se o acesso estiver liberado.
+
+    Reavalia o acesso no momento do registro (não confia em consulta anterior)
+    e não duplica a entrada dentro de JANELA_ENTRADA_DUPLICADA.
+    """
+    resultado = avaliar_acesso(aluno)
+    resultado.update(registrada=False, duplicada=False, frequencia=None)
+    if not resultado['sucesso']:
+        return resultado
+
+    with transaction.atomic():
+        # Trava a linha da aluna: dois cliques simultâneos entram um de cada vez.
+        Aluno.objects.select_for_update().get(pk=aluno.pk)
+
+        recente = Frequencia.objects.filter(
+            aluno=aluno,
+            liberado=True,
+            data_hora__gte=timezone.now() - JANELA_ENTRADA_DUPLICADA,
+        ).first()
+        if recente:
+            resultado.update(duplicada=True, frequencia=recente)
+            return resultado
+
+        observacao = (
+            'Liberado com aviso de atraso'
+            if resultado['status'] == 'liberado_com_aviso' else 'Acesso normal'
+        )
+        frequencia = Frequencia.objects.create(
+            aluno=aluno, liberado=True, observacao=observacao,
+        )
+
+    resultado.update(registrada=True, frequencia=frequencia)
+    return resultado
+
+
+def processar_entrada_aluno(identificador):
+    """Busca + registro em uma chamada (uso fora da tela, ex.: scripts/testes).
+
+    Só registra se a busca identificar UMA aluna. Se houver várias, devolve a
+    lista em 'candidatos' sem registrar nada.
+    """
+    alunos, _ = buscar_alunos(identificador)
+
+    if not alunos:
         return {
             'sucesso': False,
             'mensagem': 'Aluno não encontrado.',
             'aluno': None,
-            'resultado_financeiro': None
+            'resultado_financeiro': None,
         }
-
-    # 2. Avalia a situação financeira em tempo real usando o serviço do financeiro
-    resultado_financeiro = avaliar_situacao_financeira_aluno(aluno)
-    status = resultado_financeiro['status']
-
-    # 3. Define se o acesso é permitido e regista a frequência de acordo com a regra
-    if status in ['liberado', 'liberado_com_aviso']:
-        obs = "Liberado com aviso de atraso" if status == 'liberado_com_aviso' else "Acesso normal"
-        
-        # Regista a frequência com data e hora exatas da entrada
-        Frequencia.objects.create(
-            aluno=aluno,
-            liberado=True,
-            observacao=obs
-        )
-
-        return {
-            'sucesso': True,
-            'status': status,
-            'mensagem': resultado_financeiro['motivo'],
-            'detalhes': resultado_financeiro.get('detalhes'),
-            'aluno': aluno
-        }
-    else:
-        # Acesso bloqueado (não gera registo de frequência de entrada autorizada)
+    if len(alunos) > 1:
         return {
             'sucesso': False,
-            'status': status,
-            'mensagem': resultado_financeiro['motivo'],
-            'detalhes': resultado_financeiro.get('detalhes'),
-            'aluno': aluno
+            'mensagem': 'Mais de um aluno encontrado. Informe o CPF.',
+            'aluno': None,
+            'candidatos': alunos,
         }
+    return registrar_entrada(alunos[0])

@@ -42,8 +42,10 @@ def preencher_anamnese(request, aluno_id):
             if anamnese.autorizacao_atividade_fisica:
                 aluno.ativo = True
                 aluno.save()
-                messages.success(request, f'Matrícula de {aluno.nome} liberada com sucesso.')
-                return redirect('consultar_anamnese', aluno_id=aluno.id)
+                messages.success(request, f'Anamnese e autorização confirmadas! {aluno.nome} já pode ser matriculada.')
+                # Volta ao painel da recepção. (A tela de consulta é só do
+                # professor: redirecionar para lá daria "sem permissão".)
+                return redirect('painel_recepcao')
             else:
                 aluno.ativo = False
                 aluno.save()

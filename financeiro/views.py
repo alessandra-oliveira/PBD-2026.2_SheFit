@@ -1,6 +1,8 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from accounts.decorators import perfil_requerido
 from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
 from .forms import PlanoForm, RegraFinanceiraForm
@@ -64,6 +66,7 @@ def editar_plano(request, plano_id):
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
+@require_POST  # muda dados: nunca por GET (um link ou imagem em outra página dispararia)
 def alternar_status_plano(request, plano_id):
     """
     Ativa/Desativa o plano rapidamente. Se desativado, some das novas matrículas.

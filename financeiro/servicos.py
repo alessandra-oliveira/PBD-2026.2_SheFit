@@ -97,6 +97,74 @@ def _validar_aluno_para_matricula(aluno):
         raise ValidationError(
             "Aluno sem autorização para atividade física não pode ser matriculado."
         )
+    if not aluno.ativo:
+        raise ValidationError("Aluno desativado não pode ser matriculado.")
+
+
+def _vencimento_da_competencia(primeiro_dia_do_mes, dia_vencimento, data_inicio):
+    """Vencimento da mensalidade de um mês.
+
+    Dia inexistente no mês (ex.: 31 em abril) usa o último dia do mês.
+    Nunca vence ANTES da data de início da matrícula: se o dia de vencimento
+    do mês de entrada já passou, a 1ª mensalidade vence na própria data de
+    início. Sem isso a aluna nasceria inadimplente no dia da matrícula.
+    """
+    try:
+        vencimento = primeiro_dia_do_mes.replace(day=dia_vencimento)
+    except ValueError:
+        vencimento = primeiro_dia_do_mes + relativedelta(day=31)
+    return max(vencimento, data_inicio)
+
+
+@transaction.atomic
+def gerar_cobrancas(matricula):
+    """Gera as cobranças da matrícula (T06). É IDEMPOTENTE: pode rodar quantas
+    vezes quiser para a mesma matrícula, que cada cobrança existe uma única vez.
+
+        - adesão: no máximo uma por matrícula;
+        - mensalidade: uma por (matrícula, competência).
+
+    Devolve quantas cobranças foram criadas nesta execução (0 se já existiam).
+    """
+    plano = matricula.plano
+    criadas = 0
+
+    taxa_adesao = plano.taxa_adesao
+    if taxa_adesao and taxa_adesao > 0:
+        if not matricula.cobrancas.filter(tipo='adesao').exists():
+            Cobranca.objects.create(
+                matricula=matricula,
+                tipo='adesao',
+                valor=taxa_adesao,
+                vencimento=timezone.localdate(),
+                competencia=None,
+            )
+            criadas += 1
+
+    primeiro_mes = matricula.data_inicio.replace(day=1)
+    for i in range(obter_total_meses_periodicidade(plano.periodicidade)):
+        mes = primeiro_mes + relativedelta(months=i)
+        try:
+            # Savepoint próprio: se a constraint única disparar numa corrida,
+            # só este bloco é desfeito e a transação externa continua.
+            with transaction.atomic():
+                _, criada = Cobranca.objects.get_or_create(
+                    matricula=matricula,
+                    tipo='mensalidade',
+                    competencia=mes.strftime('%Y-%m'),
+                    defaults={
+                        'valor': plano.valor,
+                        'vencimento': _vencimento_da_competencia(
+                            mes, plano.dia_vencimento, matricula.data_inicio,
+                        ),
+                    },
+                )
+        except IntegrityError:
+            criada = False
+        if criada:
+            criadas += 1
+
+    return criadas
 
 
 @transaction.atomic
@@ -107,52 +175,10 @@ def realizar_matricula(aluno, plano, data_inicio, forma_pagamento):
         aluno=aluno,
         plano=plano,
         data_inicio=data_inicio,
-        forma_pagamento=forma_pagamento
+        forma_pagamento=forma_pagamento,
     )
-
-    taxa_adesao = getattr(plano, 'taxa_adesao', Decimal('0.00'))
-    if taxa_adesao and taxa_adesao > 0:
-        Cobranca.objects.create(
-            matricula=matricula,
-            tipo='adesao',
-            valor=taxa_adesao,
-            vencimento=timezone.localdate(),
-            competencia=None
-        )
-
-    total_meses = obter_total_meses_periodicidade(plano.periodicidade)
-    data_atual = data_inicio
-    dia_venc = getattr(plano, 'dia_vencimento', 10)
-
-    for _ in range(total_meses):
-        competencia_str = data_atual.strftime('%Y-%m')
-
-        try:
-            vencimento = data_atual.replace(day=dia_venc)
-        except ValueError:
-            # Dia inexistente no mês (ex.: 31 em abril): usa o último dia do mês.
-            vencimento = data_atual + relativedelta(day=31)
-
-        try:
-            # Savepoint próprio: se der IntegrityError, só este bloco é
-            # desfeito e a transação externa continua utilizável.
-            with transaction.atomic():
-                Cobranca.objects.get_or_create(
-                    matricula=matricula,
-                    competencia=competencia_str,
-                    defaults={
-                        'tipo': 'mensalidade',
-                        'valor': plano.valor,
-                        'vencimento': vencimento
-                    }
-                )
-        except IntegrityError:
-            pass
-
-        data_atual += relativedelta(months=1)
-
+    gerar_cobrancas(matricula)
     return matricula
-
 
 def avaliar_situacao_financeira_aluno(aluno):
     """
