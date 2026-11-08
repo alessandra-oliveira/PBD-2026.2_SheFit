@@ -1,4 +1,5 @@
 
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
@@ -56,12 +57,13 @@ class Turma(models.Model):
             })
 
     def vagas_restantes(self):
-        #implementar quando criar função de reserva
-        return self.capacidade_maxima
+        """Capacidade menos as vagas já reservadas (quem está na lista de espera não conta)."""
+        ocupadas = self.agendamentos.filter(status='reservado').count()
+        return max(self.capacidade_maxima - ocupadas, 0)
 
     def tem_aluno_agendado(self):
-        #implementar quando criar função de reserva
-        return False
+        """True se há alguém com vaga reservada ou esperando. Turma assim só pode ser desativada."""
+        return self.agendamentos.filter(status__in=['reservado', 'espera']).exists()
 
     def __str__(self):
         return f'{self.modalidade.nome} - {self.get_dia_semana_display()} {self.horario}'
