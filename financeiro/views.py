@@ -7,6 +7,7 @@ from accounts.decorators import perfil_requerido
 from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
 from .forms import PlanoForm, RegraFinanceiraForm
 
+
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
 def listar_planos(request):
@@ -15,6 +16,7 @@ def listar_planos(request):
     """
     planos = Plano.objects.all().order_by('-ativo', 'nome')
     return render(request, 'financeiro/listar_planos.html', {'planos': planos})
+
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
@@ -35,6 +37,7 @@ def cadastrar_plano(request):
         'form': form,
         'titulo': 'Novo Plano'
     })
+
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
@@ -59,6 +62,7 @@ def editar_plano(request, plano_id):
         'plano': plano,
         'titulo': f'Editar {plano.nome}'
     })
+
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
@@ -103,10 +107,3 @@ def regras_financeiras(request):
         'regras': regras,
         'historico': historico,
     })
-
-def api_planos(request):
-    """
-    Retorna os planos ativos em formato JSON para o React.
-    """
-    planos = Plano.objects.filter(ativo=True).values('id', 'nome')
-    return JsonResponse(list(planos), safe=False)

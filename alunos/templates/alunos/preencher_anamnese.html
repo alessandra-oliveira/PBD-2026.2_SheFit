@@ -4,221 +4,369 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Anamnese e Matrícula - SheFit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Anamnese e Saúde - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
             width: 100%;
-            max-width: 520px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 680px;
+            padding: 36px 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
         }
 
-        h1 {
-            color: #7c3aed;
-            text-align: center;
-            margin-bottom: 4px;
-            font-size: 1.8rem;
-        }
-
-        p.subtitle {
-            text-align: center;
-            color: #666;
+        /* Topo do Modal */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 20px;
         }
 
-        .aluno-badge {
-            background: #f3e8ff;
-            color: #6b21a8;
-            padding: 10px 14px;
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            color: #a855f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-text h2 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #8b5cf6;
+            line-height: 1.1;
+        }
+
+        .brand-text p {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
             border-radius: 8px;
-            font-size: 0.95rem;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
         }
 
-        label {
-            display: block;
-            font-weight: bold;
-            margin-top: 14px;
-            margin-bottom: 4px;
+        .btn-close:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        /* Barra de Progresso Dupla (Passo 1 e Passo 2 completos) */
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .progress-step {
+            flex: 1;
+            height: 100%;
+            border-radius: 6px;
+        }
+
+        .progress-step.step-1 {
+            background: #8b5cf6;
+        }
+
+        .progress-step.step-2 {
+            background: linear-gradient(90deg, #ec4899, #d946ef);
+        }
+
+        /* Faixa/Badge do Estudante */
+        .student-pill {
+            background: #f5f3ff;
+            color: #6d28d9;
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: center;
             font-size: 0.95rem;
-            color: #333;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        /* Mensagens */
+        .msg-erro {
+            color: #dc2626;
+            font-size: 0.82rem;
+            margin-top: 4px;
+        }
+
+        .msg-sucesso {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        label.field-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #1e293b;
         }
 
         textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-family: Arial, sans-serif;
+            min-height: 100px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            color: #1e293b;
+            background: #ffffff;
+            outline: none;
             resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .checkbox-container {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
+        textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        textarea:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+        }
+
+        /* Caixa de Termo / Autorização */
+        .term-box {
             background: #fffbeb;
             border: 1px solid #fef3c7;
-            padding: 14px;
-            border-radius: 8px;
-            margin-top: 18px;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 24px;
         }
 
-        .checkbox-container input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: #7c3aed;
+        .term-box input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: #8b5cf6;
             cursor: pointer;
-            margin: 2px 0 0 0;
+            flex-shrink: 0;
         }
 
-        .checkbox-container label {
-            margin: 0;
-            font-weight: normal;
-            font-size: 0.9rem;
+        .term-box label {
+            font-size: 0.88rem;
             color: #92400e;
+            line-height: 1.45;
             cursor: pointer;
-            line-height: 1.35;
         }
 
-        button {
-            width: 100%;
-            margin-top: 20px;
-            padding: 14px;
-            background: #7c3aed;
+        .term-box strong {
+            font-weight: 700;
+            color: #78350f;
+        }
+
+        /* Rodapé com Botões */
+        .modal-footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-voltar {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 11px 24px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-salvar {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(217, 70, 239, 0.25);
+            transition: opacity 0.2s, transform 0.1s;
         }
 
-        button:hover {
-            background: #6d28d9;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.35);
-        }
-
-        button:active {
+        .btn-salvar:hover {
+            opacity: 0.95;
             transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(124, 58, 237, 0.35);
         }
 
-        .erro {
-            color: #b91c1c;
-            font-size: 0.85em;
-            margin-top: 4px;
-        }
-
-        .sucesso {
-            background: #dcfce7;
-            color: #166534;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-        }
-
-        .erro-box {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        font-size: 0.9rem;
-        }
-
-        @media (max-width: 480px) {
-            .card {
+        @media (max-width: 640px) {
+            .modal-card {
                 padding: 24px 20px;
-                border-radius: 12px;
+                border-radius: 18px;
             }
 
-            h1 {
-                font-size: 1.5rem;
+            .modal-footer {
+                flex-direction: column-reverse;
+                width: 100%;
             }
 
-            button {
-                padding: 12px;
+            .btn-voltar,
+            .btn-salvar {
+                width: 100%;
+                text-align: center;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>SheFit</h1>
-        <p class="subtitle">Ficha de Anamnese e Saúde</p>
+    <div class="modal-card">
+        <!-- Topo com Logo e Fechar -->
+        <div class="modal-header">
+            <div class="header-brand">
+                <div class="brand-icon">
+                    <i data-lucide="dumbbell" style="width: 32px; height: 32px;"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>SheFit</h2>
+                    <p>Ficha de Anamnese e Saúde</p>
+                </div>
+            </div>
+            <a href="{% url 'gestao_estudantes' %}" class="btn-close" title="Fechar">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </a>
+        </div>
 
-        <div class="aluno-badge">
-            Aluno(a): {{ aluno.nome }}
+        <!-- Barra de Progresso Dupla (Passo 2 ativo) -->
+        <div class="progress-bar-container">
+            <div class="progress-step step-1"></div>
+            <div class="progress-step step-2"></div>
+        </div>
+
+        <!-- Faixa de identificação da aluna -->
+        <div class="student-pill">
+            Estudante: {{ aluno.nome }}
         </div>
 
         {% if messages %}
             {% for message in messages %}
-                <div class="{% if message.tags == 'error' %}erro-box{% else %}sucesso{% endif %}">
-                    {{ message }}
-                </div>
+                <div class="msg-sucesso">{{ message }}</div>
             {% endfor %}
         {% endif %}
 
         <form method="post" autocomplete="off">
             {% csrf_token %}
 
-            <label for="{{ form.restricoes_medicas.id_for_label }}">{{ form.restricoes_medicas.label }}</label>
-            {{ form.restricoes_medicas }}
-            {% if form.restricoes_medicas.errors %}
-                <div class="erro">{{ form.restricoes_medicas.errors.0 }}</div>
-            {% endif %}
+            <!-- Restrições Médicas -->
+            <div class="form-group">
+                <label for="{{ form.restricoes_medicas.id_for_label }}" class="field-title">Restrições médicas</label>
+                <textarea name="{{ form.restricoes_medicas.name }}" id="{{ form.restricoes_medicas.id_for_label }}"
+                    placeholder='Informe restrições ou escreva "Não possui"'>{{ form.restricoes_medicas.value|default:'' }}</textarea>
+                {% if form.restricoes_medicas.errors %}
+                    <span class="msg-erro">{{ form.restricoes_medicas.errors.0 }}</span>
+                {% endif %}
+            </div>
 
-            <label for="{{ form.historico_lesoes.id_for_label }}">{{ form.historico_lesoes.label }}</label>
-            {{ form.historico_lesoes }}
-            {% if form.historico_lesoes.errors %}
-                <div class="erro">{{ form.historico_lesoes.errors.0 }}</div>
-            {% endif %}
+            <!-- Histórico de Lesões -->
+            <div class="form-group">
+                <label for="{{ form.historico_lesoes.id_for_label }}" class="field-title">Histórico de lesões</label>
+                <textarea name="{{ form.historico_lesoes.name }}" id="{{ form.historico_lesoes.id_for_label }}"
+                    placeholder="Descreva lesões anteriores, se houver">{{ form.historico_lesoes.value|default:'' }}</textarea>
+                {% if form.historico_lesoes.errors %}
+                    <span class="msg-erro">{{ form.historico_lesoes.errors.0 }}</span>
+                {% endif %}
+            </div>
 
-            <label for="{{ form.condicoes_cronicas.id_for_label }}">{{ form.condicoes_cronicas.label }}</label>
-            {{ form.condicoes_cronicas }}
-            {% if form.condicoes_cronicas.errors %}
-                <div class="erro">{{ form.condicoes_cronicas.errors.0 }}</div>
-            {% endif %}
+            <!-- Condições Crônicas -->
+            <div class="form-group">
+                <label for="{{ form.condicoes_cronicas.id_for_label }}" class="field-title">Condições crônicas</label>
+                <textarea name="{{ form.condicoes_cronicas.name }}" id="{{ form.condicoes_cronicas.id_for_label }}"
+                    placeholder="Informe condições crônicas, se houver">{{ form.condicoes_cronicas.value|default:'' }}</textarea>
+                {% if form.condicoes_cronicas.errors %}
+                    <span class="msg-erro">{{ form.condicoes_cronicas.errors.0 }}</span>
+                {% endif %}
+            </div>
 
-            <div class="checkbox-container">
-                {{ form.autorizacao_atividade_fisica }}
+            <!-- Termo de Autorização -->
+            <div class="term-box">
+                <input type="checkbox" name="{{ form.autorizacao_atividade_fisica.name }}" id="{{ form.autorizacao_atividade_fisica.id_for_label }}"
+                    {% if form.autorizacao_atividade_fisica.value %}checked{% endif %}>
                 <label for="{{ form.autorizacao_atividade_fisica.id_for_label }}">
-                    <strong>Termo de Autorização:</strong> O aluno declara estar apto para a prática de atividades físicas sob orientação.
+                    <strong>Termo de autorização:</strong> o estudante declara estar apto para a prática de atividades físicas sob orientação profissional.
                 </label>
             </div>
             {% if form.autorizacao_atividade_fisica.errors %}
-                <div class="erro">{{ form.autorizacao_atividade_fisica.errors.0 }}</div>
+                <span class="msg-erro" style="display: block; margin-top: 6px;">{{ form.autorizacao_atividade_fisica.errors.0 }}</span>
             {% endif %}
 
-            <button type="submit">Salvar Anamnese</button>
+            <!-- Botões de Ação -->
+            <div class="modal-footer">
+                <a href="{% url 'gestao_estudantes' %}" class="btn-voltar">Voltar</a>
+                <button type="submit" class="btn-salvar">Salvar alterações</button>
+            </div>
         </form>
     </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>

@@ -6,141 +6,622 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel da Recepção - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
             min-height: 100vh;
         }
 
-        /* Topo / Navbar */
-        .navbar {
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            padding: 16px 32px;
+        /* Sidebar Lateral Fixa */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
             color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
         }
 
-        .navbar-brand h1 {
-            font-size: 1.5rem;
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
             letter-spacing: -0.5px;
         }
 
-        .navbar-brand span {
-            font-size: 0.8rem;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 3px 8px;
-            border-radius: 6px;
-            margin-left: 8px;
-            text-transform: uppercase;
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
         }
 
-        .btn-sair {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
             text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
             transition: background 0.2s;
         }
 
-        .btn-sair:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
         }
 
-        /* Container Principal */
-        .container {
-            max-width: 1200px;
-            margin: 32px auto;
-            padding: 0 20px;
+        /* Área Central de Conteúdo */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
 
-        /* Ações Rápidas */
-        .acoes-rapidas {
+        /* Topbar com Perfil e Data */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Cabeçalho da Página */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
             gap: 16px;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            color: white;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: bold;
-            display: inline-flex;
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .actions-group {
+            display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
-            transition: opacity 0.2s;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-
-        .btn-secondary {
+        .btn-action-outline {
             background: white;
             color: #7c3aed;
             border: 1.5px solid #ddd6fe;
-            text-decoration: none;
-            padding: 11px 20px;
-            border-radius: 8px;
-            font-weight: bold;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
             font-size: 0.95rem;
             display: inline-flex;
             align-items: center;
-            transition: background 0.2s;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
         }
 
-        .btn-secondary:hover {
+        .btn-action-outline:hover {
             background: #f5f3ff;
+            border-color: #c4b5fd;
         }
 
-        /* Card de Inadimplência do Dia (História T01) */
-        .alerta-inadimplencia {
+        .btn-action-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+        }
+
+        /* Alerta de Inadimplência */
+        .alert-card {
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             background: #fffbeb;
             border: 1px solid #fef3c7;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 32px;
+            color: #92400e;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
-        .alerta-inadimplencia h3 {
-            font-size: 1rem;
-            color: #92400e;
-            margin-bottom: 6px;
+        .alert-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-retry {
+            background: #d97706;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Cards Base */
+        .card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Linha 1: Métricas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .stat-icon {
+            color: #7c3aed;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 12px 0 8px 0;
+        }
+
+        .stat-status {
+            font-size: 0.85rem;
+            color: #059669;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        /* Linha 2: Atividade & Distribuição */
+        .content-grid-top {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .sub-bar-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .chart-subtitle {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        /* Barras Mensais */
+        .bar-chart-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            min-height: 140px;
+            padding-top: 10px;
+            gap: 12px;
+        }
+
+        .bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .bar-val {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .bar-track {
+            width: 36px;
+            height: 90px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;
+        }
+
+        .bar-pill {
+            width: 100%;
+            background: linear-gradient(180deg, #7c3aed, #a855f7);
+            border-radius: 6px;
+            transition: height 0.3s ease;
+            min-height: 4px;
+        }
+
+        .bar-col.active .bar-pill {
+            background: linear-gradient(180deg, #ec4899, #f43f5e);
+        }
+
+        .bar-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: capitalize;
+        }
+
+        /* Donut & Planos */
+        .donut-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 0;
+        }
+
+        .donut {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(white 56%, transparent 57%),
+                        conic-gradient(#7c3aed 0% 50%, #ec4899 50% 85%, #3b82f6 85% 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 0 1px #f1f5f9;
+            margin-bottom: 16px;
+        }
+
+        .donut-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .donut-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .lista-planos {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .item-plano {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .plano-info-left {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .alerta-inadimplencia p {
-            font-size: 0.9rem;
-            color: #b45309;
+        .plano-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
         }
 
-        /* Tabela de Alunos */
+        .empty-chart-note {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 14px;
+        }
+
+        /* Linha 3: Populares & Agenda */
+        .content-grid-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .sub-card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .lista-populares {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .popular-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .popular-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .badge-turmas {
+            background: #ede9fe;
+            color: #6d28d9;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .popular-progress-bg {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .popular-progress-fill {
+            height: 100%;
+            background: var(--btn-gradient);
+            border-radius: 4px;
+        }
+
+        .popular-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .lista-agenda {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .agenda-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .agenda-dia-tag {
+            background: var(--btn-gradient);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 65px;
+        }
+
+        .agenda-corpo {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .agenda-linha-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .agenda-hora {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary-purple);
+        }
+
+        .agenda-linha-sub {
+            display: flex;
+            gap: 8px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .empty-placeholder {
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 0.88rem;
+            text-align: center;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px dashed #cbd5e1;
+        }
+
+        /* Seção Tabela Geral de Alunas */
         .card-tabela {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
             overflow: hidden;
         }
 
@@ -153,17 +634,18 @@
         }
 
         .tabela-cabecalho h2 {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             color: #1e293b;
+            font-weight: 700;
         }
 
         .contador-badge {
             background: #f1f5f9;
             color: #475569;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 12px;
             font-size: 0.85rem;
-            font-weight: bold;
+            font-weight: 700;
         }
 
         table {
@@ -180,6 +662,7 @@
             letter-spacing: 0.05em;
             padding: 14px 24px;
             border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
         }
 
         td {
@@ -192,13 +675,12 @@
             background: #fcfcfd;
         }
 
-        /* Badges de Status */
         .badge-status {
-            display: inline-block;
             padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.8rem;
-            font-weight: bold;
+            font-weight: 700;
+            display: inline-block;
         }
 
         .status-ativo {
@@ -211,17 +693,17 @@
             color: #991b1b;
         }
 
-        /* Botões de Ação */
         .acoes-col {
             display: flex;
             gap: 8px;
+            justify-content: flex-end;
         }
 
         .btn-acao {
             padding: 6px 12px;
             border-radius: 6px;
             font-size: 0.8rem;
-            font-weight: bold;
+            font-weight: 700;
             text-decoration: none;
             transition: background 0.2s;
         }
@@ -271,36 +753,76 @@
 </head>
 
 <body>
-    <!-- Navbar Superior -->
-    <header class="navbar">
-        <div class="navbar-brand">
-            <h1>SheFit <span>Recepção</span></h1>
-        </div>
-        <div>
-            <span style="font-size: 0.9rem; margin-right: 16px;">Operador: <strong>{{ request.user.username }}</strong></span>
-            <a href="{% url 'sair' %}" class="btn-sair">Sair</a>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- Mensagens do sistema (ex.: confirmação da anamnese) -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="msg {% if message.tags == 'error' %}msg-erro{% else %}msg-sucesso{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <!-- Barra de Ações Rápidas -->
-        <div class="acoes-rapidas">
-            <div>
-                <h2>Gerenciamento Operacional</h2>
-                <p style="color: #64748b; font-size: 0.9rem;">Matrículas, cadastros e controle diário de acesso.</p>
+    <!-- Sidebar Navegação Lateral -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i data-lucide="dumbbell"></i>
+                <span>SheFit</span>
             </div>
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <a href="{% url 'tela_entrada_recepcao' %}" class="btn-secondary">
+            <i data-lucide="menu" style="cursor: pointer;"></i>
+        </div>
+
+        <ul class="nav-list">
+            <li class="nav-item active">
+                <a href="{% url 'tela_entrada_recepcao' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'gestao_estudantes' %}">
+                    <i data-lucide="users"></i>
+                    <span>Estudantes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity"></i>
+                    <span>Aulas/Modalidades</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+        <!-- Topbar com Data e Operador -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
+                    <div class="role">Recepção</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cabeçalho do Painel com os Dois Botões Essenciais -->
+        <div class="page-header">
+            <div>
+                <h1>Visão Geral do Painel</h1>
+                <p>Confira o que está acontecendo na academia hoje.</p>
+            </div>
+            <div class="actions-group">
+                <a href="{% url 'tela_entrada_recepcao' %}" class="btn-action-outline">
+                    <i data-lucide="log-in" style="width: 18px; height: 18px;"></i>
                     Controle de Entrada
+                </a>
+                <a href="{% url 'listar_cobrancas_pagamento' %}" class="btn-secondary">
+                    Registrar Pagamento
                 </a>
                 <a href="{% url 'listar_turmas' %}" class="btn-secondary">
                     Ver Turmas
@@ -316,66 +838,168 @@
             </div>
         </div>
 
-        <!-- Seção: Inadimplência do Dia (Atende História T01) -->
-        <section class="alerta-inadimplencia">
-            <h3>⚠️ Inadimplência do Dia</h3>
-            {% if inadimplentes_hoje %}
-                <p>Existem cobranças pendentes para o dia de hoje que requerem atenção na recepção.</p>
-            {% else %}
-                <p>Nenhuma pendência financeira ou mensalidade vencida registrada para hoje.</p>
-            {% endif %}
-        </section>
+        <!-- Banner de Inadimplência do Dia -->
+        {% if inadimplentes_hoje %}
+        <div class="alert-card">
+            <div class="alert-left">
+                <i data-lucide="alert-triangle"></i>
+                <span>Existem cobranças pendentes para o dia de hoje que requerem atenção na recepção.</span>
+            </div>
+            <a href="{% url 'tela_entrada_recepcao' %}" class="btn-retry">Verificar Entrada</a>
+        </div>
+        {% endif %}
 
-        <!-- Seção: Tabela Geral de Alunos -->
-        <section class="card-tabela">
-            <div class="tabela-cabecalho">
-                <h2>Alunas Cadastradas</h2>
-                <span class="contador-badge">{{ total_alunos }} cadastradas</span>
+        <!-- Linha 1: Métricas Principais -->
+        <section class="stats-grid">
+            <div class="card">
+                <div class="stat-card-header">
+                    <span>Total de Estudantes</span>
+                    <i data-lucide="users" class="stat-icon"></i>
+                </div>
+                <div class="stat-value">{{ total_estudantes }}</div>
+                <div class="stat-status">
+                    <i data-lucide="trending-up" style="width: 16px; height: 16px;"></i>
+                    <span>Ativas na base</span>
+                </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>CPF</th>
-                        <th>Telefone</th>
-                        <th>Situação da Matrícula</th>
-                        <th style="text-align: right;">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for aluno in alunos %}
-                        <tr>
-                            <td><strong>{{ aluno.nome }}</strong></td>
-                            <td>{{ aluno.cpf|default:"Não informado" }}</td>
-                            <td>{{ aluno.telefone|default:"Não informado" }}</td>
-                            <td>
-                                {% if aluno.apto_para_treino %}
-                                    <span class="badge-status status-ativo">Ativa</span>
-                                {% else %}
-                                    <span class="badge-status status-pendente">{{ aluno.status_matricula }}</span>
-                                {% endif %}
-                            </td>
-                            <td style="text-align: right;">
-                                <div class="acoes-col" style="justify-content: flex-end;">
-                                    <a href="{% url 'editar_aluno' aluno.id %}" class="btn-acao btn-detalhes">Editar</a>
-                                    <a href="{% url 'preencher_anamnese' aluno.id %}" class="btn-acao btn-anamnese" title="Preencher ou atualizar ficha médica">
-                                        Ficha / Anamnese
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
+            <div class="card">
+                <div class="stat-card-header">
+                    <span>Aulas Ativas</span>
+                    <i data-lucide="activity" class="stat-icon"></i>
+                </div>
+                <div class="stat-value">{{ total_aulas_ativas|default:"0" }}</div>
+                <div class="stat-status" style="color: #7c3aed;">
+                    <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+                    <span>Turmas na grade semanal</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Linha 2: Atividade de Estudantes e Distribuição de Planos -->
+        <section class="content-grid-top">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3 class="card-title">Estudantes em atividade</h3>
+                    <i data-lucide="more-horizontal" style="color: #64748b;"></i>
+                </div>
+                <div class="sub-bar-info">
+                    <span>{{ taxa_atividade|default:"0" }}% do total</span>
+                    <span>{{ estudantes_ativos|default:"0" }}/{{ total_estudantes }}</span>
+                </div>
+
+                <h4 class="chart-subtitle">Cadastros de Estudantes (Últimos 6 meses)</h4>
+
+                <div class="bar-chart-container">
+                    {% for item in cadastros_mensais %}
+                        <div class="bar-col {% if item.is_atual %}active{% endif %}">
+                            <span class="bar-val">{{ item.quantidade }}</span>
+                            <div class="bar-track">
+                                <div class="bar-pill" style="height: {{ item.altura_pct }}%;"></div>
+                            </div>
+                            <span class="bar-label">{{ item.mes }}</span>
+                        </div>
                     {% empty %}
-                        <tr>
-                            <td colspan="5" class="sem-alunos">
-                                Nenhuma aluna cadastrada até o momento. Clique em <strong>+ Novo Cadastro</strong> para iniciar.
-                            </td>
-                        </tr>
+                        <div class="bar-col active"><span class="bar-val">0</span><div class="bar-track"><div class="bar-pill" style="height: 6%;"></div></div><span class="bar-label">Janeiro</span></div>
+                        <div class="bar-col"><span class="bar-val">0</span><div class="bar-track"><div class="bar-pill" style="height: 6%;"></div></div><span class="bar-label">Fevereiro</span></div>
+                        <div class="bar-col"><span class="bar-val">0</span><div class="bar-track"><div class="bar-pill" style="height: 6%;"></div></div><span class="bar-label">Março</span></div>
+                        <div class="bar-col"><span class="bar-val">0</span><div class="bar-track"><div class="bar-pill" style="height: 6%;"></div></div><span class="bar-label">Abril</span></div>
+                        <div class="bar-col"><span class="bar-val">0</span><div class="bar-track"><div class="bar-pill" style="height: 6%;"></div></div><span class="bar-label">Maio</span></div>
+                        <div class="bar-col"><span class="bar-val">0</span><div class="bar-track"><div class="bar-pill" style="height: 6%;"></div></div><span class="bar-label">Junho</span></div>
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Distribuição de Matrículas</h3>
+                <div class="donut-container">
+                    <div class="donut">
+                        <span class="donut-number">{{ total_matriculados|default:total_estudantes }}</span>
+                        <span class="donut-label">Matrículas</span>
+                    </div>
+                </div>
+
+                <div class="lista-planos">
+                    {% for plano in distribuicao_planos %}
+                        <div class="item-plano">
+                            <div class="plano-info-left">
+                                <span class="plano-dot" style="background-color: {{ plano.cor|default:'#7c3aed' }};"></span>
+                                <span><strong>{{ plano.nome }}</strong></span>
+                            </div>
+                            <span><strong>{{ plano.quantidade }}</strong></span>
+                        </div>
+                    {% empty %}
+                        <p class="empty-chart-note">Nenhum plano cadastrado no momento.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Linha 3: Aulas Populares e Agenda Semanal -->
+        <section class="content-grid-bottom">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3 class="card-title">Aulas Populares</h3>
+                </div>
+                <p class="sub-card-desc">Frequência e representatividade das modalidades na grade semanal</p>
+
+                <div class="lista-populares">
+                    {% for mod in aulas_populares %}
+                        <div class="popular-item">
+                            <div class="popular-header">
+                                <strong>{{ mod.nome }}</strong>
+                                <span class="badge-turmas">{{ mod.turmas_count }} turma{{ mod.turmas_count|pluralize }}</span>
+                            </div>
+                            <div class="popular-progress-bg">
+                                <div class="popular-progress-fill" style="width: {{ mod.porcentagem }}%;"></div>
+                            </div>
+                            <div class="popular-meta">
+                                <span>Capacidade: {{ mod.capacidade_total }} alunas</span>
+                                <span>{{ mod.porcentagem }}% da grade</span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-placeholder">Nenhuma modalidade com turmas ativas no momento.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Agenda da Semana</h3>
+                <p class="sub-card-desc">Próximas turmas da série semanalmente</p>
+
+                <div class="lista-agenda">
+                    {% for aula in agenda_semana %}
+                        <div class="agenda-item">
+                            <div class="agenda-dia-tag">{{ aula.dia }}</div>
+                            <div class="agenda-corpo">
+                                <div class="agenda-linha-topo">
+                                    <strong class="agenda-nome">{{ aula.modalidade }}</strong>
+                                    <span class="agenda-hora">{{ aula.horario }}</span>
+                                </div>
+                                <div class="agenda-linha-sub">
+                                    <span>Prof. {{ aula.professor }}</span> &bull;
+                                    <span>{{ aula.sala }}</span> &bull;
+                                    <span>{{ aula.ocupacao }} vagas</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-placeholder">Nenhuma aula cadastrada na agenda semanal.</div>
+                    {% endfor %}
+                </div>
+            </div>
         </section>
     </main>
+
+    <script>
+        lucide.createIcons();
+
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        document.getElementById('data-atual').innerText = dataCapitalizada;
+    </script>
 </body>
 
 </html>
