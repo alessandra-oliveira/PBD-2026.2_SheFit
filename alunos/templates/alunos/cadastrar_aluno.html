@@ -4,180 +4,211 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Cadastrar Aluno - SheFit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Estudante - SheFit</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
             width: 100%;
-            max-width: 480px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 680px;
+            padding: 36px 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
-        h1 {
-            color: #7c3aed;
-            text-align: center;
-            margin-bottom: 4px;
-            font-size: 1.8rem;
-        }
-
-        p.subtitle {
-            text-align: center;
-            color: #666;
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 20px;
         }
 
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            color: #8b5cf6;
+        }
+
+        .brand-text h2 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #8b5cf6;
+        }
+
+        .brand-text p {
+            font-size: 0.88rem;
+            color: #64748b;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            text-decoration: none;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 28px;
+            overflow: hidden;
+        }
+
+        .progress-active {
+            width: 50%;
+            background: #8b5cf6;
+            height: 100%;
+        }
+
+        /* Grid do formulário do Django */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Se for campo longo (como nome, endereço ou foto), ocupa a linha toda */
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
         label {
-            display: block;
-            font-weight: bold;
-            margin-top: 12px;
-            margin-bottom: 4px;
-            font-size: 0.95rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #1e293b;
         }
 
-        input,
-        textarea {
+        input, select, textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        input[type="file"] {
-            padding: 8px 4px;
+        input:focus, select:focus {
+            border-color: #8b5cf6;
         }
 
-        button {
-            width: 100%;
-            margin-top: 20px;
-            padding: 14px;
-            background: #7c3aed;
+        .msg-erro {
+            color: #dc2626;
+            font-size: 0.8rem;
+        }
+
+        .modal-footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancelar {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .btn-avancar {
+            background: #9333ea;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
+            padding: 12px 26px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
         }
 
-        button:hover {
-            background: #6d28d9;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.35);
-        }
-
-        button:active {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(124, 58, 237, 0.35);
-        }
-
-        .erro {
-            color: #b91c1c;
-            font-size: 0.85em;
-            margin-top: 4px;
-        }
-
-        .sucesso {
-            background: #dcfce7;
-            color: #166534;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-        }
-
-        .btn-voltar {
-            display: block;
-            width: 100%;
-            margin-top: 12px;
-            padding: 14px;
-            text-align: center;
-            text-decoration: none;
-            color: #7c3aed;
-            border: 2px solid #7c3aed;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
-            transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-voltar:hover {
-            background: #7c3aed;
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.35);
-        }
-
-        .btn-voltar:active {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(124, 58, 237, 0.35);
-        }
-
-        /* Telas pequenas (celular) */
-        @media (max-width: 480px) {
-            .card {
-                padding: 24px 20px;
-                border-radius: 12px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            button {
-                padding: 12px;
-            }
-
-            .btn-voltar {
-                padding: 12px;
-            }
+        .btn-avancar:hover {
+            background: #7e22ce;
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>SheFit</h1>
-        <p class="subtitle">Cadastro de Aluno</p>
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="header-brand">
+                <i data-lucide="dumbbell" class="brand-icon" style="width: 32px; height: 32px;"></i>
+                <div class="brand-text">
+                    <h2>SheFit</h2>
+                    <p>Cadastro de Estudante</p>
+                </div>
+            </div>
+            <a href="{% url 'gestao_estudantes' %}" class="btn-close">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </a>
+        </div>
 
-        {% if messages %}
-        {% for message in messages %}
-        <div class="sucesso">{{ message }}</div>
-        {% endfor %}
-        {% endif %}
+        <div class="progress-bar-container">
+            <div class="progress-active"></div>
+        </div>
 
         <form method="post" enctype="multipart/form-data" autocomplete="off">
             {% csrf_token %}
-            {% for field in form %}
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-            <div class="erro">{{ field.errors.0 }}</div>
-            {% endif %}
-            {% endfor %}
-            <button type="submit">Avançar para Anamnese</button>
-        </form>
 
-        <a href="{% url 'painel_recepcao' %}" class="btn-voltar">Voltar ao painel</a>
+            <div class="form-grid">
+                {% for field in form %}
+                    <div class="form-group {% if field.name in 'nome,endereco,foto,observacoes' %}full-width{% endif %}">
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }} {% if field.field.required %}<span style="color: #ec4899;">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <span class="msg-erro">{{ field.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="modal-footer">
+                <a href="{% url 'gestao_estudantes' %}" class="btn-cancelar">Cancelar</a>
+                <button type="submit" class="btn-avancar">Avançar para anamnese</button>
+            </div>
+        </form>
     </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>

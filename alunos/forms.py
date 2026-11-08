@@ -2,11 +2,14 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
+from accounts.models import Perfil
 from .models import Aluno, Anamnese
 from financeiro.models import Matricula
 from django.contrib.auth.models import User
 from django.db import transaction   
 from accounts.models import Perfil    
+
 
 class AlunoForm(forms.ModelForm):
     """Cadastro e edição de aluno.
@@ -93,8 +96,6 @@ class AlunoForm(forms.ModelForm):
         if commit:
             aluno.save()
         return aluno
-    
-
 
 class AnamneseForm(forms.ModelForm):
     class Meta:
