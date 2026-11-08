@@ -58,6 +58,7 @@
             line-height: 1.5;
             margin-bottom: 28px;
         }
+        
         .botao-sair {
             display: block;
             width: 100%;
@@ -99,6 +100,7 @@
                 <strong>Aviso de Matrícula:</strong> Sua matrícula está pendente de anamnese médica. Por favor, procure a recepção para regularizar seu cadastro.
             </div>
         {% endif %}
+        <a href="{% url 'minhas_aulas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Minhas aulas</a>
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
     </div>
 </body>

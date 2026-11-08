@@ -652,3 +652,54 @@ class VencimentoDaPrimeiraMensalidadeTests(TestCase):
         matricula = realizar_matricula(self.aluno, self.plano, date(2027, 3, 1), 'pix')
         vencimentos = [c.vencimento for c in matricula.cobrancas.order_by('vencimento')]
         self.assertEqual(vencimentos, [date(2027, 3, 31), date(2027, 4, 30), date(2027, 5, 31)])
+
+        
+
+class AlternarStatusPlanoTests(TestCase):
+    """Ativar/desativar plano muda dados: só por POST, com CSRF e só o financeiro."""
+
+    def setUp(self):
+        self.financeiro = criar_usuario('fin_toggle', Perfil.FINANCEIRO)
+        self.client.force_login(self.financeiro)
+        self.plano = Plano.objects.create(
+            nome="Mensal", periodicidade="mensal", valor=Decimal('100.00'),
+            taxa_adesao=Decimal('0.00'), dia_vencimento=10,
+        )
+        self.url = reverse('alternar_status_plano', args=[self.plano.id])
+
+    def test_get_nao_altera_o_plano(self):
+        resposta = self.client.get(self.url)
+        self.assertEqual(resposta.status_code, 405)
+        self.plano.refresh_from_db()
+        self.assertTrue(self.plano.ativo)
+
+    def test_post_desativa_e_um_segundo_post_reativa(self):
+        self.client.post(self.url)
+        self.plano.refresh_from_db()
+        self.assertFalse(self.plano.ativo)
+        self.client.post(self.url)
+        self.plano.refresh_from_db()
+        self.assertTrue(self.plano.ativo)
+
+    def test_post_volta_para_a_lista_de_planos(self):
+        resposta = self.client.post(self.url)
+        self.assertRedirects(resposta, reverse('listar_planos'))
+
+    def test_post_sem_token_csrf_e_recusado(self):
+        cliente = Client(enforce_csrf_checks=True)
+        cliente.force_login(self.financeiro)
+        self.assertEqual(cliente.post(self.url).status_code, 403)
+        self.plano.refresh_from_db()
+        self.assertTrue(self.plano.ativo)
+
+    def test_recepcao_nao_altera_o_plano(self):
+        self.client.force_login(criar_usuario('rec_toggle', Perfil.RECEPCAO))
+        resposta = self.client.post(self.url)
+        self.assertEqual(resposta.status_code, 302)
+        self.plano.refresh_from_db()
+        self.assertTrue(self.plano.ativo)
+
+    def test_lista_usa_formulario_post_com_token(self):
+        resposta = self.client.get(reverse('listar_planos'))
+        self.assertContains(resposta, f'action="{self.url}"')
+        self.assertContains(resposta, 'name="csrfmiddlewaretoken"')

@@ -257,6 +257,26 @@
             padding: 32px;
             color: #94a3b8;
         }
+
+        .btn-voltar {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #7c3aed;
+            background: white;
+            border: 1px solid #ddd6fe;
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #f5f3ff;
+        }
     </style>
 </head>
 
@@ -277,8 +297,14 @@
             </div>
         {% endfor %}
         
-    <main class="container">
-        <div class="acoes-rapidas">
+            <main class="container">
+
+            <a href="javascript:history.back()" class="btn-voltar">
+                ← Voltar
+            </a>
+
+            <div class="acoes-rapidas">
+                
             <div>
                 <h2>Turmas e Modalidades</h2>
                 <p>Horários, professores e capacidade de cada turma.</p>

@@ -71,18 +71,24 @@ def painel_professor(request):
         raise PermissionDenied
     return render(request, 'accounts/painel_professor.html')
 
+
 @login_required(login_url='entrar')
 def painel_recepcao(request):
-    if hasattr(request.user, 'perfil') and request.user.perfil.tipo != 'recepcao':
+    if not hasattr(request.user, 'perfil') or request.user.perfil.tipo != 'recepcao':
         raise PermissionDenied
 
-    alunos = Perfil.objects.filter(tipo='aluno') 
-    
+    alunos = Aluno.objects.all()
+
     context = {
-        'alunos': alunos, # Passa a lista para o template
+        'alunos': alunos,
+        'total_alunos': alunos.count(),
     }
 
-    return render(request, 'accounts/painel_recepcao.html')
+    return render(
+        request,
+        'accounts/painel_recepcao.html',
+        context
+    )
 
 @login_required(login_url='entrar')
 def painel_financeiro(request):
