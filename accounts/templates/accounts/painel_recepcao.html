@@ -821,8 +821,18 @@
                     <i data-lucide="log-in" style="width: 18px; height: 18px;"></i>
                     Controle de Entrada
                 </a>
-                <a href="{% url 'criar_matricula' %}" class="btn-action-primary">
-                    <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+                <a href="{% url 'listar_cobrancas_pagamento' %}" class="btn-secondary">
+                    Registrar Pagamento
+                </a>
+                <a href="{% url 'listar_turmas' %}" class="btn-secondary">
+                    Ver Turmas
+                </a>
+                <!-- Fluxo: 1) Novo Cadastro -> 2) Anamnese -> 3) Nova Matrícula -->
+                <a href="{% url 'cadastrar_aluno' %}" class="btn-secondary">
+                    + Novo Cadastro
+                </a>
+                <!-- Matrícula financeira com cobranças automáticas (T06) -->
+                <a href="{% url 'criar_matricula' %}" class="btn-primary">
                     + Nova Matrícula
                 </a>
             </div>

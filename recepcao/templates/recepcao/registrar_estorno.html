@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Estornar pagamento - Recepção SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
+        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+        main { max-width: 720px; margin: 32px auto; padding: 0 18px; }
+        .card { padding: 22px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
+        h1 { margin: 0; font-size: 1.4rem; }
+        h2 { margin-top: 0; font-size: 1.15rem; }
+        .field { margin: 14px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+        textarea { resize: vertical; }
+        .button { display: inline-block; margin-top: 8px; padding: 11px 15px; border: 0; border-radius: 8px; background: #b91c1c; color: white; cursor: pointer; font-weight: 700; text-decoration: none; }
+        .secondary { background: #475569; }
+        .error { color: #b91c1c; }
+        .message { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
+        .muted { color: #64748b; }
+    </style>
+</head>
+<body>
+    <header><h1>SheFit · Recepção</h1></header>
+    <main>
+        {% if messages %}
+            {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+        {% endif %}
+        <section class="card">
+            <h2>Estornar pagamento #{{ pagamento.id }}</h2>
+            <p class="muted">
+                {{ pagamento.cobranca.matricula.aluno.nome }} · pago em
+                {{ pagamento.data_pagamento|date:"d/m/Y" }} · valor original
+                R$ {{ pagamento.valor_pago|floatformat:2 }}
+            </p>
+            <p>Disponível para estorno: <strong>R$ {{ disponivel|floatformat:2 }}</strong></p>
+            <p>O estorno ficará registrado com o motivo informado. O pagamento original não será apagado.</p>
+            <form method="post">
+                {% csrf_token %}
+                {% for error in form.non_field_errors %}<div class="error">{{ error }}</div>{% endfor %}
+                {% for field in form %}
+                    <div class="field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<div class="error">{{ error }}</div>{% endfor %}
+                    </div>
+                {% endfor %}
+                <button class="button" type="submit">Registrar estorno</button>
+                <a class="button secondary" href="{% url 'registrar_pagamento' pagamento.cobranca_id %}">Cancelar</a>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

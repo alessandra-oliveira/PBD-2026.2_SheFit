@@ -19,6 +19,7 @@ def _tipo_do_usuario(usuario):
     perfil = getattr(usuario, 'perfil', None)
     return getattr(perfil, 'tipo', None)
 
+
 def entrar(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -91,10 +92,11 @@ def painel_recepcao(request):
     hoje = timezone.localdate()
 
     # 1. Total de estudantes e alunas em atividade
-    alunos = Aluno.objects.all().order_by('-id')
+    alunos = Aluno.objects.select_related('perfil').all().order_by('-id')
     total_estudantes = alunos.count()
     estudantes_ativos = alunos.filter(ativo=True).count()
-    taxa_atividade = round((estudantes_ativos / total_estudantes * 100), 1) if total_estudantes > 0 else 0
+    taxa_atividade = round(
+        (estudantes_ativos / total_estudantes * 100), 1) if total_estudantes > 0 else 0
 
     # 2. Total de aulas / turmas ativas
     total_aulas_ativas = Turma.objects.filter(ativo=True).count()
@@ -108,7 +110,8 @@ def painel_recepcao(request):
     max_cadastros = 0
     for i in range(5, -1, -1):
         data_ref = hoje - relativedelta(months=i)
-        qtd = Aluno.objects.filter(criado_em__year=data_ref.year, criado_em__month=data_ref.month).count()
+        qtd = Aluno.objects.filter(
+            criado_em__year=data_ref.year, criado_em__month=data_ref.month).count()
         if qtd > max_cadastros:
             max_cadastros = qtd
         cadastros_mensais.append({
@@ -118,16 +121,19 @@ def painel_recepcao(request):
             'is_atual': (i == 0)
         })
     for item in cadastros_mensais:
-        item['altura_pct'] = max(int((item['quantidade'] / max_cadastros) * 100), 8) if max_cadastros > 0 else 8
+        item['altura_pct'] = max(
+            int((item['quantidade'] / max_cadastros) * 100), 8) if max_cadastros > 0 else 8
 
     # 4. Distribuição de matrículas por plano
-    paleta_cores = ['#7c3aed', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#06b6d4', '#8b5cf6']
+    paleta_cores = ['#7c3aed', '#ec4899', '#3b82f6',
+                    '#10b981', '#f59e0b', '#06b6d4', '#8b5cf6']
     planos_db = Plano.objects.filter(ativo=True)
     total_matriculados = Matricula.objects.count()
     distribuicao_planos = []
     for idx, plano in enumerate(planos_db):
         qtd = Matricula.objects.filter(plano=plano).count()
-        pct = round((qtd / total_matriculados * 100), 1) if total_matriculados > 0 else 0
+        pct = round((qtd / total_matriculados * 100),
+                    1) if total_matriculados > 0 else 0
         distribuicao_planos.append({
             'id': plano.id,
             'nome': plano.nome,
@@ -143,8 +149,10 @@ def painel_recepcao(request):
     for mod in modalidades:
         turmas_mod = Turma.objects.filter(modalidade=mod, ativo=True)
         count = turmas_mod.count()
-        capacidade_total = turmas_mod.aggregate(Sum('capacidade_maxima'))['capacidade_maxima__sum'] or 0
-        pct = round(count / total_aulas_ativas * 100) if total_aulas_ativas > 0 else 0
+        capacidade_total = turmas_mod.aggregate(Sum('capacidade_maxima'))[
+            'capacidade_maxima__sum'] or 0
+        pct = round(count / total_aulas_ativas *
+                    100) if total_aulas_ativas > 0 else 0
         aulas_populares.append({
             'id': mod.id,
             'nome': mod.nome.strip(),
@@ -155,8 +163,10 @@ def painel_recepcao(request):
     aulas_populares.sort(key=lambda x: x['turmas_count'], reverse=True)
 
     # 6. Agenda da semana (turmas ativas ordenadas por dia e horário)
-    dias_ordem = {'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5, 'sabado': 6, 'domingo': 7}
-    turmas_ativas = Turma.objects.filter(ativo=True).select_related('modalidade', 'professor')
+    dias_ordem = {'segunda': 1, 'terca': 2, 'quarta': 3,
+                  'quinta': 4, 'sexta': 5, 'sabado': 6, 'domingo': 7}
+    turmas_ativas = Turma.objects.filter(
+        ativo=True).select_related('modalidade', 'professor')
     agenda_semana = []
     for t in turmas_ativas:
         nome_prof = (
@@ -164,7 +174,8 @@ def painel_recepcao(request):
             if t.professor else 'Sem professor'
         )
         hora_str = t.horario.strftime('%H:%M') if t.horario else '--:--'
-        hora_fim = (datetime.combine(hoje, t.horario) + timedelta(hours=1)).strftime('%H:%M') if t.horario else '--:--'
+        hora_fim = (datetime.combine(hoje, t.horario) + timedelta(hours=1)
+                    ).strftime('%H:%M') if t.horario else '--:--'
         matriculados = t.capacidade_maxima - t.vagas_restantes()
         agenda_semana.append({
             'id': t.id,
@@ -182,7 +193,8 @@ def painel_recepcao(request):
 
     # 7. Inadimplência do dia (cobranças vencidas não pagas)
     try:
-        inadimplentes_hoje = Cobranca.objects.filter(paga=False, vencimento__lte=hoje).select_related('matricula__aluno')
+        inadimplentes_hoje = Cobranca.objects.filter(
+            paga=False, vencimento__lte=hoje).select_related('matricula__aluno')
     except Exception:
         inadimplentes_hoje = []
 
@@ -232,7 +244,8 @@ def gestao_estudantes_view(request):
     for aluno in alunos:
         matriculas = list(aluno.matricula_set.all())
         matricula_recente = (
-            sorted(matriculas, key=lambda m: (m.data_inicio, m.id), reverse=True)[0]
+            sorted(matriculas, key=lambda m: (
+                m.data_inicio, m.id), reverse=True)[0]
             if matriculas else None
         )
 
@@ -250,15 +263,18 @@ def gestao_estudantes_view(request):
             # 2. Período do plano encerrado
             periodo_expirado = False
             if matricula_recente.plano and matricula_recente.data_inicio:
-                meses = obter_total_meses_periodicidade(matricula_recente.plano.periodicidade)
-                data_fim = matricula_recente.data_inicio + relativedelta(months=meses)
+                meses = obter_total_meses_periodicidade(
+                    matricula_recente.plano.periodicidade)
+                data_fim = matricula_recente.data_inicio + \
+                    relativedelta(months=meses)
                 if data_fim < hoje:
                     periodo_expirado = True
 
             # 3. Situação da matrícula (inadimplente ou bloqueada)
             try:
                 situacao = matricula_recente.situacao
-                situacao_vencida = situacao in [SituacaoMatricula.INADIMPLENTE, SituacaoMatricula.BLOQUEADA]
+                situacao_vencida = situacao in [
+                    SituacaoMatricula.INADIMPLENTE, SituacaoMatricula.BLOQUEADA]
             except Exception:
                 situacao_vencida = False
 

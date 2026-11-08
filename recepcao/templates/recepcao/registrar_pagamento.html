@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pagamento da cobrança - Recepção SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
+        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+        main { max-width: 860px; margin: 32px auto; padding: 0 18px; }
+        .card { margin-bottom: 18px; padding: 22px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
+        h1 { margin: 0; font-size: 1.45rem; }
+        h2 { margin: 0 0 14px; font-size: 1.12rem; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+        .summary div { padding: 12px; background: #f8fafc; border-radius: 8px; }
+        .label { display: block; margin-bottom: 4px; color: #64748b; font-size: .82rem; }
+        .amount { font-size: 1.12rem; font-weight: 700; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+        .field label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+        textarea.control { resize: vertical; }
+        .button { display: inline-block; margin-top: 16px; padding: 11px 15px; border: 0; border-radius: 8px; background: #7c3aed; color: white; cursor: pointer; font-weight: 700; text-decoration: none; }
+        .button-secondary { background: #475569; }
+        .error { margin: 8px 0; color: #b91c1c; }
+        .message { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
+        .preview { border: 1px solid #f59e0b; background: #fffbeb; }
+        .history { width: 100%; border-collapse: collapse; }
+        .history th, .history td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+        .history th { color: #64748b; font-size: .8rem; }
+        .muted { color: #64748b; font-size: .9rem; }
+    </style>
+</head>
+<body>
+    <header><h1>SheFit · Recepção</h1></header>
+    <main>
+        {% if messages %}
+            {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+        {% endif %}
+        <section class="card">
+            <h2>{{ cobranca.matricula.aluno.nome }} · {{ cobranca.get_tipo_display }}</h2>
+            <div class="summary">
+                <div><span class="label">Competência</span>{{ cobranca.competencia|default:"À vista" }}</div>
+                <div><span class="label">Vencimento</span>{{ cobranca.vencimento|date:"d/m/Y" }}</div>
+                <div><span class="label">Valor original</span>R$ {{ cobranca.valor|floatformat:2 }}</div>
+                <div><span class="label">Saldo atualizado hoje</span><strong class="amount">R$ {{ saldo_atual|floatformat:2 }}</strong></div>
+            </div>
+        </section>
+
+        <section class="card">
+            {% if quitada %}
+                <h2>Cobrança quitada</h2>
+                <p>Não é possível registrar outro pagamento. Consulte o histórico abaixo para estornar um lançamento, se necessário.</p>
+            {% else %}
+                <h2>Dados do pagamento</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for error in form.non_field_errors %}<div class="error">{{ error }}</div>{% endfor %}
+                    <div class="grid">
+                        {% for field in form %}
+                            <div class="field">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for error in field.errors %}<div class="error">{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if preview %}
+                        <section class="card preview" style="margin-top: 18px; margin-bottom: 0;">
+                            <h2>Confira antes de confirmar</h2>
+                            <p>Saldo devido na data escolhida: <strong>R$ {{ preview.saldo_total|floatformat:2 }}</strong></p>
+                            <p>Recebido: <strong>R$ {{ preview.total|floatformat:2 }}</strong></p>
+                            <p>Aplicado a juros: R$ {{ preview.juros|floatformat:2 }} · multa: R$ {{ preview.multa|floatformat:2 }} · principal: R$ {{ preview.principal_aplicado|floatformat:2 }}</p>
+                            <p>Saldo restante após este pagamento: <strong>R$ {{ preview.saldo_restante|floatformat:2 }}</strong></p>
+                            {% if preview.saldo_restante > 0 %}<p>O pagamento é parcial; a cobrança continuará aberta.</p>{% endif %}
+                            <button class="button" type="submit" name="confirmar" value="1">Confirmar pagamento</button>
+                        </section>
+                    {% else %}
+                        <button class="button" type="submit">Simular pagamento</button>
+                    {% endif %}
+                    <a class="button button-secondary" href="{% url 'listar_cobrancas_pagamento' %}">Cancelar</a>
+                </form>
+            {% endif %}
+        </section>
+
+        <section class="card">
+            <h2>Pagamentos registrados nesta cobrança</h2>
+            {% if pagamentos %}
+                <div style="overflow-x: auto;">
+                    <table class="history">
+                        <thead><tr><th>Data</th><th>Valor</th><th>Forma</th><th>Estornos</th><th>Ação</th></tr></thead>
+                        <tbody>
+                            {% for item in pagamentos %}
+                                <tr>
+                                    <td>{{ item.pagamento.data_pagamento|date:"d/m/Y" }}</td>
+                                    <td>R$ {{ item.pagamento.valor_pago|floatformat:2 }}</td>
+                                    <td>{{ item.pagamento.get_forma_pagamento_display }}</td>
+                                    <td>
+                                        {% for estorno in item.pagamento.estornos.all %}
+                                            R$ {{ estorno.valor|floatformat:2 }} — {{ estorno.motivo }}<br>
+                                        {% empty %}—{% endfor %}
+                                    </td>
+                                    <td>
+                                        {% if item.disponivel > 0 %}
+                                            <a href="{% url 'registrar_estorno' item.pagamento.id %}">Estornar (R$ {{ item.disponivel|floatformat:2 }})</a>
+                                        {% else %}Estornado{% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="muted">Ainda não há pagamentos para esta cobrança.</p>
+            {% endif %}
+        </section>
+        <a class="muted" href="{% url 'listar_cobrancas_pagamento' %}">Voltar às cobranças</a>
+    </main>
+</body>
+</html>
