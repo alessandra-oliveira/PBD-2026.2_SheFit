@@ -14,7 +14,10 @@ urlpatterns = [
     path('entrar/', entrar, name='entrar'),
     path('sair/', sair, name='sair'),
     path('alunos/', include('alunos.urls')),
+    path('treinos/', include('treinos.urls')),
+    path('agendamentos/', include('agendamentos.urls')),
     path('recepcao/', include('recepcao.urls')), 
+
     path('', include('turmas.urls')),
     path('financeiro/', include('financeiro.urls')),
     path('', include('accounts.urls')),
@@ -26,6 +29,7 @@ urlpatterns = [
     path('painel/aluno/', painel_aluno, name='painel_aluno'),
 
     path('painel/professor/', painel_professor, name='painel_professor'),
+
     path('painel/recepcao/', painel_recepcao, name='painel_recepcao'),
     path('painel/financeiro/', painel_financeiro, name='painel_financeiro'),
     path('painel/estudantes/', gestao_estudantes_view, name='gestao_estudantes'),

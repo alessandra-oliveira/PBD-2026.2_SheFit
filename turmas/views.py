@@ -7,7 +7,6 @@ from accounts.decorators import perfil_requerido
 from .models import Turma, Modalidade
 from .forms import TurmaForm, ModalidadeForm
 
-
 @login_required
 @perfil_requerido('recepcao', 'financeiro', 'professor')
 def listar_turmas(request):

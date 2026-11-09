@@ -58,6 +58,7 @@
             line-height: 1.5;
             margin-bottom: 28px;
         }
+        
         .botao-sair {
             display: block;
             width: 100%;
@@ -99,6 +100,26 @@
                 <strong>Aviso de Matrícula:</strong> Sua matrícula está pendente de anamnese médica. Por favor, procure a recepção para regularizar seu cadastro.
             </div>
         {% endif %}
+        <section style="text-align: left; margin: 20px 0;">
+            <h3 style="color: #6d28d9; margin-bottom: 10px;">Minha ficha de treino</h3>
+            {% if ficha_ativa %}
+                <p>Revisão prevista para {{ ficha_ativa.data_revisao|date:"d/m/Y" }}</p>
+                {% for exercicio in ficha_ativa.exercicios.all %}
+                    <div style="border-top: 1px solid #e5e7eb; padding: 10px 0;">
+                        <strong>{{ exercicio.nome }}</strong>
+                        <p>Séries: {{ exercicio.series|default_if_none:"Não informado" }} · Repetições: {{ exercicio.repeticoes|default_if_none:"Não informado" }}</p>
+                        <p>Carga sugerida: {{ exercicio.carga_sugerida|default_if_none:"Não informada" }}</p>
+                        <p>Observações: {{ exercicio.observacoes|default:"Nenhuma" }}</p>
+                    </div>
+                {% empty %}
+                    <p>Sua ficha ainda não possui exercícios.</p>
+                {% endfor %}
+                <a href="{% url 'ficha_ativa_aluno' %}" class="botao-sair" style="background: #fdf2f8; color: #db2777; margin-top: 10px;">Abrir ficha</a>
+            {% else %}
+                <div class="alerta-aviso">Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais informações.</div>
+            {% endif %}
+        </section>
+        <a href="{% url 'minhas_aulas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Minhas aulas</a>
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
     </div>
 </body>

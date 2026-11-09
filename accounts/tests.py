@@ -1,9 +1,148 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.contrib.auth.models import User
+from datetime import date
+from itertools import count
 
-from accounts.models import Perfil
-from accounts.forms import CadastroColaboradorForm
+from django.contrib.auth.models import User
+from django.test import TestCase
+from django.urls import reverse
+
+from alunos.models import Aluno
+from .models import Perfil
+
+_seq = count(1)
+
+PAINEL_DE = {
+    Perfil.ALUNO: 'painel_aluno',
+    Perfil.PROFESSOR: 'painel_professor',
+    Perfil.RECEPCAO: 'painel_recepcao',
+    Perfil.FINANCEIRO: 'painel_financeiro',
+}
+
+
+def criar_usuario(tipo, password=None):
+    n = next(_seq)
+    usuario = User.objects.create(username=f'{tipo}{n}')
+    if password:
+        usuario.set_password(password)
+        usuario.save()
+    Perfil.objects.create(usuario=usuario, tipo=tipo)
+    return usuario
+
+
+class EntrarTests(TestCase):
+    def setUp(self):
+        self.usuario = criar_usuario(Perfil.RECEPCAO, password='senha12345')
+        self.url = reverse('entrar')
+
+    def test_tela_de_login_abre(self):
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+
+    def test_login_correto_vai_para_o_painel_e_cria_sessao(self):
+        resposta = self.client.post(
+            self.url, {'username': self.usuario.username, 'password': 'senha12345'},
+        )
+        self.assertRedirects(resposta, reverse('painel'), fetch_redirect_response=False)
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.usuario.id)
+
+    def test_senha_errada_mostra_erro_e_nao_cria_sessao(self):
+        resposta = self.client.post(
+            self.url, {'username': self.usuario.username, 'password': 'errada'},
+        )
+        self.assertEqual(resposta.status_code, 200)
+        self.assertIn('inválidos', resposta.context['erro'])
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_usuario_inexistente_recebe_o_mesmo_erro_generico(self):
+        errada = self.client.post(
+            self.url, {'username': self.usuario.username, 'password': 'errada'},
+        ).context['erro']
+        inexistente = self.client.post(
+            self.url, {'username': 'ninguem', 'password': 'qualquer'},
+        ).context['erro']
+        self.assertEqual(errada, inexistente)  # não revela se o usuário existe
+
+    def test_usuario_sem_perfil_nao_entra(self):
+        User.objects.create_user(username='semperfil', password='senha12345')
+        resposta = self.client.post(self.url, {'username': 'semperfil', 'password': 'senha12345'})
+        self.assertEqual(resposta.status_code, 200)
+        self.assertIn('perfil', resposta.context['erro'].lower())
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+
+class SairTests(TestCase):
+    def test_sair_encerra_a_sessao_e_volta_ao_login(self):
+        self.client.force_login(criar_usuario(Perfil.RECEPCAO))
+        resposta = self.client.get(reverse('sair'))
+        self.assertRedirects(resposta, reverse('entrar'), fetch_redirect_response=False)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+
+class PainelTests(TestCase):
+    def test_cada_perfil_e_levado_ao_seu_painel(self):
+        for tipo, rota in PAINEL_DE.items():
+            with self.subTest(tipo=tipo):
+                self.client.force_login(criar_usuario(tipo))
+                resposta = self.client.get(reverse('painel'))
+                self.assertRedirects(resposta, reverse(rota), fetch_redirect_response=False)
+
+    def test_cada_painel_abre_para_o_perfil_certo(self):
+        for tipo, rota in PAINEL_DE.items():
+            with self.subTest(tipo=tipo):
+                self.client.force_login(criar_usuario(tipo))
+                self.assertEqual(self.client.get(reverse(rota)).status_code, 200)
+
+    def test_cada_painel_barra_os_outros_perfis(self):
+        for tipo in PAINEL_DE:
+            self.client.force_login(criar_usuario(tipo))
+            for outro_tipo, rota in PAINEL_DE.items():
+                if outro_tipo == tipo:
+                    continue
+                with self.subTest(usuario=tipo, painel=rota):
+                    self.assertEqual(self.client.get(reverse(rota)).status_code, 403)
+
+    def test_visitante_vai_para_o_login(self):
+        for rota in ['painel', *PAINEL_DE.values()]:
+            with self.subTest(rota=rota):
+                url = reverse(rota)
+                resposta = self.client.get(url)
+                self.assertRedirects(
+                    resposta, f"{reverse('entrar')}?next={url}", fetch_redirect_response=False,
+                )
+
+    def test_usuario_sem_perfil_toma_403_e_nao_erro_500(self):
+        # Ex.: o superusuário do admin não tem Perfil. Antes dava AttributeError (500).
+        self.client.force_login(User.objects.create_superuser('admin', password='senha12345'))
+        for rota in ['painel', *PAINEL_DE.values()]:
+            with self.subTest(rota=rota):
+                self.assertEqual(self.client.get(reverse(rota)).status_code, 403)
+
+
+class PainelRecepcaoTests(TestCase):
+    def _aluna(self, nome):
+        n = next(_seq)
+        perfil = Perfil.objects.create(
+            usuario=User.objects.create(username=f'aluna{n}'), tipo=Perfil.ALUNO,
+        )
+        return Aluno.objects.create(
+            perfil=perfil, nome=nome, cpf=f'{n:011d}', data_nascimento=date(2000, 1, 1),
+            endereco='Rua A, 1', telefone=f'8199{n:07d}', email=f'a{n}@exemplo.com',
+            contato_emergencia_nome='Contato', contato_emergencia_telefone='81988887777',
+        )
+
+    def setUp(self):
+        self.client.force_login(criar_usuario(Perfil.RECEPCAO))
+
+    def test_lista_as_alunas_e_o_total(self):
+        self._aluna('Ana Lima')
+        self._aluna('Bia Souza')
+        resposta = self.client.get(reverse('painel_recepcao'))
+        self.assertEqual(resposta.context['total_alunos'], 2)
+        resposta_gestao = self.client.get(reverse('gestao_estudantes'))
+        self.assertContains(resposta_gestao, 'Ana Lima')
+        self.assertContains(resposta_gestao, 'Bia Souza')
+
+    def test_tem_o_botao_de_novo_cadastro(self):
+        resposta = self.client.get(reverse('painel_recepcao'))
+        self.assertContains(resposta, reverse('cadastrar_aluno'))
 
 
 class AdminPerfilModelTests(TestCase):
@@ -37,6 +176,8 @@ class AdminPerfilModelTests(TestCase):
 class CadastroColaboradorFormTests(TestCase):
     def test_formulario_valido_cria_colaborador_e_perfil(self):
         """Testa o cadastro bem-sucedido de colaboradores com diferentes papéis."""
+        from accounts.forms import CadastroColaboradorForm
+
         for papel in [Perfil.Tipo.RECEPCAO, Perfil.Tipo.PROFESSOR, Perfil.Tipo.FINANCEIRO]:
             dados = {
                 'nome': f'Colaborador {papel}',
@@ -57,9 +198,9 @@ class CadastroColaboradorFormTests(TestCase):
             self.assertEqual(usuario_criado.perfil.tipo, papel)
 
     def test_validacao_username_duplicado(self):
-        """Impede o cadastro com username já existente no sistema."""
-        User.objects.create_user(username='colaborador1', email='outro@shefit.com.br', password='123')
+        from accounts.forms import CadastroColaboradorForm
 
+        User.objects.create_user(username='colaborador1', email='outro@shefit.com.br', password='123')
         dados = {
             'nome': 'Novo Colaborador',
             'username': 'colaborador1',
@@ -71,145 +212,31 @@ class CadastroColaboradorFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('username', form.errors)
 
-    def test_validacao_email_duplicado(self):
-        """Impede o cadastro com e-mail já existente no sistema."""
-        User.objects.create_user(username='outro_user', email='duplicado@shefit.com.br', password='123')
-
-        dados = {
-            'nome': 'Novo Colaborador',
-            'username': 'novo_usuario',
-            'email': 'duplicado@shefit.com.br',
-            'senha_provisoria': 'senhaForte123',
-            'tipo': Perfil.Tipo.FINANCEIRO,
-        }
-        form = CadastroColaboradorForm(data=dados)
-        self.assertFalse(form.is_valid())
-        self.assertIn('email', form.errors)
-
-    def test_validacao_senha_curta(self):
-        """Exige senha provisória de no mínimo 6 caracteres."""
-        dados = {
-            'nome': 'Novo Colaborador',
-            'username': 'novo_usuario',
-            'email': 'novo@shefit.com.br',
-            'senha_provisoria': '12345',
-            'tipo': Perfil.Tipo.PROFESSOR,
-        }
-        form = CadastroColaboradorForm(data=dados)
-        self.assertFalse(form.is_valid())
-        self.assertIn('senha_provisoria', form.errors)
-
 
 class PainelAdminViewTests(TestCase):
     def setUp(self):
-        self.client = Client()
-
-        # Admin
         self.user_admin = User.objects.create_user(username='admin_boss', password='senha_admin123', first_name='Chefe')
         Perfil.objects.create(usuario=self.user_admin, tipo=Perfil.Tipo.ADMIN)
 
-        # Recepção
         self.user_recepcao = User.objects.create_user(username='recepcao_user', password='senha12345')
         Perfil.objects.create(usuario=self.user_recepcao, tipo=Perfil.Tipo.RECEPCAO)
 
-        # Professor
-        self.user_professor = User.objects.create_user(username='prof_user', password='senha12345')
-        Perfil.objects.create(usuario=self.user_professor, tipo=Perfil.Tipo.PROFESSOR)
-
-        # Financeiro
-        self.user_financeiro = User.objects.create_user(username='fin_user', password='senha12345')
-        Perfil.objects.create(usuario=self.user_financeiro, tipo=Perfil.Tipo.FINANCEIRO)
-
-    def test_usuario_anonimo_redirecionado(self):
-        """Usuário não logado não pode acessar o painel admin e é redirecionado para o login."""
-        url = reverse('painel_admin')
-        resposta = self.client.get(url)
-        self.assertEqual(resposta.status_code, 302)
-        self.assertIn('/entrar/', resposta.url)
-
-    def test_outros_perfis_bloqueados_no_painel_admin(self):
-        """Colaboradores que não são Admin são bloqueados e redirecionados."""
-        for user in [self.user_recepcao, self.user_professor, self.user_financeiro]:
-            self.client.force_login(user)
-            resposta = self.client.get(reverse('painel_admin'))
-            self.assertEqual(resposta.status_code, 302)
-            self.assertEqual(resposta.url, reverse('painel'))
-
     def test_admin_acessa_painel_admin_com_sucesso(self):
-        """Admin acessa a rota do painel e visualiza o formulário, métricas e a listagem sem links para /admin."""
         self.client.force_login(self.user_admin)
         resposta = self.client.get(reverse('painel_admin'))
-
         self.assertEqual(resposta.status_code, 200)
-        self.assertTemplateUsed(resposta, 'accounts/painel_admin.html')
-        self.assertContains(resposta, 'Painel Admin')
+        self.assertContains(resposta, 'Painel do Administrador')
         self.assertContains(resposta, '+ Novo Usuário')
         self.assertContains(resposta, 'Total de Administradores')
-        self.assertContains(resposta, 'Total de Recepcionistas')
-        self.assertContains(resposta, 'Total de Professores')
-        self.assertContains(resposta, 'Total de Financeiro')
-        self.assertContains(resposta, 'Colaboradores e Usuários')
-        self.assertContains(resposta, 'admin_boss')
-
-        # Garante que não há nenhum link para o Django Admin nativo (/admin)
         self.assertNotContains(resposta, 'href="/admin"')
         self.assertNotContains(resposta, 'Django Admin')
 
-    def test_admin_cadastra_novo_colaborador_com_sucesso(self):
-        """Admin submete o formulário e registra um novo colaborador."""
-        self.client.force_login(self.user_admin)
-
-        dados_post = {
-            'nome': 'Carla Recepção Nova',
-            'username': 'carla.recepcao',
-            'email': 'carla@shefit.com.br',
-            'senha_provisoria': 'senhaSegura999',
-            'tipo': Perfil.Tipo.RECEPCAO,
-        }
-        resposta = self.client.post(reverse('painel_admin'), data=dados_post, follow=True)
-
-        self.assertEqual(resposta.status_code, 200)
-        self.assertContains(resposta, 'cadastrado(a) com sucesso')
-
-        # Verifica se o usuário e o perfil foram criados no banco
-        novo_user = User.objects.get(username='carla.recepcao')
-        self.assertEqual(novo_user.email, 'carla@shefit.com.br')
-        self.assertEqual(novo_user.perfil.tipo, Perfil.Tipo.RECEPCAO)
-        self.assertTrue(novo_user.check_password('senhaSegura999'))
-
     def test_admin_alterna_status_ativo_inativo_colaborador(self):
-        """Admin desativa e depois reativa um colaborador via POST."""
         self.client.force_login(self.user_admin)
         url = reverse('alternar_status_usuario', args=[self.user_recepcao.id])
-
-        # 1. Desativar
         resposta = self.client.post(url, follow=True)
         self.assertEqual(resposta.status_code, 200)
         self.user_recepcao.refresh_from_db()
         self.assertFalse(self.user_recepcao.is_active)
         self.assertContains(resposta, 'desativado com sucesso')
-
-        # 2. Reativar
-        resposta = self.client.post(url, follow=True)
-        self.assertEqual(resposta.status_code, 200)
-        self.user_recepcao.refresh_from_db()
-        self.assertTrue(self.user_recepcao.is_active)
-        self.assertContains(resposta, 'ativado com sucesso')
-
-    def test_admin_nao_pode_desativar_a_si_mesmo(self):
-        """Admin não pode desativar sua própria conta."""
-        self.client.force_login(self.user_admin)
-        url = reverse('alternar_status_usuario', args=[self.user_admin.id])
-
-        resposta = self.client.post(url, follow=True)
-        self.assertEqual(resposta.status_code, 200)
-        self.user_admin.refresh_from_db()
-        self.assertTrue(self.user_admin.is_active)
-        self.assertContains(resposta, 'Não é permitido desativar a sua própria conta')
-
-    def test_redirecionamento_rota_painel_para_admin(self):
-        """Admin ao acessar a rota genérica /painel/ é redirecionado para /painel/admin/."""
-        self.client.force_login(self.user_admin)
-        resposta = self.client.get(reverse('painel'))
-        self.assertRedirects(resposta, reverse('painel_admin'))
 

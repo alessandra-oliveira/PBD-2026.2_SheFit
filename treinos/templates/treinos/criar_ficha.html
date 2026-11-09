@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Nova ficha de treino - SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 28px 16px; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #1f2937; }
+        main { max-width: 900px; margin: auto; }
+        .card { background: #fff; border-radius: 16px; padding: 28px; margin-bottom: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
+        h1, h2 { color: #6d28d9; margin-top: 0; }
+        h1 { font-size: 1.7rem; }
+        h2 { font-size: 1.15rem; }
+        .campo { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; }
+        .form-control { width: 100%; padding: 11px 12px; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
+        .linha-exercicio { border-top: 1px solid #e5e7eb; padding: 18px 0; }
+        .grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .alerta { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; margin: 10px 0; }
+        .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+        .botao { border: 0; border-radius: 8px; padding: 12px 16px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; display: inline-block; }
+        .primario { background: #7c3aed; color: white; }
+        .secundario { background: #f3f4f6; color: #374151; }
+        .erro { color: #b91c1c; font-size: .9rem; }
+        @media (max-width: 600px) { .card { padding: 20px; } .grade { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<main>
+    <section class="card">
+        <h1>Montar ficha de treino</h1>
+        <form method="get" class="campo">
+            <label for="selecionar-aluno">Aluno</label>
+            <select id="selecionar-aluno" name="aluno" class="form-control" onchange="this.form.submit()">
+                <option value="">Selecione para consultar a anamnese</option>
+                {% for aluno in form.fields.aluno.queryset %}
+                    <option value="{{ aluno.pk }}" {% if aluno_selecionado.pk == aluno.pk %}selected{% endif %}>{{ aluno.nome }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {% if aluno_selecionado %}
+        <div class="alerta">
+            <h2>Anamnese de {{ aluno_selecionado.nome }}</h2>
+            {% if anamnese %}
+                <p><strong>Restrições médicas:</strong> {{ anamnese.restricoes_medicas|default:"Nenhuma informada."|linebreaksbr }}</p>
+                <p><strong>Histórico de lesões:</strong> {{ anamnese.historico_lesoes|default:"Nenhum informado."|linebreaksbr }}</p>
+                <p><strong>Condições crônicas:</strong> {{ anamnese.condicoes_cronicas|default:"Nenhuma informada."|linebreaksbr }}</p>
+                <p><strong>Autorização:</strong> {% if anamnese.autorizacao_atividade_fisica %}Confirmada{% else %}Não confirmada{% endif %}</p>
+            {% else %}
+                <p>Este aluno ainda não possui anamnese cadastrada.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% if form.errors or formset.errors %}
+            <p class="erro">Verifique os campos destacados antes de salvar.</p>
+        {% endif %}
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        {{ form.aluno.errors }}
+        <div class="campo">
+            {{ form.data_revisao.label_tag }}{{ form.data_revisao }}{{ form.data_revisao.errors }}
+        </div>
+
+        <h2>Exercícios</h2>
+        {{ formset.management_form }}
+        <div id="exercicios">
+            {% for exercicio in formset %}
+                <div class="linha-exercicio">
+                    {% for hidden in exercicio.hidden_fields %}{{ hidden }}{% endfor %}
+                    <div class="campo">{{ exercicio.nome.label_tag }}{{ exercicio.nome }}{{ exercicio.nome.errors }}</div>
+                    <div class="grade">
+                        <div class="campo">{{ exercicio.series.label_tag }}{{ exercicio.series }}{{ exercicio.series.errors }}</div>
+                        <div class="campo">{{ exercicio.repeticoes.label_tag }}{{ exercicio.repeticoes }}{{ exercicio.repeticoes.errors }}</div>
+                        <div class="campo">{{ exercicio.carga_sugerida.label_tag }}{{ exercicio.carga_sugerida }}{{ exercicio.carga_sugerida.errors }}</div>
+                        <div class="campo">{{ exercicio.observacoes.label_tag }}{{ exercicio.observacoes }}{{ exercicio.observacoes.errors }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <template id="exercicio-vazio">
+            <div class="linha-exercicio">
+                {% for field in formset.empty_form %}
+                    {% if field.is_hidden %}{{ field }}{% else %}
+                        <div class="campo">{{ field.label_tag }}{{ field }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </template>
+        <div class="acoes">
+            <button type="button" class="botao secundario" id="adicionar-exercicio">Adicionar exercício</button>
+            <button type="submit" class="botao primario">Salvar ficha</button>
+            <a href="{% url 'painel_professor' %}" class="botao secundario">Voltar ao painel</a>
+        </div>
+    </form>
+</main>
+<script>
+    document.getElementById('adicionar-exercicio').addEventListener('click', function () {
+        const total = document.getElementById('id_exercicios-TOTAL_FORMS');
+        const html = document.getElementById('exercicio-vazio').innerHTML.replace(/__prefix__/g, total.value);
+        document.getElementById('exercicios').insertAdjacentHTML('beforeend', html);
+        total.value = Number(total.value) + 1;
+    });
+</script>
+</body>
+</html>
