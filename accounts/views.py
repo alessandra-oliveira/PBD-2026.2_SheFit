@@ -1,19 +1,24 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth import authenticate, login as autenticar_sessao, logout as encerrar_sessao
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from django.db.models import Sum
+from django.db.models import Sum, Q
 
 from alunos.models import Aluno
 from accounts.models import Perfil
 from treinos.models import FichaTreino
 from django.utils import timezone
+from accounts.forms import CadastroColaboradorForm
+from accounts.decorators import admin_requerido, perfil_requerido
 from turmas.models import Turma, Modalidade
 from financeiro.models import Plano, Matricula, Cobranca, SituacaoMatricula
 from financeiro.servicos import obter_total_meses_periodicidade
+
 
 
 def _tipo_do_usuario(usuario):
@@ -35,9 +40,12 @@ def entrar(request):
             })
 
         if not hasattr(usuario, 'perfil'):  # logou certo mas não tem perfil
-            return render(request, 'accounts/login.html', {
-                'erro': 'Usuário sem perfil atribuído.'
-            })
+            if usuario.is_superuser:
+                Perfil.objects.create(usuario=usuario, tipo=Perfil.Tipo.ADMIN)
+            else:
+                return render(request, 'accounts/login.html', {
+                    'erro': 'Usuário sem perfil atribuído.'
+                })
 
         autenticar_sessao(request, usuario)  # usuário loga
 
@@ -56,7 +64,9 @@ def sair(request):
 def painel(request):
     tipo = _tipo_do_usuario(request.user)
 
-    if tipo == 'aluno':
+    if tipo == 'admin':
+        return redirect('painel_admin')
+    elif tipo == 'aluno':
         return redirect('painel_aluno')
     elif tipo == 'professor':
         return redirect('painel_professor')
@@ -69,6 +79,91 @@ def painel(request):
 
 
 # Telas de cada perfil, só entra quem tem o tipo certo
+@admin_requerido
+def painel_admin(request):
+    """
+    Painel do Administrador:
+    - Permissão total para visualizar todos os colaboradores/usuários cadastrados
+    - Formulário para cadastrar novos colaboradores atribuindo os papéis:
+      Recepção, Professor (Instrutor), Financeiro ou Admin.
+    """
+    if request.method == 'POST':
+        form = CadastroColaboradorForm(request.POST)
+        if form.is_valid():
+            novo_usuario = form.save()
+            perfil_nome = novo_usuario.perfil.get_tipo_display()
+            messages.success(
+                request,
+                f'Colaborador(a) "{novo_usuario.get_full_name() or novo_usuario.username}" cadastrado(a) com sucesso como {perfil_nome}!'
+            )
+            return redirect('painel_admin')
+        else:
+            messages.error(request, 'Erro ao cadastrar usuário. Verifique os campos destacados abaixo.')
+    else:
+        form = CadastroColaboradorForm()
+
+    filtro_tipo = request.GET.get('filtro_tipo', '').strip()
+    busca = request.GET.get('busca', '').strip()
+
+    # Base de usuários
+    todos_usuarios = User.objects.select_related('perfil').order_by('-date_joined')
+
+    # Métricas consolidadas
+    total_geral = todos_usuarios.count()
+    total_recepcao = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.RECEPCAO).count()
+    total_professores = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.PROFESSOR).count()
+    total_financeiro = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.FINANCEIRO).count()
+    total_admin = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.ADMIN).count()
+
+    # Aplicação de filtros para a tabela
+    usuarios_filtrados = todos_usuarios
+    if filtro_tipo:
+        usuarios_filtrados = usuarios_filtrados.filter(perfil__tipo=filtro_tipo)
+
+    if busca:
+        usuarios_filtrados = usuarios_filtrados.filter(
+            Q(username__icontains=busca) |
+            Q(first_name__icontains=busca) |
+            Q(last_name__icontains=busca) |
+            Q(email__icontains=busca)
+        )
+
+    contexto = {
+        'form': form,
+        'usuarios': usuarios_filtrados,
+        'filtro_tipo': filtro_tipo,
+        'busca': busca,
+        'total_geral': total_geral,
+        'total_recepcao': total_recepcao,
+        'total_professores': total_professores,
+        'total_financeiro': total_financeiro,
+        'total_admin': total_admin,
+        'tipos_perfil': Perfil.Tipo.choices,
+    }
+    return render(request, 'accounts/painel_admin.html', contexto)
+
+
+@admin_requerido
+def alternar_status_usuario(request, user_id):
+    """
+    Alterna o status do usuário entre Ativo e Inativo.
+    Impedindo que o próprio administrador logado desative a sua própria conta.
+    """
+    if request.method == 'POST':
+        usuario = get_object_or_404(User, id=user_id)
+        if usuario == request.user:
+            messages.error(request, 'Não é permitido desativar a sua própria conta de administrador.')
+        else:
+            usuario.is_active = not usuario.is_active
+            usuario.save(update_fields=['is_active'])
+            status_txt = 'ativado' if usuario.is_active else 'desativado'
+            messages.success(
+                request,
+                f'Usuário "{usuario.get_full_name() or usuario.username}" foi {status_txt} com sucesso!'
+            )
+    return redirect('painel_admin')
+
+
 @login_required(login_url='entrar')
 def painel_aluno(request):
     if not hasattr(request.user, 'perfil') or request.user.perfil.tipo != 'aluno':

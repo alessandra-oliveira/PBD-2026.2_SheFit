@@ -136,9 +136,107 @@ class PainelRecepcaoTests(TestCase):
         self._aluna('Bia Souza')
         resposta = self.client.get(reverse('painel_recepcao'))
         self.assertEqual(resposta.context['total_alunos'], 2)
-        self.assertContains(resposta, 'Ana Lima')
-        self.assertContains(resposta, 'Bia Souza')
+        resposta_gestao = self.client.get(reverse('gestao_estudantes'))
+        self.assertContains(resposta_gestao, 'Ana Lima')
+        self.assertContains(resposta_gestao, 'Bia Souza')
 
     def test_tem_o_botao_de_novo_cadastro(self):
         resposta = self.client.get(reverse('painel_recepcao'))
         self.assertContains(resposta, reverse('cadastrar_aluno'))
+
+
+class AdminPerfilModelTests(TestCase):
+    def test_opcoes_perfil_incluem_papeis_necessarios(self):
+        """Verifica se os papéis Admin, Recepcao, Professor, Financeiro e Aluno estão disponíveis."""
+        self.assertEqual(Perfil.Tipo.ADMIN, 'admin')
+        self.assertEqual(Perfil.Tipo.RECEPCAO, 'recepcao')
+        self.assertEqual(Perfil.Tipo.PROFESSOR, 'professor')
+        self.assertEqual(Perfil.Tipo.FINANCEIRO, 'financeiro')
+        self.assertEqual(Perfil.Tipo.ALUNO, 'aluno')
+
+        # Compatibilidade com constantes de classe
+        self.assertEqual(Perfil.ADMIN, 'admin')
+        self.assertEqual(Perfil.RECEPCAO, 'recepcao')
+        self.assertEqual(Perfil.PROFESSOR, 'professor')
+        self.assertEqual(Perfil.FINANCEIRO, 'financeiro')
+        self.assertEqual(Perfil.ALUNO, 'aluno')
+
+    def test_criacao_perfil_admin(self):
+        """Cria um usuário com perfil de Administrador e valida propriedades."""
+        usuario = User.objects.create_user(username='admin_test', password='senha_teste123')
+        perfil = Perfil.objects.create(usuario=usuario, tipo=Perfil.Tipo.ADMIN)
+
+        self.assertTrue(perfil.is_admin)
+        self.assertFalse(perfil.is_recepcao)
+        self.assertFalse(perfil.is_professor)
+        self.assertFalse(perfil.is_financeiro)
+        self.assertIn('Administrador', str(perfil))
+
+
+class CadastroColaboradorFormTests(TestCase):
+    def test_formulario_valido_cria_colaborador_e_perfil(self):
+        """Testa o cadastro bem-sucedido de colaboradores com diferentes papéis."""
+        from accounts.forms import CadastroColaboradorForm
+
+        for papel in [Perfil.Tipo.RECEPCAO, Perfil.Tipo.PROFESSOR, Perfil.Tipo.FINANCEIRO]:
+            dados = {
+                'nome': f'Colaborador {papel}',
+                'username': f'usuario_{papel}',
+                'email': f'{papel}@shefit.com.br',
+                'senha_provisoria': 'senhaForte123',
+                'tipo': papel,
+            }
+            form = CadastroColaboradorForm(data=dados)
+            self.assertTrue(form.is_valid(), f"Formulário deveria ser válido para {papel}: {form.errors}")
+
+            usuario_criado = form.save()
+            self.assertEqual(usuario_criado.username, f'usuario_{papel}')
+            self.assertEqual(usuario_criado.first_name, 'Colaborador')
+            self.assertEqual(usuario_criado.last_name, papel)
+            self.assertEqual(usuario_criado.email, f'{papel}@shefit.com.br')
+            self.assertTrue(hasattr(usuario_criado, 'perfil'))
+            self.assertEqual(usuario_criado.perfil.tipo, papel)
+
+    def test_validacao_username_duplicado(self):
+        from accounts.forms import CadastroColaboradorForm
+
+        User.objects.create_user(username='colaborador1', email='outro@shefit.com.br', password='123')
+        dados = {
+            'nome': 'Novo Colaborador',
+            'username': 'colaborador1',
+            'email': 'novo@shefit.com.br',
+            'senha_provisoria': 'senhaForte123',
+            'tipo': Perfil.Tipo.RECEPCAO,
+        }
+        form = CadastroColaboradorForm(data=dados)
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+
+
+class PainelAdminViewTests(TestCase):
+    def setUp(self):
+        self.user_admin = User.objects.create_user(username='admin_boss', password='senha_admin123', first_name='Chefe')
+        Perfil.objects.create(usuario=self.user_admin, tipo=Perfil.Tipo.ADMIN)
+
+        self.user_recepcao = User.objects.create_user(username='recepcao_user', password='senha12345')
+        Perfil.objects.create(usuario=self.user_recepcao, tipo=Perfil.Tipo.RECEPCAO)
+
+    def test_admin_acessa_painel_admin_com_sucesso(self):
+        self.client.force_login(self.user_admin)
+        resposta = self.client.get(reverse('painel_admin'))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'Painel do Administrador')
+        self.assertContains(resposta, '+ Novo Usuário')
+        self.assertContains(resposta, 'Total de Administradores')
+        self.assertNotContains(resposta, 'href="/admin"')
+        self.assertNotContains(resposta, 'Django Admin')
+
+    def test_admin_alterna_status_ativo_inativo_colaborador(self):
+        self.client.force_login(self.user_admin)
+        url = reverse('alternar_status_usuario', args=[self.user_recepcao.id])
+        resposta = self.client.post(url, follow=True)
+        self.assertEqual(resposta.status_code, 200)
+        self.user_recepcao.refresh_from_db()
+        self.assertFalse(self.user_recepcao.is_active)
+        self.assertContains(resposta, 'desativado com sucesso')
+

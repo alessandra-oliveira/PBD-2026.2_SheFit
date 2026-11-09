@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+
 from accounts.decorators import perfil_requerido
 from .models import Turma, Modalidade
 from .forms import TurmaForm, ModalidadeForm
