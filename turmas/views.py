@@ -1,12 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-<<<<<<< HEAD
-from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
-=======
->>>>>>> 942f79e (feat: isola rotas e templates do professor e padroniza layout das turmas)
 from accounts.decorators import perfil_requerido
 from .models import Turma, Modalidade
 from .forms import TurmaForm, ModalidadeForm

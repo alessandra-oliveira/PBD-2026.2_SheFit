@@ -1,0 +1,1273 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Administrador - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ================= SIDEBAR LATERAL PADRÃO ================= */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        /* ================= ÁREA CENTRAL DE CONTEÚDO ================= */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Topbar com Perfil e Data */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Cabeçalho da Página */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .actions-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+        }
+
+        /* Mensagens / Alertas */
+        .msg {
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .msg-sucesso, .msg-success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #16a34a;
+        }
+
+        .msg-erro, .msg-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #dc2626;
+        }
+
+        /* ================= CARDS DE MÉTRICAS EM LINHA ================= */
+        .stats-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1100px) {
+            .stats-grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            padding: 22px 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-icon-admin {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .stat-icon-recepcao {
+            background: #fce7f3;
+            color: #db2777;
+        }
+
+        .stat-icon-professor {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .stat-icon-financeiro {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 12px 0 6px 0;
+        }
+
+        .stat-status {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        /* ================= SEÇÃO TABELA DE USUÁRIOS ================= */
+        .card-tabela {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+
+        .tabela-cabecalho {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .tabela-titulo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tabela-cabecalho h2 {
+            font-size: 1.18rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .contador-badge {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        /* Barra de Filtros e Busca */
+        .filtros-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 12px;
+            min-width: 240px;
+        }
+
+        .search-box i {
+            color: #94a3b8;
+            margin-right: 8px;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.88rem;
+            width: 100%;
+            color: #1e293b;
+        }
+
+        .select-filtro {
+            padding: 7px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            background: #f8fafc;
+            color: #334155;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .btn-filtrar {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-filtrar:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .btn-limpar {
+            color: #ef4444;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 10px;
+        }
+
+        /* Tabela */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 14px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #fcfcfd;
+        }
+
+        /* Coluna Usuário */
+        .usuario-col {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar-sm {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .usuario-info-box .nome-completo {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+
+        .usuario-info-box .login-username {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Badges de Perfil / Cargo */
+        .badge-perfil {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .badge-perfil-admin {
+            background-color: #f3e8ff;
+            color: #7c3aed;
+            border: 1px solid #e9d5ff;
+        }
+
+        .badge-perfil-recepcao {
+            background-color: #fce7f3;
+            color: #db2777;
+            border: 1px solid #fbcfe8;
+        }
+
+        .badge-perfil-professor {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            border: 1px solid #c7d2fe;
+        }
+
+        .badge-perfil-financeiro {
+            background-color: #d1fae5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .badge-perfil-aluno {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Badges de Status Ativo/Inativo */
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        .status-ativo {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pendente {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Coluna Ações */
+        .acoes-col {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-acao {
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-desativar {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .btn-desativar:hover {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .btn-ativar {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .btn-ativar:hover {
+            background: #bbf7d0;
+            color: #166534;
+        }
+
+        .badge-usuario-atual {
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sem-usuarios {
+            text-align: center;
+            padding: 48px 24px;
+            color: #94a3b8;
+        }
+
+        .sem-usuarios i {
+            margin-bottom: 10px;
+            color: #cbd5e1;
+        }
+
+        /* ================= MODAL DE NOVO USUÁRIO ================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 22px 28px;
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .modal-body {
+            padding: 26px 28px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: #0f172a;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #ffffff;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.12);
+        }
+
+        .form-error-msg {
+            color: #dc2626;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .btn-cancelar {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-cancelar:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-salvar {
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .btn-salvar:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= SIDEBAR NAVEGAÇÃO LATERAL ================= -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i data-lucide="dumbbell"></i>
+                <span>SheFit</span>
+            </div>
+            <i data-lucide="menu" style="cursor: pointer;"></i>
+        </div>
+
+        <ul class="nav-list">
+            <li class="nav-item active">
+                <a href="{% url 'painel_admin' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel Admin</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'painel_admin' %}#secao-usuarios">
+                    <i data-lucide="users"></i>
+                    <span>Colaboradores</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ================= CONTEÚDO PRINCIPAL ================= -->
+    <main class="main-content">
+
+        <!-- Topbar com Data e Operador -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Admin)</div>
+                    <div class="role">Administrador</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cabeçalho do Painel com Título e Ação Principal '+ Novo Usuário' -->
+        <div class="page-header">
+            <div>
+                <h1>Painel do Administrador</h1>
+                <p>Gerenciamento de acessos, controle e cadastro de colaboradores do sistema.</p>
+            </div>
+            <div class="actions-group">
+                <button type="button" class="btn-action-primary" onclick="abrirModalNovoUsuario()">
+                    <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+                    + Novo Usuário
+                </button>
+            </div>
+        </div>
+
+        <!-- Mensagens de Alerta (Sucesso / Erro) -->
+        {% if messages %}
+        <div>
+            {% for message in messages %}
+            <div class="msg {% if message.tags == 'success' %}msg-sucesso{% else %}msg-erro{% endif %}">
+                {% if message.tags == 'success' %}
+                <i data-lucide="check-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                {% else %}
+                <i data-lucide="alert-triangle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                {% endif %}
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- ================= CARDS DE MÉTRICAS / CONTADORES EM LINHA ================= -->
+        <section class="stats-grid-4">
+            <!-- Total de Administradores -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span>Total de Administradores</span>
+                    <div class="stat-icon stat-icon-admin">
+                        <i data-lucide="shield" style="width: 18px; height: 18px;"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_admin }}</div>
+                <div class="stat-status">
+                    <i data-lucide="shield-check" style="width: 14px; height: 14px; color: #7c3aed;"></i>
+                    <span>Gestão e controle de acesso</span>
+                </div>
+            </div>
+
+            <!-- Total de Recepcionistas -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span>Total de Recepcionistas</span>
+                    <div class="stat-icon stat-icon-recepcao">
+                        <i data-lucide="clipboard-list" style="width: 18px; height: 18px;"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_recepcao }}</div>
+                <div class="stat-status">
+                    <i data-lucide="user-check" style="width: 14px; height: 14px; color: #db2777;"></i>
+                    <span>Recepção e atendimento</span>
+                </div>
+            </div>
+
+            <!-- Total de Professores -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span>Total de Professores</span>
+                    <div class="stat-icon stat-icon-professor">
+                        <i data-lucide="dumbbell" style="width: 18px; height: 18px;"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_professores }}</div>
+                <div class="stat-status">
+                    <i data-lucide="activity" style="width: 14px; height: 14px; color: #4338ca;"></i>
+                    <span>Instrutores e aulas</span>
+                </div>
+            </div>
+
+            <!-- Total de Usuários do Financeiro -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <span>Total de Financeiro</span>
+                    <div class="stat-icon stat-icon-financeiro">
+                        <i data-lucide="dollar-sign" style="width: 18px; height: 18px;"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_financeiro }}</div>
+                <div class="stat-status">
+                    <i data-lucide="trending-up" style="width: 14px; height: 14px; color: #047857;"></i>
+                    <span>Planos e mensalidades</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SEÇÃO TABELA DE USUÁRIOS ================= -->
+        <section class="card-tabela" id="secao-usuarios">
+            <div class="tabela-cabecalho">
+                <div class="tabela-titulo-area">
+                    <h2>Colaboradores e Usuários</h2>
+                    <span class="contador-badge">{{ usuarios|length }} cadastrado(s)</span>
+                </div>
+
+                <!-- Formulário de Filtro e Busca -->
+                <form method="GET" action="{% url 'painel_admin' %}" class="filtros-container">
+                    <div class="search-box">
+                        <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                        <input type="text" name="busca" value="{{ busca }}" placeholder="Buscar por nome, usuário ou e-mail...">
+                    </div>
+
+                    <select name="filtro_tipo" class="select-filtro">
+                        <option value="">Todos os Cargos</option>
+                        {% for valor, label in tipos_perfil %}
+                        <option value="{{ valor }}" {% if filtro_tipo == valor %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit" class="btn-filtrar">Filtrar</button>
+
+                    {% if busca or filtro_tipo %}
+                    <a href="{% url 'painel_admin' %}" class="btn-limpar" title="Limpar Filtros">
+                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                        Limpar
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome Completo</th>
+                            <th>E-mail</th>
+                            <th>Tipo / Cargo</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <!-- Nome Completo & Login -->
+                            <td>
+                                <div class="usuario-col">
+                                    <div class="user-avatar-sm">
+                                        {{ u.first_name|default:u.username|slice:":1"|upper }}
+                                    </div>
+                                    <div class="usuario-info-box">
+                                        <div class="nome-completo">
+                                            {{ u.get_full_name|default:u.username }}
+                                        </div>
+                                        <div class="login-username">
+                                            @{{ u.username }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- E-mail -->
+                            <td>
+                                <span style="color: #475569; font-size: 0.9rem;">
+                                    {{ u.email|default:"—" }}
+                                </span>
+                            </td>
+
+                            <!-- Tipo / Cargo com Badges Visuais Coloridas -->
+                            <td>
+                                {% if u.perfil %}
+                                    {% if u.perfil.tipo == 'admin' %}
+                                    <span class="badge-perfil badge-perfil-admin">
+                                        <i data-lucide="shield" style="width: 13px; height: 13px;"></i>
+                                        Administrador
+                                    </span>
+                                    {% elif u.perfil.tipo == 'recepcao' %}
+                                    <span class="badge-perfil badge-perfil-recepcao">
+                                        <i data-lucide="clipboard-list" style="width: 13px; height: 13px;"></i>
+                                        Recepção
+                                    </span>
+                                    {% elif u.perfil.tipo == 'professor' %}
+                                    <span class="badge-perfil badge-perfil-professor">
+                                        <i data-lucide="dumbbell" style="width: 13px; height: 13px;"></i>
+                                        Professor (Instrutor)
+                                    </span>
+                                    {% elif u.perfil.tipo == 'financeiro' %}
+                                    <span class="badge-perfil badge-perfil-financeiro">
+                                        <i data-lucide="dollar-sign" style="width: 13px; height: 13px;"></i>
+                                        Financeiro
+                                    </span>
+                                    {% elif u.perfil.tipo == 'aluno' %}
+                                    <span class="badge-perfil badge-perfil-aluno">
+                                        <i data-lucide="user" style="width: 13px; height: 13px;"></i>
+                                        Aluno
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-perfil badge-perfil-aluno">
+                                        {{ u.perfil.get_tipo_display }}
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge-perfil badge-perfil-aluno" style="color: #991b1b; background: #fee2e2;">
+                                        Sem Perfil
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Status (Ativo / Inativo) -->
+                            <td>
+                                {% if u.is_active %}
+                                <span class="badge-status status-ativo">
+                                    <span class="status-dot"></span>
+                                    Ativo
+                                </span>
+                                {% else %}
+                                <span class="badge-status status-pendente">
+                                    <span class="status-dot"></span>
+                                    Inativo
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Coluna de Ações -->
+                            <td style="text-align: right;">
+                                <div class="acoes-col" style="justify-content: flex-end;">
+                                    {% if u.id == request.user.id %}
+                                    <span class="badge-usuario-atual" title="Você não pode desativar o seu próprio usuário logado">
+                                        <i data-lucide="shield" style="width: 13px; height: 13px;"></i>
+                                        Você (Admin)
+                                    </span>
+                                    {% else %}
+                                    <form method="POST" action="{% url 'alternar_status_usuario' u.id %}" onsubmit="return confirm('Deseja realmente {% if u.is_active %}desativar{% else %}ativar{% endif %} o acesso do usuário &quot;{{ u.username }}&quot;?');">
+                                        {% csrf_token %}
+                                        {% if u.is_active %}
+                                        <button type="submit" class="btn-acao btn-desativar" title="Desativar acesso deste usuário">
+                                            <i data-lucide="user-x" style="width: 14px; height: 14px;"></i>
+                                            Desativar
+                                        </button>
+                                        {% else %}
+                                        <button type="submit" class="btn-acao btn-ativar" title="Reativar acesso deste usuário">
+                                            <i data-lucide="user-check" style="width: 14px; height: 14px;"></i>
+                                            Ativar
+                                        </button>
+                                        {% endif %}
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="sem-usuarios">
+                                    <i data-lucide="users" style="width: 44px; height: 44px;"></i>
+                                    <p style="font-weight: 700; color: #1e293b; margin-bottom: 4px;">Nenhum usuário encontrado</p>
+                                    <p style="font-size: 0.88rem;">Não foram encontrados usuários correspondentes aos critérios de busca ou filtros.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODAL DE CADASTRO DE NOVO USUÁRIO ================= -->
+    <div class="modal-overlay" id="modalNovoUsuario">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>
+                    <i data-lucide="user-plus" style="width: 22px; height: 22px;"></i>
+                    Cadastrar Novo Usuário
+                </h3>
+                <button type="button" class="modal-close-btn" onclick="fecharModalNovoUsuario()" title="Fechar">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'painel_admin' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+
+                    <!-- Nome Completo -->
+                    <div class="form-group">
+                        <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }} *</label>
+                        <input type="text" name="nome" id="{{ form.nome.id_for_label }}" class="form-control" placeholder="Ex: Carlos Eduardo Silva" value="{{ form.nome.value|default:'' }}" required>
+                        {% if form.nome.errors %}
+                        <div class="form-error-msg">
+                            <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i>
+                            {{ form.nome.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Nome de Usuário (Login) -->
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}">{{ form.username.label }} *</label>
+                        <input type="text" name="username" id="{{ form.username.id_for_label }}" class="form-control" placeholder="Ex: carlos.silva" value="{{ form.username.value|default:'' }}" required>
+                        {% if form.username.errors %}
+                        <div class="form-error-msg">
+                            <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i>
+                            {{ form.username.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- E-mail -->
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}">{{ form.email.label }} *</label>
+                        <input type="email" name="email" id="{{ form.email.id_for_label }}" class="form-control" placeholder="Ex: carlos@shefit.com.br" value="{{ form.email.value|default:'' }}" required>
+                        {% if form.email.errors %}
+                        <div class="form-error-msg">
+                            <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i>
+                            {{ form.email.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Senha Provisória -->
+                    <div class="form-group">
+                        <label for="{{ form.senha_provisoria.id_for_label }}">{{ form.senha_provisoria.label }} *</label>
+                        <input type="password" name="senha_provisoria" id="{{ form.senha_provisoria.id_for_label }}" class="form-control" placeholder="Mínimo de 6 caracteres" required>
+                        {% if form.senha_provisoria.errors %}
+                        <div class="form-error-msg">
+                            <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i>
+                            {{ form.senha_provisoria.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Papel / Perfil -->
+                    <div class="form-group">
+                        <label for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }} *</label>
+                        <select name="tipo" id="{{ form.tipo.id_for_label }}" class="form-control" required>
+                            {% for valor, label in form.fields.tipo.choices %}
+                            <option value="{{ valor }}" {% if form.tipo.value == valor %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.tipo.errors %}
+                        <div class="form-error-msg">
+                            <i data-lucide="alert-circle" style="width: 13px; height: 13px;"></i>
+                            {{ form.tipo.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancelar" onclick="fecharModalNovoUsuario()">Cancelar</button>
+                        <button type="submit" class="btn-salvar">Cadastrar Usuário</button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inicialização de Ícones Lucide e Data Atual -->
+    <script>
+        lucide.createIcons();
+
+        // Data atual padronizada com os outros painéis
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+
+        // Funções do Modal
+        function abrirModalNovoUsuario() {
+            const modal = document.getElementById('modalNovoUsuario');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function fecharModalNovoUsuario() {
+            const modal = document.getElementById('modalNovoUsuario');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Fechar modal ao clicar fora da caixa
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalNovoUsuario');
+            if (event.target === modal) {
+                fecharModalNovoUsuario();
+            }
+        }
+
+        // Se houver erros no formulário após submissão, reabre o modal automaticamente
+        {% if form.errors %}
+        abrirModalNovoUsuario();
+        {% endif %}
+    </script>
+</body>
+
+</html>
