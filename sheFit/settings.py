@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "turmas",
     'financeiro',
     'recepcao',
+    'treinos',
     'agendamentos',
     'corsheaders',
     

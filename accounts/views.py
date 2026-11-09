@@ -9,6 +9,8 @@ from django.db.models import Sum
 
 from alunos.models import Aluno
 from accounts.models import Perfil
+from treinos.models import FichaTreino
+from django.utils import timezone
 from turmas.models import Turma, Modalidade
 from financeiro.models import Plano, Matricula, Cobranca, SituacaoMatricula
 from financeiro.servicos import obter_total_meses_periodicidade
@@ -73,15 +75,32 @@ def painel_aluno(request):
         raise PermissionDenied
 
     aluno = getattr(request.user.perfil, 'aluno', None)
+    ficha_ativa = None
+    if aluno:
+        ficha_ativa = (
+            FichaTreino.objects.filter(aluno=aluno, ativa=True)
+            .prefetch_related('exercicios')
+            .first()
+        )
 
-    return render(request, 'accounts/painel_aluno.html', {'aluno': aluno})
+    return render(request, 'accounts/painel_aluno.html', {
+        'aluno': aluno,
+        'ficha_ativa': ficha_ativa,
+    })
 
 
 @login_required(login_url='entrar')
 def painel_professor(request):
     if not hasattr(request.user, 'perfil') or request.user.perfil.tipo != 'professor':
         raise PermissionDenied
-    return render(request, 'accounts/painel_professor.html')
+    fichas_revisao_pendente = (
+        FichaTreino.objects.filter(ativa=True, data_revisao__lt=timezone.localdate())
+        .select_related('aluno')
+        .order_by('data_revisao', 'aluno__nome')
+    )
+    return render(request, 'accounts/painel_professor.html', {
+        'fichas_revisao_pendente': fichas_revisao_pendente,
+    })
 
 
 @login_required(login_url='entrar')
