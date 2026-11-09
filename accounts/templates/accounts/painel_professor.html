@@ -1,87 +1,465 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Painel do Professor - SheFit</title>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
+            --btn-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ================= SIDEBAR PADRÃO ================= */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px 32px 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-radius: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .badge-nav {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .nav-item.active .badge-nav {
+            background: #f3e8ff;
+            color: var(--primary-purple);
+        }
+
+        .sidebar-footer {
+            padding-top: 16px;
+        }
+
+        .btn-sair-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            color: #ef4444;
+            padding: 12px 20px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s;
+        }
+
+        .btn-sair-sidebar:hover {
+            background: #fee2e2;
+        }
+
+        /* ================= ÁREA DE CONTEÚDO ================= */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* Topbar */
+        .topbar {
+            background: #ffffff;
+            padding: 18px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .topbar-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .topbar-date {
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+
+        .topbar-sub {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .user-role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .avatar-wrapper {
+            position: relative;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            font-size: 1.1rem;
         }
-        .card {
+
+        .status-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 11px;
+            height: 11px;
+            background: #10b981;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        /* Conteúdo Principal */
+        .content-area {
+            padding: 32px 36px 60px;
+            max-width: 1400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* Boas-vindas */
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Seção 1: Cards de Métricas */
+        .stats-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stat-card {
             background: #ffffff;
             border-radius: 16px;
-            padding: 40px 32px;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            text-align: center;
+            padding: 24px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 140px;
         }
-        .logo {
-            font-size: 32px;
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-card-label {
+            font-size: 0.95rem;
             font-weight: 700;
-            letter-spacing: -1px;
+            color: var(--text-dark);
+        }
+
+        .icon-box-purple {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #f5f3ff;
             color: #7c3aed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-box-pink {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #fdf2f8;
+            color: #db2777;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-card-number {
+            font-size: 2.3rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            line-height: 1;
+            margin: 12px 0 4px 0;
+        }
+
+        .stat-card-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Seção 2: Agenda de Hoje */
+        .agenda-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .agenda-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .agenda-title-box h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-dark);
             margin-bottom: 4px;
         }
-        .badge {
-            display: inline-block;
-            background: #ede9fe;
-            color: #6d28d9;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+
+        .agenda-title-box span {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            text-transform: capitalize;
         }
-        .saudacao {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 8px;
-        }
-        .descricao {
-            color: #6b7280;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 28px;
-        }
-        .botao-sair {
-            display: block;
-            width: 100%;
-            padding: 13px;
-            background: #f3f4f6;
-            color: #4b5563;
+
+        .link-ver-agenda {
+            color: #7c3aed;
+            font-size: 0.92rem;
+            font-weight: 700;
             text-decoration: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            transition: background 0.2s, color 0.2s;
+            transition: color 0.2s;
         }
-        .botao-sair:hover {
-            background: #fee2e2;
-            color: #dc2626;
+
+        .link-ver-agenda:hover {
+            color: #6d28d9;
+            text-decoration: underline;
+        }
+
+        .agenda-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .agenda-item-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .agenda-item-row:hover {
+            border-color: #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .time-pill {
+            background: #f5f3ff;
+            color: #7c3aed;
+            font-weight: 800;
+            font-size: 0.92rem;
+            padding: 8px 14px;
+            border-radius: 10px;
+            min-width: 68px;
+            text-align: center;
+        }
+
+        .agenda-item-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .agenda-item-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .agenda-item-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .agenda-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 36px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            background: #f8fafc;
+            border: 1px dashed #e2e8f0;
+            border-radius: 14px;
+            gap: 8px;
+        }
+
+        .agenda-empty-state p {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .agenda-list:has(.agenda-item-row) .agenda-empty-state {
+            display: none !important;
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="card">
-        <div class="logo">SheFit</div>
-        <div class="badge">Professor</div>
-        <h2 class="saudacao">Olá, {{ request.user.username }}!</h2>
-        <p class="descricao">Área de acompanhamento de treinos e fichas dos alunos.</p>
+    <!-- SIDEBAR FIXA -->
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i data-lucide="dumbbell" style="width: 28px; height: 28px;"></i>
+                    <span>SheFit</span>
+                </div>
+                <i data-lucide="menu" style="width: 20px; height: 20px; cursor: pointer;"></i>
+            </div>
 
         <a href="{% url 'listar_turmas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
             Minhas Turmas
@@ -106,6 +484,180 @@
         {% endif %}
 
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
+            <ul class="nav-list">
+                <li class="nav-item active">
+                    <a href="{% url 'painel_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                            <span>Painel</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'minhas_turmas_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Minhas Turmas</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item" style="opacity: 0.7; cursor: default;">
+                    <a href="#" onclick="event.preventDefault();" style="cursor: default;">
+                        <div class="nav-item-left">
+                            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+                            <span>Estudantes</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
         </div>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sair-sidebar">
+                <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <div class="main-wrapper">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-info">
+                <div class="topbar-date" id="data-atual">
+                    Hoje
+                </div>
+                <div class="topbar-sub">
+                    Sua próxima aula começa às 10:30
+                </div>
+            </div>
+
+            <div class="user-profile">
+                <div class="user-info">
+                    <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+                    <span class="user-role">Professora &bull; Yoga e Pilates</span>
+                </div>
+                <div class="avatar-wrapper">
+                    <div class="avatar">
+                        {{ request.user.first_name|slice:":1"|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                    <span class="status-dot"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="content-area">
+            <!-- Boas-vindas -->
+            <div class="page-header">
+                <h1>Olá, {{ request.user.first_name|default:request.user.username }}!</h1>
+                <p>Acompanhe sua agenda, suas turmas e a evolução dos estudantes.</p>
+            </div>
+
+            <!-- SEÇÃO 1: CARDS DE MÉTRICAS -->
+            <section class="stats-grid-2">
+                <!-- Card 1: Turmas hoje -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">Turmas hoje</span>
+                        <div class="icon-box-purple">
+                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-number" id="num-turmas-hoje">0</div>
+                    <div class="stat-card-sub" id="sub-turmas-hoje">Nenhuma aula agendada</div>
+                </div>
+
+                <!-- Card 2: Meus estudantes -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">Meus estudantes</span>
+                        <div class="icon-box-pink">
+                            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-number">{{ total_estudantes|default:"28" }}</div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 2: AGENDA DE HOJE -->
+            <section class="agenda-card">
+                <div class="agenda-header">
+                    <div class="agenda-title-box">
+                        <h2>Agenda de hoje</h2>
+                        <span id="data-agenda-sub">Hoje</span>
+                    </div>
+                    <a href="{% url 'minhas_turmas_professor' %}" class="link-ver-agenda">Ver agenda</a>
+                </div>
+
+                {% now 'w' as dia_num %}
+                <!-- Lista de cards das turmas de hoje -->
+                <div class="agenda-list" id="agenda-hoje-list">
+                    {% for turma in turmas_hoje|default:request.user.turmas_lecionadas.all %}
+                        {% if turma.ativo %}
+                            {% if dia_num == '0' and turma.dia_semana == 'domingo' or dia_num == '1' and turma.dia_semana == 'segunda' or dia_num == '2' and turma.dia_semana == 'terca' or dia_num == '3' and turma.dia_semana == 'quarta' or dia_num == '4' and turma.dia_semana == 'quinta' or dia_num == '5' and turma.dia_semana == 'sexta' or dia_num == '6' and turma.dia_semana == 'sabado' %}
+                                <div class="agenda-item-row">
+                                    <div class="time-pill">{{ turma.horario|time:"H:i" }}</div>
+                                    <div class="agenda-item-details">
+                                        <h3 class="agenda-item-title">{{ turma.modalidade.nome }}</h3>
+                                        <div class="agenda-item-meta">
+                                            <span>{{ turma.sala }}</span> &bull;
+                                            <span>50 min</span> &bull;
+                                            <span>{{ turma.capacidade_maxima }} alunos</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="agenda-empty-state" id="agenda-empty-state">
+                        <i data-lucide="calendar-x" style="width: 32px; height: 32px; color: #94a3b8; margin-bottom: 4px;"></i>
+                        <p>Nenhuma aula agendada para hoje.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Data atual por extenso
+        const opcoes = { weekday: 'long', day: 'numeric', month: 'long' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataFormatada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+
+        const elDataTopo = document.getElementById('data-atual');
+        if (elDataTopo) elDataTopo.innerText = dataFormatada;
+
+        const elDataAgenda = document.getElementById('data-agenda-sub');
+        if (elDataAgenda) elDataAgenda.innerText = dataFormatada;
+
+        // Atualização reativa de turmas de hoje e próxima aula
+        const rows = document.querySelectorAll('.agenda-item-row');
+        const emptyState = document.getElementById('agenda-empty-state');
+        const numTurmas = document.getElementById('num-turmas-hoje');
+        const subTurmas = document.getElementById('sub-turmas-hoje');
+        const topbarSub = document.querySelector('.topbar-sub');
+
+        if (rows.length > 0) {
+            if (emptyState) emptyState.style.display = 'none';
+            if (numTurmas) numTurmas.innerText = rows.length;
+            const firstTimeEl = rows[0].querySelector('.time-pill');
+            const firstTime = firstTimeEl ? firstTimeEl.innerText.trim() : '';
+            if (firstTime) {
+                if (subTurmas) subTurmas.innerText = 'Próxima às ' + firstTime;
+                if (topbarSub) topbarSub.innerText = 'Sua próxima aula começa às ' + firstTime;
+            }
+        } else {
+            if (emptyState) emptyState.style.display = 'flex';
+            if (numTurmas) numTurmas.innerText = '0';
+            if (subTurmas) subTurmas.innerText = 'Nenhuma aula hoje';
+            if (topbarSub) topbarSub.innerText = 'Nenhuma aula agendada para hoje';
+        }
+    </script>
 </body>
+
 </html>

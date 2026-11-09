@@ -58,6 +58,7 @@
             line-height: 1.5;
             margin-bottom: 28px;
         }
+        
         .botao-sair {
             display: block;
             width: 100%;
@@ -118,6 +119,7 @@
                 <div class="alerta-aviso">Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais informações.</div>
             {% endif %}
         </section>
+        <a href="{% url 'minhas_aulas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Minhas aulas</a>
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
     </div>
 </body>
