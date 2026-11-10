@@ -1,0 +1,70 @@
+{% extends "avaliacoes/base_avaliacoes.html" %}
+{% block titulo %}Comparar avaliações{% endblock %}
+{% block conteudo %}
+<section class="card">
+    <div class="topo">
+        <h1>Comparar avaliações{% if eh_professor %} — {{ aluno.nome }}{% endif %}</h1>
+        <a class="botao secundario" href="{{ url_voltar }}">Voltar</a>
+    </div>
+
+    {% if avaliacoes|length < 2 %}
+        <p class="aviso-caixa">São necessárias pelo menos duas avaliações para comparar.</p>
+    {% else %}
+        <form method="get" class="grade" style="margin-top: 14px;">
+            <div class="campo">
+                <label for="a">Avaliação 1</label>
+                <select id="a" name="a" class="form-control">
+                    {% for av in avaliacoes %}
+                        <option value="{{ av.pk }}" {% if escolhida_a.pk == av.pk %}selected{% endif %}>
+                            {{ av.data_avaliacao|date:"d/m/Y" }} — {{ av.peso_kg|floatformat:"-2" }} kg{% if not av.vigente %} (corrigida){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="campo">
+                <label for="b">Avaliação 2</label>
+                <select id="b" name="b" class="form-control">
+                    {% for av in avaliacoes %}
+                        <option value="{{ av.pk }}" {% if escolhida_b.pk == av.pk %}selected{% endif %}>
+                            {{ av.data_avaliacao|date:"d/m/Y" }} — {{ av.peso_kg|floatformat:"-2" }} kg{% if not av.vigente %} (corrigida){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="grid-column: 1 / -1;">
+                <button type="submit" class="botao primario">Comparar</button>
+            </div>
+        </form>
+    {% endif %}
+</section>
+
+{% if linhas %}
+<section class="card">
+    <h2>De {{ anterior.data_avaliacao|date:"d/m/Y" }} para {{ posterior.data_avaliacao|date:"d/m/Y" }}</h2>
+    <p class="discreto">A diferença é sempre a avaliação mais recente menos a mais antiga.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Medida</th>
+                <th class="num">{{ anterior.data_avaliacao|date:"d/m/Y" }}</th>
+                <th class="num">{{ posterior.data_avaliacao|date:"d/m/Y" }}</th>
+                <th class="num">Diferença</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for linha in linhas %}
+            <tr>
+                <td>
+                    {{ linha.rotulo }}{% if linha.eh_teste %} <span class="badge cinza">teste</span>{% endif %}
+                    {% if linha.aviso %}<br><span class="discreto">{{ linha.aviso }}</span>{% endif %}
+                </td>
+                <td class="num">{% if linha.anterior is None %}—{% else %}{{ linha.anterior|floatformat:"-2" }} {{ linha.unidade }}{% endif %}</td>
+                <td class="num">{% if linha.posterior is None %}—{% else %}{{ linha.posterior|floatformat:"-2" }} {{ linha.unidade }}{% endif %}</td>
+                <td class="num"><strong>{{ linha.diferenca_texto }}</strong>{% if linha.diferenca is not None %} {{ linha.unidade }}{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+{% endblock %}

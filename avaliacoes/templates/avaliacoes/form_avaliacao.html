@@ -1,0 +1,58 @@
+{% extends "avaliacoes/base_avaliacoes.html" %}
+{% block titulo %}{% if original %}Corrigir avaliação{% else %}Nova avaliação{% endif %}{% endblock %}
+{% block conteudo %}
+<section class="card">
+    <h1>{% if original %}Corrigir avaliação de {{ original.data_avaliacao|date:"d/m/Y" }}{% else %}Nova avaliação{% endif %} — {{ aluno.nome }}</h1>
+    {% if original %}
+        <p class="aviso-caixa">
+            A avaliação original <strong>não será alterada</strong>: esta correção entra como um registro novo,
+            com o motivo, e as duas ficam no histórico do aluno.
+        </p>
+    {% else %}
+        <p class="discreto">O IMC é calculado automaticamente a partir do peso e da altura.</p>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {% if original %}
+            <div class="campo">
+                <label for="{{ form.motivo_correcao.id_for_label }}">{{ form.motivo_correcao.label }} *</label>
+                {{ form.motivo_correcao }}
+                {% for erro in form.motivo_correcao.errors %}<p class="erro">{{ erro }}</p>{% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="grade">
+            {% for campo in form %}
+                {% if campo.name != 'motivo_correcao' %}
+                    <div class="campo" {% if campo.name == 'observacoes' %}style="grid-column: 1 / -1;"{% endif %}>
+                        <label for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required %} *{% endif %}</label>
+                        {{ campo }}
+                        {% for erro in campo.errors %}<p class="erro">{{ erro }}</p>{% endfor %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <h2 style="margin-top: 18px;">Testes físicos</h2>
+        <p class="discreto">Opcional. Use o mesmo nome do teste nas avaliações para que dê para comparar depois.</p>
+        {{ formset.management_form }}
+        {% for erro in formset.non_form_errors %}<p class="erro">{{ erro }}</p>{% endfor %}
+        {% for f in formset %}
+            {% for oculto in f.hidden_fields %}{{ oculto }}{% endfor %}
+            <div class="grade" style="grid-template-columns: 2fr 1fr 1fr; border-top: 1px solid #e5e7eb; padding-top: 10px; margin-bottom: 6px;">
+                <div class="campo">{{ f.nome }}{% for erro in f.nome.errors %}<p class="erro">{{ erro }}</p>{% endfor %}</div>
+                <div class="campo">{{ f.resultado }}{% for erro in f.resultado.errors %}<p class="erro">{{ erro }}</p>{% endfor %}</div>
+                <div class="campo">{{ f.unidade }}{% for erro in f.unidade.errors %}<p class="erro">{{ erro }}</p>{% endfor %}</div>
+            </div>
+        {% endfor %}
+
+        <div class="acoes" style="margin-top: 18px;">
+            <button type="submit" class="botao primario">{% if original %}Registrar correção{% else %}Registrar avaliação{% endif %}</button>
+            <a class="botao secundario" href="{% url 'avaliacoes_aluno' aluno.pk %}">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

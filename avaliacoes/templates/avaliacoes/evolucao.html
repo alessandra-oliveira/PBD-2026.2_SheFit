@@ -1,0 +1,86 @@
+{% extends "avaliacoes/base_avaliacoes.html" %}
+{% block titulo %}{% if eh_professor %}Evolução de {{ aluno.nome }}{% else %}Minha evolução{% endif %}{% endblock %}
+{% block conteudo %}
+<section class="card">
+    <div class="topo">
+        <h1>{% if eh_professor %}Evolução de {{ aluno.nome }}{% else %}Minha evolução{% endif %}</h1>
+        <div class="acoes">
+            {% if avaliacoes|length >= 2 %}
+                <a class="botao primario" href="{{ url_comparar }}">Comparar avaliações</a>
+            {% endif %}
+            {% if eh_professor %}
+                <a class="botao primario" href="{% url 'registrar_avaliacao' aluno.pk %}">Nova avaliação</a>
+            {% endif %}
+            <a class="botao secundario" href="{{ url_voltar }}">Voltar</a>
+        </div>
+    </div>
+    <p class="discreto">
+        Cada avaliação é um registro novo e nunca é alterada: a sequência delas é a evolução.
+        {% if avaliacoes|length == 1 %}Com mais uma avaliação já é possível comparar.{% endif %}
+    </p>
+</section>
+
+{% for av in avaliacoes %}
+<section class="card">
+    <div class="topo">
+        <h2>Avaliação de {{ av.data_avaliacao|date:"d/m/Y" }}</h2>
+        <div class="acoes">
+            {% if av.corrige_id %}<span class="badge aviso">Correção</span>{% endif %}
+            {% if av.substituida_por %}
+                <span class="badge cinza">Substituída pela correção de {{ av.substituida_por.data_avaliacao|date:"d/m/Y" }}</span>
+            {% else %}
+                <span class="badge">Vigente</span>
+            {% endif %}
+        </div>
+    </div>
+    <p class="discreto">
+        Registrada em {{ av.registrada_em|date:"d/m/Y H:i" }} por {{ av.professor.get_full_name|default:av.professor.username }}
+    </p>
+
+    {% if av.corrige_id %}
+        <div class="aviso-caixa">
+            <strong>Corrige a avaliação de {{ av.corrige.data_avaliacao|date:"d/m/Y" }}.</strong><br>
+            Motivo: {{ av.motivo_correcao }}
+        </div>
+    {% endif %}
+
+    <div class="metricas">
+        <div class="metrica"><span>Peso</span><strong>{{ av.peso_kg|floatformat:"-2" }} kg</strong></div>
+        <div class="metrica"><span>Altura</span><strong>{{ av.altura_cm|floatformat:"-1" }} cm</strong></div>
+        <div class="metrica"><span>IMC (calculado)</span><strong>{{ av.imc|floatformat:2 }}</strong></div>
+        {% if av.percentual_gordura is not None %}
+            <div class="metrica"><span>% de gordura</span><strong>{{ av.percentual_gordura|floatformat:"-1" }}%</strong></div>
+        {% endif %}
+        {% for rotulo, valor in av.medidas_preenchidas %}
+            <div class="metrica"><span>{{ rotulo }}</span><strong>{{ valor|floatformat:"-1" }}</strong></div>
+        {% endfor %}
+    </div>
+
+    {% with testes=av.testes.all %}
+        {% if testes %}
+            <h3>Testes físicos</h3>
+            <table>
+                <tbody>
+                {% for teste in testes %}
+                    <tr><td>{{ teste.nome }}</td><td class="num">{{ teste.resultado|floatformat:"-2" }} {{ teste.unidade }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endwith %}
+
+    {% if av.observacoes %}<p><strong>Observações:</strong> {{ av.observacoes }}</p>{% endif %}
+
+    {% if eh_professor and not av.substituida_por %}
+        <a class="botao secundario pequeno" href="{% url 'corrigir_avaliacao' av.pk %}">Corrigir (cria um novo registro)</a>
+    {% endif %}
+</section>
+{% empty %}
+<section class="card">
+    <p class="aviso-caixa">
+        {% if eh_professor %}Este aluno ainda não tem avaliações registradas.
+        {% else %}Você ainda não tem avaliações registradas. Procure seu professor para fazer a primeira.{% endif %}
+    </p>
+</section>
+{% endfor %}
+{% endblock %}
