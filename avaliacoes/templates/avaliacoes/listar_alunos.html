@@ -1,0 +1,34 @@
+{% extends "avaliacoes/base_avaliacoes.html" %}
+{% block titulo %}Avaliações físicas{% endblock %}
+{% block conteudo %}
+<section class="card">
+    <div class="topo">
+        <h1>Avaliações físicas</h1>
+        <a class="botao secundario" href="{% url 'painel_professor' %}">Voltar ao painel</a>
+    </div>
+    <form method="get" class="campo" style="margin-top: 14px;">
+        <label for="busca">Buscar aluno</label>
+        <input id="busca" class="form-control" type="search" name="q" value="{{ busca }}" placeholder="Nome do aluno">
+    </form>
+    <table>
+        <thead>
+            <tr><th>Aluno</th><th>Avaliações</th><th>Última</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for aluno in alunos %}
+            <tr>
+                <td><strong>{{ aluno.nome }}</strong></td>
+                <td>{{ aluno.total_avaliacoes }}</td>
+                <td>{% if aluno.ultima_avaliacao %}{{ aluno.ultima_avaliacao|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                <td class="num">
+                    <a class="botao secundario pequeno" href="{% url 'avaliacoes_aluno' aluno.pk %}">Evolução</a>
+                    <a class="botao primario pequeno" href="{% url 'registrar_avaliacao' aluno.pk %}">Nova avaliação</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4">Nenhum aluno encontrado.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
