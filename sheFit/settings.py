@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'agendamentos',
     'corsheaders',
     'avaliacoes',
-    
+    'retencao',
 ]
 
 MIDDLEWARE = [

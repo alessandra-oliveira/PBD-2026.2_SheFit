@@ -1,0 +1,134 @@
+{% extends "avaliacoes/base_avaliacoes.html" %}
+{% block titulo %}Meus resultados{% endblock %}
+{% block conteudo %}
+<section class="card">
+    <div class="topo">
+        <h1>Meus resultados</h1>
+        <a class="botao secundario" href="{% url 'painel_aluno' %}">Voltar</a>
+    </div>
+    <p class="discreto">O quanto você veio e o quanto mudou, {{ aluno.nome.split.0 }}.</p>
+</section>
+
+{# ---------------- Frequência ---------------- #}
+<section class="card">
+    <h2>Sua frequência</h2>
+    <div class="acoes" style="margin-bottom: 8px;">
+        {% for chave, rotulo in periodos %}
+            <a class="botao pequeno {% if chave == periodo %}primario{% else %}secundario{% endif %}"
+               href="?periodo={{ chave }}">{{ rotulo }}</a>
+        {% endfor %}
+    </div>
+    <div class="metricas">
+        <div class="metrica"><span>Acessos ({{ frequencia.rotulo|lower }})</span><strong>{{ frequencia.total }}</strong></div>
+        <div class="metrica"><span>Média por semana</span><strong>{{ frequencia.media_semanal|floatformat:1 }}</strong></div>
+    </div>
+    {% if frequencia.total == 0 %}
+        <p class="aviso-caixa">Nenhum acesso registrado neste período.</p>
+    {% endif %}
+</section>
+
+{# ---------------- Avaliações físicas ---------------- #}
+<section class="card">
+    <h2>Suas avaliações físicas</h2>
+    {% if not avaliacoes %}
+        <p class="aviso-caixa">
+            Você ainda não tem avaliação física. Procure seu professor para fazer a primeira
+            e acompanhar sua evolução por aqui.
+        </p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th class="num">Peso</th>
+                    <th class="num">IMC</th>
+                    <th class="num">% gordura</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for av in avaliacoes %}
+                <tr>
+                    <td>{{ av.data_avaliacao|date:"d/m/Y" }}</td>
+                    <td class="num">{{ av.peso_kg|floatformat:"-2" }} kg</td>
+                    <td class="num">{{ av.imc|floatformat:2 }}</td>
+                    <td class="num">{% if av.percentual_gordura is None %}—{% else %}{{ av.percentual_gordura|floatformat:"-1" }}%{% endif %}</td>
+                    <td>
+                        {% if av.corrige_id %}<span class="badge aviso">Correção</span>{% endif %}
+                        {% if av.substituida_por %}<span class="badge cinza">Substituída</span>{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p class="discreto" style="margin-top: 10px;">
+            <a href="{% url 'minha_evolucao' %}">Ver todas as medidas e testes de cada avaliação</a>
+        </p>
+    {% endif %}
+</section>
+
+{# ---------------- Comparação ---------------- #}
+{% if avaliacoes %}
+<section class="card">
+    <h2>Compare duas avaliações</h2>
+    {% if avaliacoes|length < 2 %}
+        <p class="aviso-caixa">Com mais uma avaliação você já poderá comparar a sua evolução.</p>
+    {% else %}
+        <form method="get" class="grade">
+            <input type="hidden" name="periodo" value="{{ periodo }}">
+            <div class="campo">
+                <label for="a">Avaliação 1</label>
+                <select id="a" name="a" class="form-control">
+                    {% for av in avaliacoes %}
+                        <option value="{{ av.pk }}" {% if escolhida_a.pk == av.pk %}selected{% endif %}>
+                            {{ av.data_avaliacao|date:"d/m/Y" }} — {{ av.peso_kg|floatformat:"-2" }} kg{% if not av.vigente %} (corrigida){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="campo">
+                <label for="b">Avaliação 2</label>
+                <select id="b" name="b" class="form-control">
+                    {% for av in avaliacoes %}
+                        <option value="{{ av.pk }}" {% if escolhida_b.pk == av.pk %}selected{% endif %}>
+                            {{ av.data_avaliacao|date:"d/m/Y" }} — {{ av.peso_kg|floatformat:"-2" }} kg{% if not av.vigente %} (corrigida){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="grid-column: 1 / -1;">
+                <button type="submit" class="botao primario">Comparar</button>
+            </div>
+        </form>
+
+        {% if linhas %}
+            <h3 style="margin-top: 18px;">De {{ anterior.data_avaliacao|date:"d/m/Y" }} para {{ posterior.data_avaliacao|date:"d/m/Y" }}</h3>
+            <p class="discreto">A diferença é sempre a avaliação mais recente menos a mais antiga.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Medida</th>
+                        <th class="num">{{ anterior.data_avaliacao|date:"d/m/Y" }}</th>
+                        <th class="num">{{ posterior.data_avaliacao|date:"d/m/Y" }}</th>
+                        <th class="num">Diferença</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for linha in linhas %}
+                    <tr>
+                        <td>
+                            {{ linha.rotulo }}{% if linha.eh_teste %} <span class="badge cinza">teste</span>{% endif %}
+                            {% if linha.aviso %}<br><span class="discreto">{{ linha.aviso }}</span>{% endif %}
+                        </td>
+                        <td class="num">{% if linha.anterior is None %}—{% else %}{{ linha.anterior|floatformat:"-2" }} {{ linha.unidade }}{% endif %}</td>
+                        <td class="num">{% if linha.posterior is None %}—{% else %}{{ linha.posterior|floatformat:"-2" }} {{ linha.unidade }}{% endif %}</td>
+                        <td class="num"><strong>{{ linha.diferenca_texto }}</strong>{% if linha.diferenca is not None %} {{ linha.unidade }}{% endif %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}
