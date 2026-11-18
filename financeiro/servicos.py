@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import (
     RegraFinanceira, Matricula, Cobranca, Pagamento, Estorno,
-    SituacaoMatricula, Trancamento, Cancelamento,
+    SituacaoMatricula, Trancamento, Cancelamento, Renovacao
 )
 
 CENTAVOS = Decimal('0.01')
@@ -342,6 +342,38 @@ def _vencimento_da_competencia(primeiro_dia_do_mes, dia_vencimento, data_inicio)
         vencimento = primeiro_dia_do_mes + relativedelta(day=31)
     return max(vencimento, data_inicio)
 
+def _gerar_mensalidades_do_ciclo(matricula, inicio_ciclo, meses):
+    """Mensalidades de UM ciclo que começa em `inicio_ciclo` e dura `meses` meses.
+
+    Mesma regra para o ciclo 1 (T06) e para as renovações (T18): valor do plano,
+    dia de vencimento do plano e nunca vencer antes do início do ciclo.
+    Idempotente: uma por (matrícula, competência). Devolve quantas criou.
+    """
+    plano = matricula.plano
+    primeiro_mes = inicio_ciclo.replace(day=1)
+    criadas = 0
+    for i in range(meses):
+        mes = primeiro_mes + relativedelta(months=i)
+        try:
+            # Savepoint próprio: se a constraint única disparar numa corrida,
+            # só este bloco é desfeito e a transação externa continua.
+            with transaction.atomic():
+                _, criada = Cobranca.objects.get_or_create(
+                    matricula=matricula,
+                    tipo='mensalidade',
+                    competencia=mes.strftime('%Y-%m'),
+                    defaults={
+                        'valor': plano.valor,
+                        'vencimento': _vencimento_da_competencia(
+                            mes, plano.dia_vencimento, inicio_ciclo,
+                        ),
+                    },
+                )
+        except IntegrityError:
+            criada = False
+        if criada:
+            criadas += 1
+    return criadas
 
 @transaction.atomic
 def gerar_cobrancas(matricula):
@@ -357,6 +389,11 @@ def gerar_cobrancas(matricula):
         return 0
     plano = matricula.plano
     criadas = 0
+    criadas += _gerar_mensalidades_do_ciclo(
+        matricula, matricula.data_inicio,
+        obter_total_meses_periodicidade(plano.periodicidade),
+    )
+    return criadas
 
     taxa_adesao = plano.taxa_adesao
     if taxa_adesao and taxa_adesao > 0:
@@ -607,3 +644,156 @@ def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
             'dividas': previsao['dividas'],
             'total_dividas': previsao['total_dividas'],
         }
+
+# ---------------------------------------------------------------------------
+# T18 - Renovação da matrícula no fim da vigência
+# ---------------------------------------------------------------------------
+
+# Renovação AUTOMÁTICA: roda quando a vigência chega ao fim (0 = no próprio dia).
+# Se o sistema ficar parado, a execução seguinte alcança todos os ciclos atrasados.
+ANTECEDENCIA_RENOVACAO_AUTOMATICA_DIAS = 0
+
+# Renovação POR CONFIRMAÇÃO: o painel avisa e a recepção pode confirmar a partir
+# de quantos dias antes do fim da vigência.
+JANELA_AVISO_RENOVACAO_DIAS = 15
+
+# Trava de segurança: ciclos atrasados que uma execução alcança por matrícula.
+LIMITE_CICLOS_POR_EXECUCAO = 60
+
+
+def _ultima_renovacao(matricula):
+    # .all() aproveita prefetch_related('renovacoes') quando houver.
+    return max(matricula.renovacoes.all(), key=lambda r: r.ciclo, default=None)
+
+
+def _meses_acumulados(matricula):
+    ultima = _ultima_renovacao(matricula)
+    if ultima is not None:
+        return ultima.meses_acumulados
+    # Ciclo 1: a vigência original é a periodicidade do plano.
+    return obter_total_meses_periodicidade(matricula.plano.periodicidade)
+
+
+def ciclo_atual(matricula):
+    ultima = _ultima_renovacao(matricula)
+    return ultima.ciclo if ultima is not None else 1
+
+
+def fim_vigencia(matricula):
+    """Dia em que termina a vigência atual (e começa o ciclo seguinte)."""
+    return matricula.data_inicio + relativedelta(months=_meses_acumulados(matricula))
+
+
+@transaction.atomic
+def renovar_matricula(matricula, hoje=None, usuario=None, automatica=False, fim_esperado=None):
+    """Gera UM ciclo seguinte para a matrícula (T18), se estiver na hora.
+
+    O ciclo começa exatamente onde o anterior termina: nenhum dia fica de fora.
+    As mensalidades novas seguem as mesmas regras do ciclo 1. A taxa de adesão
+    não se repete (é cobrada uma vez). Nada que já foi cobrado é lido ou alterado:
+    renovar devendo é continuar devendo.
+
+    Idempotente: se não está na hora (ou já foi renovada), devolve renovada=False
+    e não grava nada. `fim_esperado` é o fim de vigência que a tela mostrou: se a
+    vigência já andou, também não renova (protege contra clique duplo).
+
+    Matrícula cancelada não renova (ValidationError).
+    """
+    hoje = hoje or timezone.localdate()
+    # Trava a matrícula: duas renovações simultâneas entram uma de cada vez.
+    matricula = Matricula.objects.select_for_update().select_related('plano').get(pk=matricula.pk)
+    if Cancelamento.objects.filter(matricula=matricula).exists():
+        raise ValidationError("Matrícula cancelada não pode ser renovada.")
+
+    fim_atual = fim_vigencia(matricula)
+    if fim_esperado is not None and fim_esperado != fim_atual:
+        return {'renovada': False, 'motivo': 'desatualizada', 'fim_vigencia': fim_atual}
+    antecedencia = (
+        ANTECEDENCIA_RENOVACAO_AUTOMATICA_DIAS if automatica else JANELA_AVISO_RENOVACAO_DIAS
+    )
+    if fim_atual > hoje + timedelta(days=antecedencia):
+        return {'renovada': False, 'motivo': 'fora_da_janela', 'fim_vigencia': fim_atual}
+
+    meses = obter_total_meses_periodicidade(matricula.plano.periodicidade)
+    acumulados = _meses_acumulados(matricula) + meses
+    nome = ''
+    if usuario is not None:
+        nome = usuario.get_full_name() or usuario.get_username()
+    renovacao = Renovacao.objects.create(
+        matricula=matricula,
+        ciclo=ciclo_atual(matricula) + 1,
+        inicio=fim_atual,
+        fim=matricula.data_inicio + relativedelta(months=acumulados),
+        meses_acumulados=acumulados,
+        automatica=automatica,
+        confirmada_por=usuario,
+        confirmada_por_nome=nome,
+    )
+    criadas = _gerar_mensalidades_do_ciclo(matricula, renovacao.inicio, meses)
+    return {
+        'renovada': True,
+        'renovacao': renovacao,
+        'cobrancas_criadas': criadas,
+        'fim_vigencia': renovacao.fim,
+    }
+
+
+def renovar_automaticas(hoje=None):
+    """Renova todas as matrículas de plano automático que chegaram ao fim da vigência.
+
+    Roda sem ninguém clicar (middleware, na primeira requisição do dia, ou o comando
+    `renovar_matriculas`). Alcança ciclos atrasados e pode rodar quantas vezes quiser:
+    a segunda execução não encontra nada a fazer. Uma matrícula com problema não
+    derruba as outras: o erro é devolvido no resumo.
+    """
+    hoje = hoje or timezone.localdate()
+    resumo = {'ciclos': 0, 'matriculas': 0, 'cobrancas': 0, 'erros': []}
+    candidatas = (
+        Matricula.objects.filter(cancelamento__isnull=True, plano__renovacao_automatica=True)
+        .select_related('plano').prefetch_related('renovacoes').order_by('pk')
+    )
+    limite = hoje + timedelta(days=ANTECEDENCIA_RENOVACAO_AUTOMATICA_DIAS)
+    for matricula in candidatas:
+        # Varredura barata: quem ainda não chegou ao fim da vigência nem é travado.
+        if fim_vigencia(matricula) > limite:
+            continue
+        renovou = False
+        try:
+            for _ in range(LIMITE_CICLOS_POR_EXECUCAO):
+                r = renovar_matricula(matricula, hoje=hoje, automatica=True)
+                if not r['renovada']:
+                    break
+                renovou = True
+                resumo['ciclos'] += 1
+                resumo['cobrancas'] += r['cobrancas_criadas']
+        except Exception as erro:  # um problema não pode parar as demais
+            resumo['erros'].append((matricula.pk, str(erro)))
+        if renovou:
+            resumo['matriculas'] += 1
+    return resumo
+
+
+def renovacoes_a_vencer(hoje=None):
+    """Matrículas de plano COM CONFIRMAÇÃO que a recepção precisa renovar (T18).
+
+    Entram as que terminam em até JANELA_AVISO_RENOVACAO_DIAS dias e as que já
+    terminaram sem renovação. Mais urgentes primeiro. Cancelada nunca aparece.
+    """
+    hoje = hoje or timezone.localdate()
+    limite = hoje + timedelta(days=JANELA_AVISO_RENOVACAO_DIAS)
+    candidatas = (
+        Matricula.objects.filter(cancelamento__isnull=True, plano__renovacao_automatica=False)
+        .select_related('aluno', 'plano').prefetch_related('renovacoes')
+    )
+    itens = []
+    for matricula in candidatas:
+        fim = fim_vigencia(matricula)
+        if fim <= limite:
+            itens.append({
+                'matricula': matricula,
+                'fim': fim,
+                'dias': (fim - hoje).days,   # negativo = já venceu
+                'ciclo': ciclo_atual(matricula),
+            })
+    itens.sort(key=lambda i: (i['fim'], i['matricula'].pk))
+    return itens

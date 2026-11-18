@@ -1,12 +1,11 @@
 from django.contrib import admin
 from .models import (
     Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca,
-    Trancamento, Cancelamento,
-)
+    Trancamento, Cancelamento, Renovacao)
 
 @admin.register(Plano)
 class PlanoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'periodicidade', 'valor', 'dia_vencimento', 'ativo')
+    list_display = ('nome', 'periodicidade', 'valor', 'dia_vencimento', 'ativo', 'renovacao_automatica')
     list_filter = ('ativo', 'periodicidade')
     search_fields = ('nome',)
 
@@ -67,3 +66,9 @@ class TrancamentoAdmin(admin.ModelAdmin):
 @admin.register(Cancelamento)
 class CancelamentoAdmin(admin.ModelAdmin):
     list_display = ('matricula', 'data', 'motivo')
+
+
+@admin.register(Renovacao)
+class RenovacaoAdmin(admin.ModelAdmin):
+    list_display = ('matricula', 'ciclo', 'inicio', 'fim', 'automatica', 'confirmada_por_nome')
+    list_filter = ('automatica',)

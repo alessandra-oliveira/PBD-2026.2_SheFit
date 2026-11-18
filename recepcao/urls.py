@@ -10,6 +10,7 @@ urlpatterns = [
         'pagamentos/cobranca/<int:cobranca_id>/',
         views.registrar_pagamento,
         name='registrar_pagamento',
+        
     ),
     path(
         'pagamentos/<int:pagamento_id>/estorno/',
@@ -19,4 +20,7 @@ urlpatterns = [
 
     path('cancelamento/', views.buscar_matricula_cancelamento, name='buscar_matricula_cancelamento'),
     path('cancelamento/<int:matricula_id>/', views.cancelar_matricula, name='cancelar_matricula'),
+
+    path('renovacoes/', views.listar_renovacoes, name='listar_renovacoes'),
+    path('renovacoes/<int:matricula_id>/confirmar/', views.confirmar_renovacao, name='confirmar_renovacao'),
 ]
