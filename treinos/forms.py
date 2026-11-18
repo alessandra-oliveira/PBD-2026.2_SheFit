@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-
+from django.utils import timezone
 from alunos.models import Aluno
 from .models import ExercicioTreino, FichaTreino
 
@@ -16,6 +16,12 @@ class FichaTreinoForm(forms.ModelForm):
                 format='%Y-%m-%d',
             ),
         }
+
+    def clean_data_revisao(self):
+        data = self.cleaned_data['data_revisao']
+        if data < timezone.localdate():
+            raise forms.ValidationError('A data de revisão não pode estar no passado.')
+        return data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
