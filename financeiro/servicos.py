@@ -51,7 +51,7 @@ def calcular_situacao(matricula, hoje=None, regras=None):
         return SituacaoMatricula.TRANCADA
 
     vencimento_mais_antigo = matricula.cobrancas.filter(
-        paga=False, vencimento__lt=hoje,
+        paga=False, cancelada=False, vencimento__lt=hoje,
     ).aggregate(mais_antigo=Min('vencimento'))['mais_antigo']
     if vencimento_mais_antigo is None:
         return SituacaoMatricula.ATIVA
@@ -191,6 +191,8 @@ def simular_pagamento(cobranca, valor, data_pagamento=None):
         raise ValidationError("O valor recebido deve ser maior que zero.")
     if data_pagamento > timezone.localdate():
         raise ValidationError("A data do pagamento não pode estar no futuro.")
+    if cobranca.cancelada:
+        raise ValidationError("Esta cobrança foi cancelada com a matrícula e não é mais devida.")
     if cobranca.paga and not cobranca.pagamentos.exists():
         raise ValidationError("Esta cobrança já está quitada.")
 
@@ -351,6 +353,8 @@ def gerar_cobrancas(matricula):
 
     Devolve quantas cobranças foram criadas nesta execução (0 se já existiam).
     """
+    if Cancelamento.objects.filter(matricula=matricula).exists():
+        return 0
     plano = matricula.plano
     criadas = 0
 
@@ -404,7 +408,6 @@ def realizar_matricula(aluno, plano, data_inicio, forma_pagamento):
     )
     gerar_cobrancas(matricula)
     return matricula
-
 def avaliar_situacao_financeira_aluno(aluno):
     """
     Avalia a entrada do aluno a partir da SITUAÇÃO calculada da matrícula
@@ -436,7 +439,7 @@ def avaliar_situacao_financeira_aluno(aluno):
 
     # Bloqueada ou inadimplente: há uma cobrança vencida em aberto
     cobranca_mais_antiga = matricula.cobrancas.filter(
-        paga=False, vencimento__lt=hoje,
+        paga=False, cancelada=False, vencimento__lt=hoje,
     ).order_by('vencimento').first()
     dias_atraso = (hoje - cobranca_mais_antiga.vencimento).days
     valor_pendente = saldo_cobranca(cobranca_mais_antiga, hoje)
@@ -464,3 +467,143 @@ def avaliar_situacao_financeira_aluno(aluno):
             'dias_restantes_bloqueio': dias_restantes
         }
     }
+
+# ---------------------------------------------------------------------------
+# T17 - Cancelamento da matrícula com a multa certa
+# ---------------------------------------------------------------------------
+
+# A multa vira uma cobrança com vencimento. Quantos dias a aluna tem para pagar
+# a partir do cancelamento (0 = vence no próprio dia). Ajuste se a regra mudar.
+DIAS_PARA_PAGAR_MULTA = 0
+
+
+def calcular_multa_cancelamento(matricula, hoje=None):
+    """Multa por cancelamento antecipado de `matricula` se cancelada em `hoje`.
+
+    Só há multa com fidelidade EM CURSO: plano com fidelidade e hoje ainda antes
+    do fim dela (data_inicio + fidelidade_meses).
+
+        multa = mensalidade x meses_fidelidade x percentual/100 x dias_restantes / dias_totais
+
+    Arredondada para centavos (meio para cima). Só consulta: não grava nada.
+    """
+    hoje = hoje or timezone.localdate()
+    plano = matricula.plano
+    base = {
+        'em_fidelidade': False,
+        'multa': Decimal('0.00'),
+        'percentual': plano.multa_cancelamento,
+        'fidelidade_meses': plano.fidelidade_meses,
+        'inicio_fidelidade': matricula.data_inicio,
+        'fim_fidelidade': None,
+        'dias_totais': 0,
+        'dias_restantes': 0,
+        'valor_contrato': Decimal('0.00'),
+    }
+    if not plano.fidelidade_meses:
+        return base
+
+    inicio = matricula.data_inicio
+    fim = inicio + relativedelta(months=plano.fidelidade_meses)
+    dias_totais = (fim - inicio).days
+    base.update(fim_fidelidade=fim, dias_totais=dias_totais)
+    if hoje >= fim:
+        return base
+
+    # Matrícula que ainda nem começou: o tempo restante é a fidelidade inteira.
+    dias_restantes = min((fim - hoje).days, dias_totais)
+    valor_contrato = plano.valor * plano.fidelidade_meses
+    multa = _centavos(
+        valor_contrato * plano.multa_cancelamento / 100
+        * Decimal(dias_restantes) / Decimal(dias_totais)
+    )
+    base.update(
+        em_fidelidade=True,
+        multa=multa,
+        dias_restantes=dias_restantes,
+        valor_contrato=valor_contrato,
+    )
+    return base
+
+
+def previsao_cancelamento(matricula, hoje=None):
+    """Tudo o que o cancelamento de HOJE causaria, sem gravar nada.
+
+    - multa: valor e como foi calculado;
+    - a_cancelar: cobranças futuras ainda não vencidas (serão canceladas);
+    - dividas: cobranças vencidas e não pagas (continuam como dívida), com saldo.
+    "Vencida" segue o resto do sistema: vencimento anterior a hoje.
+    """
+    hoje = hoje or timezone.localdate()
+    abertas = matricula.cobrancas.filter(paga=False, cancelada=False).order_by('vencimento', 'id')
+    a_cancelar = [c for c in abertas if c.vencimento >= hoje]
+    dividas = [
+        {'cobranca': c, 'saldo': saldo_cobranca(c, hoje)}
+        for c in abertas if c.vencimento < hoje
+    ]
+    return {
+        'multa': calcular_multa_cancelamento(matricula, hoje),
+        'a_cancelar': a_cancelar,
+        'dividas': [d for d in dividas if d['saldo'] > 0],
+        'total_dividas': sum((d['saldo'] for d in dividas if d['saldo'] > 0), Decimal('0.00')),
+    }
+
+
+@transaction.atomic
+def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
+        """Cancela a matrícula (T17). Tudo ou nada, numa transação.
+
+        1. registra o cancelamento com data e motivo (a situação vira "cancelada");
+        2. cobranças futuras ainda não vencidas são canceladas (a linha fica, marcada);
+        3. se há multa, ela vira uma cobrança comum, com vencimento;
+        4. cobranças vencidas e não pagas NÃO são tocadas: continuam como dívida.
+
+        `multa_esperada` é o valor que a recepção mostrou à aluna. Se o cálculo de
+        agora der outro valor, nada é gravado e sai um ValidationError com
+        code='multa_divergente'.
+        """
+        hoje = hoje or timezone.localdate()
+        motivo = (motivo or '').strip()
+        if not motivo:
+            raise ValidationError("Informe o motivo do cancelamento.")
+
+        # Trava a matrícula: dois cancelamentos simultâneos entram um de cada
+        #  vez.
+        matricula = Matricula.objects.select_for_update().select_related('plano').get(pk=matricula.pk)
+        if Cancelamento.objects.filter(matricula=matricula).exists():
+            raise ValidationError("Esta matrícula já está cancelada.")
+
+        previsao = previsao_cancelamento(matricula, hoje)
+        multa = previsao['multa']['multa']
+        if multa_esperada is not None and _centavos(Decimal(str(multa_esperada))) != multa:
+            raise ValidationError(
+                f"O valor da multa mudou para R$ {multa}. Confira o valor com a aluna "
+                f"antes de confirmar.",
+                code='multa_divergente',
+            )
+
+        cancelamento = Cancelamento.objects.create(matricula=matricula, data=hoje, motivo=motivo)
+
+        canceladas = previsao['a_cancelar']
+        com_pagamento = [c for c in canceladas if c.pagamentos.exists()]
+        Cobranca.objects.filter(pk__in=[c.pk for c in canceladas]).update(cancelada=True)
+
+        cobranca_multa = None
+        if multa > 0:
+            # Criada DEPOIS de cancelar as futuras, para não ser varrida junto.
+            cobranca_multa = Cobranca.objects.create(
+                matricula=matricula,
+                tipo='multa_cancelamento',
+                valor=multa,
+                vencimento=hoje + timedelta(days=DIAS_PARA_PAGAR_MULTA),
+                competencia=None,
+            )
+
+        return {
+            'cancelamento': cancelamento,
+            'cobranca_multa': cobranca_multa,
+            'canceladas': canceladas,
+            'canceladas_com_pagamento': com_pagamento,
+            'dividas': previsao['dividas'],
+            'total_dividas': previsao['total_dividas'],
+        }

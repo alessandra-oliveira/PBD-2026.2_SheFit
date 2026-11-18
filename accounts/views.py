@@ -314,7 +314,8 @@ def painel_recepcao(request):
     # 7. Inadimplência do dia (cobranças vencidas não pagas)
     try:
         inadimplentes_hoje = Cobranca.objects.filter(
-            paga=False, vencimento__lte=hoje).select_related('matricula__aluno')
+    paga=False, cancelada=False, vencimento__lte=hoje).select_related('matricula__aluno')
+
     except Exception:
         inadimplentes_hoje = []
 
@@ -378,7 +379,7 @@ def gestao_estudantes_view(request):
         if matricula_recente:
             # 1. Cobranças vencidas e não pagas
             cobrancas_vencidas = any(
-                not c.paga and c.vencimento and c.vencimento < hoje
+                not c.paga and not c.cancelada and c.vencimento and c.vencimento < hoje
                 for c in matricula_recente.cobrancas.all()
             )
 

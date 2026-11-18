@@ -53,3 +53,22 @@ class EstornoForm(forms.Form):
         label='Motivo',
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
     )
+
+class CancelamentoForm(forms.Form):
+    motivo = forms.CharField(
+        label='Motivo do cancelamento',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        error_messages={'required': 'Informe o motivo do cancelamento.'},
+    )
+    # O valor que a recepção mostrou à aluna. Volta junto com o POST para o
+    # serviço conferir que o cancelamento não é confirmado por um valor e
+    # cobrado por outro.
+    multa_exibida = forms.DecimalField(
+        max_digits=10, decimal_places=2, widget=forms.HiddenInput(),
+    )
+
+    def clean_motivo(self):
+        motivo = self.cleaned_data['motivo'].strip()
+        if not motivo:
+            raise forms.ValidationError('Informe o motivo do cancelamento.')
+        return motivo
