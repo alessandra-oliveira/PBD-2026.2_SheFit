@@ -212,6 +212,7 @@ class Cobranca(models.Model):
     TIPO_CHOICES = [
         ('adesao', 'Taxa de Adesão'),
         ('mensalidade', 'Mensalidade'),
+        ('multa_cancelamento', 'Multa de Cancelamento'),   
     ]
 
     matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='cobrancas', verbose_name="Matrícula")
@@ -220,8 +221,12 @@ class Cobranca(models.Model):
     vencimento = models.DateField(verbose_name="Data de Vencimento")
     competencia = models.CharField(max_length=7, null=True, blank=True, verbose_name="Competência (AAAA-MM)")
     paga = models.BooleanField(default=False, verbose_name="Paga?")
+    cancelada = models.BooleanField(                          # novo
+        default=False, verbose_name="Cancelada?",
+        help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
+                  "A linha continua existindo, mas não é mais devida.",
+    )
     ultima_sequencia_evento = models.PositiveBigIntegerField(default=0, editable=False)
-
     class Meta:
         verbose_name = "Cobrança"
         verbose_name_plural = "Cobranças"
@@ -366,3 +371,16 @@ class Cancelamento(models.Model):
 
     def __str__(self):
         return f"Cancelamento da matrícula #{self.matricula_id} em {self.data}"
+
+    TIPO_CHOICES = [
+        ('adesao', 'Taxa de Adesão'),
+        ('mensalidade', 'Mensalidade'),
+        ('multa_cancelamento', 'Multa de Cancelamento'),   # novo
+    ]
+    ...
+    paga = models.BooleanField(default=False, verbose_name="Paga?")
+    cancelada = models.BooleanField(                         # novo
+        default=False, verbose_name="Cancelada?",
+        help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
+                  "A linha continua existindo, mas não é mais devida.",
+    )

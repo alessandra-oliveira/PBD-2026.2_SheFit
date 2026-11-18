@@ -14,4 +14,7 @@ urlpatterns = [
         views.registrar_estorno,
         name='registrar_estorno',
     ),
+    
+    path('cancelamento/', views.buscar_matricula_cancelamento, name='buscar_matricula_cancelamento'),
+    path('cancelamento/<int:matricula_id>/', views.cancelar_matricula, name='cancelar_matricula'),
 ]

@@ -1315,3 +1315,278 @@ class TarefaT07MigrationExecutorTests(TransactionTestCase):
                     criado_em=timestamp_atual + timedelta(microseconds=1),
                 )
             MigrationExecutor(connection).migrate(latest_targets)
+
+class TarefaT17CancelamentoTests(TestCase):
+    """Cancelar a matrícula com a multa certa.
+
+    Plano semestral, R$ 100/mês, fidelidade de 6 meses, multa de 10%, vencimento
+    dia 10. Matrícula iniciada em 01/01/2027: fidelidade até 01/07/2027 (181 dias).
+    """
+
+    def setUp(self):
+        RegraFinanceira.obter()
+        self.inicio = date(2027, 1, 1)
+        self.hoje = date(2027, 4, 1)   # faltam 91 de 181 dias
+        self.plano = Plano.objects.create(
+            nome='Semestral fiel', periodicidade='semestral', valor=Decimal('100.00'),
+            dia_vencimento=10, fidelidade_meses=6, multa_cancelamento=Decimal('10.00'),
+        )
+        self.matricula = realizar_matricula(criar_aluno_valido(), self.plano, self.inicio, 'pix')
+
+    def cancelar(self, motivo='Mudou de cidade', **kw):
+        from .servicos import cancelar_matricula
+        kw.setdefault('hoje', self.hoje)
+        return cancelar_matricula(self.matricula, motivo, **kw)
+
+    def competencia(self, mes):
+        return self.matricula.cobrancas.get(competencia=f'2027-{mes:02d}')
+
+    # ---- cálculo da multa -------------------------------------------
+    def test_multa_e_proporcional_ao_tempo_restante(self):
+        from .servicos import calcular_multa_cancelamento
+        # 600 (contrato) x 10% x 91/181 = 30,17
+        r = calcular_multa_cancelamento(self.matricula, self.hoje)
+        self.assertTrue(r['em_fidelidade'])
+        self.assertEqual((r['dias_restantes'], r['dias_totais']), (91, 181))
+        self.assertEqual(r['multa'], Decimal('30.17'))
+
+    def test_multa_cheia_no_primeiro_dia_e_menor_depois(self):
+        from .servicos import calcular_multa_cancelamento
+        cheia = calcular_multa_cancelamento(self.matricula, self.inicio)['multa']
+        meio = calcular_multa_cancelamento(self.matricula, self.hoje)['multa']
+        fim = calcular_multa_cancelamento(self.matricula, date(2027, 6, 30))['multa']
+        self.assertEqual(cheia, Decimal('60.00'))
+        self.assertTrue(cheia > meio > fim > 0)
+
+    def test_sem_multa_quando_a_fidelidade_ja_acabou(self):
+        from .servicos import calcular_multa_cancelamento
+        for dia in (date(2027, 7, 1), date(2028, 1, 1)):
+            r = calcular_multa_cancelamento(self.matricula, dia)
+            self.assertFalse(r['em_fidelidade'])
+            self.assertEqual(r['multa'], Decimal('0.00'))
+
+    def test_sem_multa_em_plano_sem_fidelidade(self):
+        from .servicos import calcular_multa_cancelamento
+        self.plano.fidelidade_meses = 0
+        self.plano.save()
+        self.matricula.refresh_from_db()
+        self.assertEqual(calcular_multa_cancelamento(self.matricula, self.hoje)['multa'], Decimal('0.00'))
+        resultado = self.cancelar()
+        self.assertIsNone(resultado['cobranca_multa'])
+        self.assertFalse(self.matricula.cobrancas.filter(tipo='multa_cancelamento').exists())
+
+    # ---- o cancelamento ---------------------------------------------
+    def test_cancelamento_registra_data_e_motivo(self):
+        self.cancelar(motivo='  Mudou de cidade  ')
+        c = Cancelamento.objects.get(matricula=self.matricula)
+        self.assertEqual(c.data, self.hoje)
+        self.assertEqual(c.motivo, 'Mudou de cidade')
+
+    def test_motivo_e_obrigatorio(self):
+        for motivo in ('', '   ', None):
+            with self.assertRaises(ValidationError):
+                self.cancelar(motivo=motivo)
+        self.assertFalse(Cancelamento.objects.exists())
+
+    def test_matricula_passa_a_cancelada(self):
+        self.cancelar()
+        self.assertEqual(calcular_situacao(self.matricula, hoje=self.hoje), SituacaoMatricula.CANCELADA)
+
+    def test_nao_cancela_duas_vezes(self):
+        self.cancelar()
+        with self.assertRaisesMessage(ValidationError, 'já está cancelada'):
+            self.cancelar()
+        self.assertEqual(self.matricula.cobrancas.filter(tipo='multa_cancelamento').count(), 1)
+
+    def test_multa_vira_cobranca_com_vencimento(self):
+        r = self.cancelar()
+        multa = r['cobranca_multa']
+        self.assertEqual(multa.tipo, 'multa_cancelamento')
+        self.assertEqual(multa.valor, Decimal('30.17'))
+        self.assertEqual(multa.matricula, self.matricula)
+        self.assertEqual(multa.vencimento, self.hoje)
+        self.assertFalse(multa.paga)
+        self.assertFalse(multa.cancelada)
+
+    def test_multa_e_paga_como_qualquer_outra_cobranca(self):
+        multa = self.cancelar()['cobranca_multa']
+        hoje_real = timezone.localdate()
+        pagamento = registrar_pagamento(
+            multa, Decimal('30.17'), 'pix', data_pagamento=multa.vencimento if multa.vencimento <= hoje_real else hoje_real,
+        )
+        multa.refresh_from_db()
+        self.assertTrue(multa.paga)
+        self.assertEqual(pagamento.valor_pago, Decimal('30.17'))
+
+    def test_futuras_nao_vencidas_sao_canceladas(self):
+        r = self.cancelar()
+        for mes in (4, 5, 6):   # 10/04, 10/05, 10/06: ainda não venceram
+            c = self.competencia(mes)
+            self.assertTrue(c.cancelada, mes)
+            self.assertFalse(c.paga)
+        self.assertEqual(len(r['canceladas']), 3)
+
+    def test_vencidas_e_nao_pagas_continuam_como_divida(self):
+        r = self.cancelar()
+        for mes in (1, 2, 3):   # venceram antes de 01/04
+            c = self.competencia(mes)
+            self.assertFalse(c.cancelada, mes)
+            self.assertFalse(c.paga, mes)
+            self.assertGreaterEqual(saldo_cobranca(c, self.hoje), Decimal('100.00'))
+        self.assertEqual(len(r['dividas']), 3)
+        self.assertGreaterEqual(r['total_dividas'], Decimal('300.00'))
+
+    def test_cobranca_que_vence_no_dia_do_cancelamento_e_futura(self):
+        # "Vencida" é vencimento ANTES de hoje, como no resto do sistema.
+        r = self.cancelar(hoje=date(2027, 4, 10))
+        self.assertTrue(self.competencia(4).cancelada)
+        self.assertFalse(self.competencia(3).cancelada)
+        self.assertEqual(len(r['canceladas']), 3)
+
+    def test_cobranca_ja_paga_nao_e_cancelada(self):
+        c = self.competencia(5)
+        c.paga = True
+        c.save()
+        self.cancelar()
+        c.refresh_from_db()
+        self.assertFalse(c.cancelada)
+
+    def test_futura_com_pagamento_e_cancelada_mas_sinalizada(self):
+        # Pagamento antecipado de uma mensalidade que vence no futuro.
+        hoje_real = timezone.localdate()
+        matricula = realizar_matricula(
+            criar_aluno_valido(), self.plano, hoje_real, 'pix',
+        )
+        futura = matricula.cobrancas.order_by('-vencimento').first()
+        registrar_pagamento(futura, Decimal('50.00'), 'pix', data_pagamento=hoje_real)
+        from .servicos import cancelar_matricula
+        r = cancelar_matricula(matricula, 'Desistiu', hoje=hoje_real)
+        futura.refresh_from_db()
+        self.assertTrue(futura.cancelada)
+        self.assertIn(futura, r['canceladas_com_pagamento'])
+        self.assertEqual(futura.pagamentos.count(), 1)   # o pagamento não some
+
+    def test_nenhuma_cobranca_nova_depois_do_cancelamento(self):
+        self.cancelar()
+        total = self.matricula.cobrancas.count()
+        self.assertEqual(gerar_cobrancas(self.matricula), 0)
+        self.assertEqual(self.matricula.cobrancas.count(), total)
+
+    def test_cobranca_cancelada_nao_aceita_pagamento(self):
+        self.cancelar()
+        with self.assertRaisesMessage(ValidationError, 'cancelada'):
+            registrar_pagamento(self.competencia(6), Decimal('100.00'), 'pix', data_pagamento=timezone.localdate())
+
+    def test_cobranca_cancelada_nao_vira_atraso_depois(self):
+        from .servicos import calcular_situacao
+        self.cancelar()
+        # Muito depois: a cobrança cancelada não pode voltar como atrasada.
+        atrasos = self.matricula.cobrancas.filter(paga=False, cancelada=False, vencimento__lt=date(2028, 1, 1))
+        self.assertNotIn(self.competencia(6), atrasos)
+        self.assertEqual(calcular_situacao(self.matricula, hoje=date(2028, 1, 1)), SituacaoMatricula.CANCELADA)
+
+    def test_previsao_nao_grava_nada(self):
+        from .servicos import previsao_cancelamento
+        p = previsao_cancelamento(self.matricula, self.hoje)
+        self.assertEqual(p['multa']['multa'], Decimal('30.17'))
+        self.assertEqual(len(p['a_cancelar']), 3)
+        self.assertEqual(len(p['dividas']), 3)
+        self.assertFalse(Cancelamento.objects.exists())
+        self.assertFalse(self.matricula.cobrancas.filter(cancelada=True).exists())
+
+    # ---- o valor mostrado é o valor cobrado --------------------------
+    def test_valor_mostrado_igual_ao_calculado_confirma(self):
+        r = self.cancelar(multa_esperada=Decimal('30.17'))
+        self.assertEqual(r['cobranca_multa'].valor, Decimal('30.17'))
+
+    def test_valor_mostrado_diferente_nao_cancela_nada(self):
+        with self.assertRaises(ValidationError) as ctx:
+            self.cancelar(multa_esperada=Decimal('99.99'))
+        self.assertEqual(ctx.exception.code, 'multa_divergente')
+        self.assertFalse(Cancelamento.objects.exists())
+        self.assertFalse(self.matricula.cobrancas.filter(cancelada=True).exists())
+        self.assertFalse(self.matricula.cobrancas.filter(tipo='multa_cancelamento').exists())
+
+
+class TarefaT17TelaRecepcaoTests(TestCase):
+    """A recepção vê o valor da multa ANTES de confirmar; só o POST cancela."""
+
+    def setUp(self):
+        RegraFinanceira.obter()
+        self.recepcao = criar_usuario('recepcao_t17', 'recepcao')
+        self.client = Client()
+        self.client.force_login(self.recepcao)
+        self.hoje = timezone.localdate()
+        self.plano = Plano.objects.create(
+            nome='Anual fiel', periodicidade='mensal', valor=Decimal('100.00'),
+            dia_vencimento=10, fidelidade_meses=12, multa_cancelamento=Decimal('20.00'),
+        )
+        self.aluno = criar_aluno_valido()
+        self.matricula = realizar_matricula(self.aluno, self.plano, self.hoje, 'pix')
+        self.url = reverse('cancelar_matricula', args=[self.matricula.pk])
+
+    def test_get_mostra_a_multa_e_nao_grava(self):
+        # Matrícula iniciada hoje: fidelidade inteira pela frente = 1200 x 20% = 240,00
+        r = self.client.get(self.url)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, '240,00')
+        self.assertContains(r, 'Confirmar cancelamento')
+        self.assertFalse(Cancelamento.objects.exists())
+        self.assertFalse(Cobranca.objects.filter(tipo='multa_cancelamento').exists())
+
+    def test_post_confirma_e_cria_multa_como_cobranca(self):
+        r = self.client.post(self.url, {'motivo': 'Mudou de cidade', 'multa_exibida': '240.00'}, follow=True)
+        self.assertContains(r, 'cancelada em')
+        self.assertTrue(Cancelamento.objects.filter(matricula=self.matricula, motivo='Mudou de cidade').exists())
+        multa = Cobranca.objects.get(matricula=self.matricula, tipo='multa_cancelamento')
+        self.assertEqual(multa.valor, Decimal('240.00'))
+
+    def test_post_sem_motivo_nao_cancela(self):
+        r = self.client.post(self.url, {'motivo': '  ', 'multa_exibida': '240.00'})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'Informe o motivo')
+        self.assertFalse(Cancelamento.objects.exists())
+
+    def test_post_sem_o_valor_mostrado_nao_cancela(self):
+        r = self.client.post(self.url, {'motivo': 'x'})
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(Cancelamento.objects.exists())
+
+    def test_valor_mostrado_desatualizado_pede_conferencia(self):
+        r = self.client.post(self.url, {'motivo': 'Mudou', 'multa_exibida': '10.00'})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'multa mudou')
+        self.assertContains(r, 'Mudou')           # o motivo digitado não se perde
+        self.assertContains(r, '240,00')           # mostra o valor atual
+        self.assertFalse(Cancelamento.objects.exists())
+
+    def test_matricula_cancelada_mostra_resumo_e_nao_cancela_de_novo(self):
+        self.client.post(self.url, {'motivo': 'x', 'multa_exibida': '240.00'})
+        r = self.client.get(self.url)
+        self.assertContains(r, 'Matrícula cancelada')
+        self.assertContains(r, 'Registrar pagamento')   # a multa está em aberto
+        r = self.client.post(self.url, {'motivo': 'y', 'multa_exibida': '0'}, follow=True)
+        self.assertContains(r, 'já está cancelada')
+        self.assertEqual(Cobranca.objects.filter(tipo='multa_cancelamento').count(), 1)
+
+    def test_cobrancas_canceladas_somem_da_lista_de_pagamento_e_a_multa_aparece(self):
+        self.client.post(self.url, {'motivo': 'x', 'multa_exibida': '240.00'})
+        r = self.client.get(reverse('listar_cobrancas_pagamento'))
+        self.assertContains(r, 'Multa de Cancelamento')
+        self.assertEqual(r.content.decode().count('Mensalidade'), 0)
+
+    def test_busca_lista_matriculas_nao_canceladas(self):
+        r = self.client.get(reverse('buscar_matricula_cancelamento'), {'q': self.aluno.nome})
+        self.assertContains(r, self.url)
+        self.client.post(self.url, {'motivo': 'x', 'multa_exibida': '240.00'})
+        r = self.client.get(reverse('buscar_matricula_cancelamento'), {'q': self.aluno.nome})
+        self.assertNotContains(r, self.url)
+
+    def test_so_a_recepcao_cancela(self):
+        outro = Client()
+        outro.force_login(criar_usuario('prof_t17', 'professor'))
+        r = outro.post(self.url, {'motivo': 'x', 'multa_exibida': '240.00'})
+        self.assertEqual(r.status_code, 302)
+        self.assertFalse(Cancelamento.objects.exists())
+        self.assertEqual(Client().get(self.url).status_code, 302)
+        

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cancelar matrícula - Recepção SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
+        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+        main { max-width: 1000px; margin: 32px auto; padding: 0 18px; }
+        .card { margin-bottom: 16px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
+        h1 { margin: 0; font-size: 1.5rem; }
+        h2 { margin: 0 0 8px; font-size: 1.1rem; }
+        p { color: #64748b; }
+        form.busca { display: flex; gap: 8px; }
+        input[type=text] { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+        .item { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+        .button { display: inline-block; padding: 10px 14px; color: white; text-decoration: none; background: #7c3aed; border: 0; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
+        .danger { background: #b91c1c; }
+        .secondary { background: #475569; }
+        .muted { color: #64748b; font-size: .9rem; }
+        .message { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
+        .message.warning { color: #92400e; background: #fef3c7; }
+        .message.error { color: #991b1b; background: #fee2e2; }
+        @media (max-width: 600px) { .item { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header><h1>SheFit · Recepção</h1></header>
+    <main>
+        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+
+        <section class="card">
+            <h2>Cancelar matrícula</h2>
+            <p>Busque a aluna por CPF ou nome e escolha a matrícula. O valor da multa é mostrado antes de confirmar.</p>
+            <form class="busca" method="get">
+                <input type="text" name="q" value="{{ query }}" placeholder="CPF ou nome da aluna" autofocus>
+                <button class="button" type="submit">Buscar</button>
+                <a class="button secondary" href="{% url 'painel_recepcao' %}">Voltar</a>
+            </form>
+        </section>
+
+        {% if query %}
+            {% if truncado %}
+                <div class="message warning">Mostrando só as primeiras {{ limite }} alunas. Refine a busca ou use o CPF.</div>
+            {% endif %}
+            {% for matricula in matriculas %}
+                <article class="card item">
+                    <div>
+                        <h2>{{ matricula.aluno.nome }}</h2>
+                        <div class="muted">
+                            Matrícula #{{ matricula.id }} · {{ matricula.plano.nome }}
+                            · início {{ matricula.data_inicio|date:"d/m/Y" }}
+                            · {% if matricula.plano.fidelidade_meses %}fidelidade de {{ matricula.plano.fidelidade_meses }} meses{% else %}sem fidelidade{% endif %}
+                            · situação: {{ matricula.situacao_display }}
+                        </div>
+                    </div>
+                    <a class="button danger" href="{% url 'cancelar_matricula' matricula.id %}">Cancelar matrícula</a>
+                </article>
+            {% empty %}
+                <section class="card"><p>Nenhuma matrícula ativa encontrada para essa busca.</p></section>
+            {% endfor %}
+        {% endif %}
+    </main>
+</body>
+</html>

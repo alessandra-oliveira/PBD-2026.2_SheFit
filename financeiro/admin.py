@@ -44,7 +44,7 @@ class CobrancaInline(admin.TabularInline):
     """Cobranças aparecem dentro da matrícula, para criar/editar na mesma tela."""
     model = Cobranca
     extra = 0
-    fields = ('tipo', 'valor', 'vencimento', 'competencia', 'paga')
+    fields = ('tipo', 'valor', 'vencimento', 'competencia', 'paga', 'cancelada')
 
 
 @admin.register(Matricula)
