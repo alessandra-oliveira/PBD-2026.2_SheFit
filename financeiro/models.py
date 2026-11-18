@@ -58,6 +58,12 @@ class Plano(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(31)],
         verbose_name="Dia Padrão de Vencimento"
     )
+    renovacao_automatica = models.BooleanField(
+        default=False,
+        verbose_name="Renovação automática?",
+        help_text="Marcado: o sistema gera o ciclo seguinte sozinho no fim da vigência. "
+                  "Desmarcado: a recepção confirma cada renovação.",
+    )
     ativo = models.BooleanField(
         default=True, 
         verbose_name="Plano Ativo?",
@@ -384,3 +390,36 @@ class Cancelamento(models.Model):
         help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
                   "A linha continua existindo, mas não é mais devida.",
     )
+
+class Renovacao(models.Model):
+    """Um ciclo de vigência depois do primeiro (T18). O ciclo 1 é a própria matrícula.
+    Cada linha diz de quando a quando vai o ciclo. A vigência da matrícula termina
+    no `fim` do último ciclo. (matrícula, ciclo) é único: é a trava que impede
+    gerar dois ciclos iguais mesmo se a renovação rodar duas vezes ao mesmo tempo.
+    """
+    
+    matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='renovacoes')
+    ciclo = models.PositiveIntegerField(verbose_name="Ciclo")
+    inicio = models.DateField(verbose_name="Início do ciclo")
+    fim = models.DateField(verbose_name="Fim do ciclo")
+    meses_acumulados = models.PositiveIntegerField(
+        help_text="Meses entre o início da matrícula e o fim deste ciclo.",
+    )
+    automatica = models.BooleanField(default=False, verbose_name="Renovação automática?")
+    confirmada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='+',
+    )
+    confirmada_por_nome = models.CharField(max_length=150, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Renovação"
+        verbose_name_plural = "Renovações"
+        ordering = ['matricula_id', 'ciclo']
+        constraints = [
+            models.UniqueConstraint(fields=['matricula', 'ciclo'], name='uq_renovacao_matricula_ciclo'),
+        ]
+
+    def __str__(self):
+        return f"Matrícula #{self.matricula_id} - ciclo {self.ciclo} ({self.inicio} a {self.fim})"

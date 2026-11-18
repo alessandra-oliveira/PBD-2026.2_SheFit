@@ -1589,4 +1589,447 @@ class TarefaT17TelaRecepcaoTests(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertFalse(Cancelamento.objects.exists())
         self.assertEqual(Client().get(self.url).status_code, 302)
-        
+    
+class TarefaT18RenovacaoTests(TestCase):
+    """Renovação no fim da vigência.
+
+    Plano semestral, R$ 100/mês, vencimento dia 10. Matrícula iniciada em
+    01/01/2027: o ciclo 1 cobre jan-jun e a vigência termina em 01/07/2027.
+    """
+
+    def setUp(self):
+        RegraFinanceira.obter()
+        self.inicio = date(2027, 1, 1)
+        self.fim1 = date(2027, 7, 1)
+        self.plano = Plano.objects.create(
+            nome='Semestral auto', periodicidade='semestral', valor=Decimal('100.00'),
+            dia_vencimento=10, taxa_adesao=Decimal('30.00'), renovacao_automatica=True,
+        )
+        self.matricula = realizar_matricula(criar_aluno_valido(), self.plano, self.inicio, 'pix')
+
+    def renovar(self, matricula=None, hoje=None, **kw):
+        from .servicos import renovar_matricula
+        return renovar_matricula(matricula or self.matricula, hoje=hoje or self.fim1, **kw)
+
+    def mensalidades(self, matricula=None):
+        m = matricula or self.matricula
+        return list(m.cobrancas.filter(tipo='mensalidade').order_by('competencia'))
+
+    # ---- o plano define o tipo ---------------------------------------
+    def test_plano_define_se_a_renovacao_e_automatica(self):
+        self.assertTrue(self.plano.renovacao_automatica)
+        manual = Plano.objects.create(nome='Manual', periodicidade='mensal', valor=Decimal('50.00'))
+        self.assertFalse(manual.renovacao_automatica)   # padrão: com confirmação
+
+    # ---- ciclo seguinte, mesmas regras ------------------------------
+    def test_renovacao_gera_as_cobrancas_do_ciclo_seguinte(self):
+        r = self.renovar(automatica=True)
+        self.assertTrue(r['renovada'])
+        self.assertEqual(r['cobrancas_criadas'], 6)
+        self.assertEqual(r['renovacao'].ciclo, 2)
+        self.assertEqual((r['renovacao'].inicio, r['renovacao'].fim), (self.fim1, date(2028, 1, 1)))
+        comps = [c.competencia for c in self.mensalidades()]
+        self.assertEqual(comps, [f'2027-{m:02d}' for m in range(1, 13)])
+
+    def test_cobrancas_novas_seguem_as_mesmas_regras(self):
+        self.renovar(automatica=True)
+        ciclo2 = [c for c in self.mensalidades() if c.competencia >= '2027-07']
+        self.assertEqual([c.valor for c in ciclo2], [Decimal('100.00')] * 6)
+        self.assertEqual(
+            [c.vencimento for c in ciclo2],
+            [date(2027, m, 10) for m in range(7, 13)],
+        )
+        self.assertTrue(all(not c.paga and not c.cancelada for c in ciclo2))
+
+    def test_nunca_vence_antes_do_inicio_do_ciclo_como_no_ciclo_1(self):
+        m = realizar_matricula(criar_aluno_valido(), self.plano, date(2027, 1, 15), 'pix')
+        self.assertEqual(m.cobrancas.get(competencia='2027-01').vencimento, date(2027, 1, 15))
+        from .servicos import renovar_matricula
+        renovar_matricula(m, hoje=date(2027, 7, 15), automatica=True)
+        self.assertEqual(m.cobrancas.get(competencia='2027-07').vencimento, date(2027, 7, 15))
+        self.assertEqual(m.cobrancas.get(competencia='2027-08').vencimento, date(2027, 8, 10))
+
+    def test_taxa_de_adesao_nao_se_repete(self):
+        self.renovar(automatica=True)
+        self.assertEqual(self.matricula.cobrancas.filter(tipo='adesao').count(), 1)
+
+    def test_ciclo_seguinte_comeca_exatamente_onde_o_anterior_termina(self):
+        self.renovar(automatica=True)
+        from .servicos import fim_vigencia
+        r2 = self.renovar(hoje=date(2028, 1, 1), automatica=True)
+        self.assertEqual(r2['renovacao'].inicio, date(2028, 1, 1))
+        self.assertEqual(fim_vigencia(self.matricula), date(2028, 7, 1))
+
+    def test_dia_31_nao_deriva_entre_ciclos(self):
+        mensal = Plano.objects.create(
+            nome='Mensal auto', periodicidade='mensal', valor=Decimal('80.00'),
+            dia_vencimento=31, renovacao_automatica=True,
+        )
+        m = realizar_matricula(criar_aluno_valido(), mensal, date(2027, 1, 31), 'pix')
+        from .servicos import renovar_matricula, fim_vigencia
+        fins = []
+        for hoje in (date(2027, 2, 28), date(2027, 3, 31), date(2027, 4, 30)):
+            renovar_matricula(m, hoje=hoje, automatica=True)
+            fins.append(fim_vigencia(m))
+        self.assertEqual(fins, [date(2027, 3, 31), date(2027, 4, 30), date(2027, 5, 31)])
+
+    # ---- automática: sem ninguém clicar -------------------------------
+    def test_automatica_acontece_sem_ninguem_clicar(self):
+        from .servicos import renovar_automaticas
+        resumo = renovar_automaticas(self.fim1)
+        self.assertEqual((resumo['ciclos'], resumo['matriculas'], resumo['cobrancas']), (1, 1, 6))
+        r = self.matricula.renovacoes.get()
+        self.assertTrue(r.automatica)
+        self.assertIsNone(r.confirmada_por)
+
+    def test_automatica_nao_renova_antes_da_hora(self):
+        from .servicos import renovar_automaticas
+        resumo = renovar_automaticas(date(2027, 6, 30))
+        self.assertEqual(resumo['ciclos'], 0)
+        self.assertFalse(self.matricula.renovacoes.exists())
+
+    def test_automatica_alcanca_ciclos_atrasados_sem_deixar_dia_de_fora(self):
+        from .servicos import renovar_automaticas, fim_vigencia
+        resumo = renovar_automaticas(date(2028, 2, 1))   # sistema ficou parado
+        self.assertEqual(resumo['ciclos'], 2)
+        self.assertEqual(
+            [(r.inicio, r.fim) for r in self.matricula.renovacoes.all()],
+            [(date(2027, 7, 1), date(2028, 1, 1)), (date(2028, 1, 1), date(2028, 7, 1))],
+        )
+        self.assertEqual(fim_vigencia(self.matricula), date(2028, 7, 1))
+
+    def test_automatica_nao_toca_plano_com_confirmacao(self):
+        from .servicos import renovar_automaticas
+        manual = Plano.objects.create(
+            nome='Manual', periodicidade='semestral', valor=Decimal('100.00'), dia_vencimento=10,
+        )
+        m = realizar_matricula(criar_aluno_valido(), manual, self.inicio, 'pix')
+        renovar_automaticas(self.fim1)
+        self.assertFalse(m.renovacoes.exists())
+
+    def test_comando_renovar_matriculas(self):
+        from django.core.management import call_command
+        from io import StringIO
+        saida = StringIO()
+        call_command('renovar_matriculas', data='2027-07-01', stdout=saida)
+        self.assertIn('1 ciclo(s) gerado(s)', saida.getvalue())
+        self.assertEqual(self.matricula.renovacoes.count(), 1)
+
+    # ---- rodar duas vezes não gera dois ciclos -------------------------
+    def test_rodar_a_renovacao_duas_vezes_nao_gera_dois_ciclos(self):
+        from .servicos import renovar_automaticas
+        renovar_automaticas(self.fim1)
+        total = self.matricula.cobrancas.count()
+        resumo = renovar_automaticas(self.fim1)
+        self.assertEqual(resumo['ciclos'], 0)
+        self.assertEqual(self.matricula.renovacoes.count(), 1)
+        self.assertEqual(self.matricula.cobrancas.count(), total)
+
+    def test_renovar_a_mesma_matricula_duas_vezes_seguidas(self):
+        a = self.renovar(automatica=True)
+        b = self.renovar(automatica=True)
+        self.assertTrue(a['renovada'])
+        self.assertFalse(b['renovada'])
+        self.assertEqual(self.matricula.renovacoes.count(), 1)
+        self.assertEqual(len(self.mensalidades()), 12)
+
+    def test_o_banco_recusa_ciclo_duplicado(self):
+        from django.db import IntegrityError, transaction
+        self.renovar(automatica=True)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Renovacao.objects.create(
+                matricula=self.matricula, ciclo=2, inicio=self.fim1,
+                fim=date(2028, 1, 1), meses_acumulados=12,
+            )
+
+    # ---- renovar não apaga nem altera dívida --------------------------
+    def test_renovar_nao_apaga_nem_altera_divida_pendente(self):
+        antes = {
+            c.pk: (c.valor, c.vencimento, c.competencia, c.tipo, c.paga, c.cancelada)
+            for c in self.matricula.cobrancas.all()
+        }
+        saldos_antes = {
+            c.pk: saldo_cobranca(c, self.fim1) for c in self.matricula.cobrancas.all()
+        }
+        self.assertTrue(all(v > 0 for v in saldos_antes.values()))   # tudo em aberto
+        self.renovar(automatica=True)
+        for c in Cobranca.objects.filter(pk__in=antes):
+            self.assertEqual(
+                (c.valor, c.vencimento, c.competencia, c.tipo, c.paga, c.cancelada), antes[c.pk],
+            )
+            self.assertEqual(saldo_cobranca(c, self.fim1), saldos_antes[c.pk])
+
+    def test_aluno_renova_devendo_e_continua_devendo(self):
+        antes = calcular_situacao(self.matricula, hoje=self.fim1)
+        self.assertEqual(antes, SituacaoMatricula.BLOQUEADA)   # jan-jun em atraso
+        self.renovar(automatica=True)
+        self.assertEqual(calcular_situacao(self.matricula, hoje=self.fim1), SituacaoMatricula.BLOQUEADA)
+        # a mensalidade mais antiga em aberto continua sendo a de janeiro
+        self.assertEqual(
+            self.matricula.cobrancas.filter(tipo='mensalidade', paga=False, vencimento__lt=self.fim1)
+            .order_by('vencimento').first().competencia, '2027-01',
+        )
+
+    def test_cobranca_vencida_paga_continua_paga_e_a_devida_continua_devida(self):
+        c1 = self.matricula.cobrancas.get(competencia='2027-01')
+        c1.paga = True
+        c1.save()
+        self.renovar(automatica=True)
+        c1.refresh_from_db()
+        self.assertTrue(c1.paga)
+        self.assertFalse(self.matricula.cobrancas.get(competencia='2027-02').paga)
+
+    # ---- cancelada não renova -----------------------------------------
+    def test_matricula_cancelada_nao_renova(self):
+        from .servicos import renovar_automaticas
+        Cancelamento.objects.create(matricula=self.matricula, data=self.fim1)
+        resumo = renovar_automaticas(self.fim1)
+        self.assertEqual(resumo['ciclos'], 0)
+        with self.assertRaisesMessage(ValidationError, 'cancelada'):
+            self.renovar()
+        self.assertEqual(len(self.mensalidades()), 6)
+
+    def test_cancelar_matricula_renovada_cancela_as_futuras(self):
+        from .servicos import cancelar_matricula
+        self.renovar(automatica=True)
+        cancelar_matricula(self.matricula, 'Desistiu', hoje=date(2027, 9, 1))
+        self.assertTrue(self.matricula.cobrancas.get(competencia='2027-10').cancelada)
+        self.assertFalse(self.matricula.cobrancas.get(competencia='2027-08').cancelada)  # vencida
+
+
+class TarefaT18ConfirmacaoDaRecepcaoTests(TestCase):
+    """Plano com confirmação: o painel avisa e a recepção confirma."""
+
+    def setUp(self):
+        RegraFinanceira.obter()
+        self.hoje = timezone.localdate()
+        self.plano = Plano.objects.create(
+            nome='Trimestral manual', periodicidade='trimestral', valor=Decimal('90.00'),
+            dia_vencimento=10, renovacao_automatica=False,
+        )
+        self.recepcao = criar_usuario('recepcao_t18', 'recepcao')
+        self.client = Client()
+        self.client.force_login(self.recepcao)
+
+    def matricula_com_fim_em(self, dias):
+        """Matrícula trimestral cuja vigência termina daqui a `dias` dias."""
+        fim = self.hoje + timedelta(days=dias)
+        inicio = fim - relativedelta(months=3)
+        return realizar_matricula(criar_aluno_valido(), self.plano, inicio, 'pix')
+
+    def test_painel_avisa_quais_estao_vencendo(self):
+        from .servicos import renovacoes_a_vencer
+        vencendo = self.matricula_com_fim_em(5)
+        vencida = self.matricula_com_fim_em(-3)
+        longe = self.matricula_com_fim_em(60)
+        ids = [i['matricula'].pk for i in renovacoes_a_vencer(self.hoje)]
+        self.assertEqual(ids, [vencida.pk, vencendo.pk])    # mais urgente primeiro
+        self.assertNotIn(longe.pk, ids)
+
+    def test_painel_nao_lista_plano_automatico_nem_cancelada(self):
+        from .servicos import renovacoes_a_vencer
+        auto = Plano.objects.create(
+            nome='Auto', periodicidade='trimestral', valor=Decimal('90.00'), renovacao_automatica=True,
+        )
+        fim = self.hoje + timedelta(days=3)
+        m_auto = realizar_matricula(criar_aluno_valido(), auto, fim - relativedelta(months=3), 'pix')
+        m_canc = self.matricula_com_fim_em(3)
+        Cancelamento.objects.create(matricula=m_canc)
+        ids = [i['matricula'].pk for i in renovacoes_a_vencer(self.hoje)]
+        self.assertNotIn(m_auto.pk, ids)
+        self.assertNotIn(m_canc.pk, ids)
+
+    def test_painel_da_recepcao_mostra_o_aviso(self):
+        m = self.matricula_com_fim_em(5)
+        r = self.client.get(reverse('painel_recepcao'))
+        self.assertContains(r, 'renovação por confirmação vencendo')
+        self.assertContains(r, reverse('listar_renovacoes'))
+        self.assertContains(r, m.aluno.nome)
+
+    def test_sem_renovacao_vencendo_nao_ha_aviso(self):
+        self.matricula_com_fim_em(60)
+        r = self.client.get(reverse('painel_recepcao'))
+        self.assertNotContains(r, 'renovação por confirmação vencendo')
+
+    def test_lista_mostra_a_matricula_e_o_botao(self):
+        m = self.matricula_com_fim_em(5)
+        r = self.client.get(reverse('listar_renovacoes'))
+        self.assertContains(r, m.aluno.nome)
+        self.assertContains(r, 'Confirmar renovação')
+        self.assertContains(r, 'Vence em 5 dia(s)')
+
+    def test_renovacao_manual_exige_confirmacao_nao_acontece_sozinha(self):
+        from .servicos import renovar_automaticas
+        m = self.matricula_com_fim_em(0)
+        renovar_automaticas(self.hoje)
+        self.assertFalse(m.renovacoes.exists())
+        self.client.get(reverse('listar_renovacoes'))      # só olhar não renova
+        self.assertFalse(m.renovacoes.exists())
+
+    def test_confirmar_renova_e_registra_quem_confirmou(self):
+        from .servicos import fim_vigencia
+        m = self.matricula_com_fim_em(5)
+        fim = fim_vigencia(m)
+        r = self.client.post(
+            reverse('confirmar_renovacao', args=[m.pk]), {'fim_vigencia': fim.isoformat()}, follow=True,
+        )
+        self.assertContains(r, 'renovada: ciclo 2')
+        ren = m.renovacoes.get()
+        self.assertFalse(ren.automatica)
+        self.assertEqual(ren.confirmada_por, self.recepcao)
+        self.assertEqual(ren.inicio, fim)
+        self.assertEqual(m.cobrancas.filter(tipo='mensalidade').count(), 6)
+        self.assertNotContains(self.client.get(reverse('listar_renovacoes')), m.aluno.nome)
+
+    def test_clique_duplo_nao_gera_dois_ciclos(self):
+        from .servicos import fim_vigencia
+        m = self.matricula_com_fim_em(-40)       # vencida há mais de um ciclo
+        fim = fim_vigencia(m)
+        url = reverse('confirmar_renovacao', args=[m.pk])
+        self.client.post(url, {'fim_vigencia': fim.isoformat()})
+        r = self.client.post(url, {'fim_vigencia': fim.isoformat()}, follow=True)
+        self.assertContains(r, 'já foi renovada')
+        self.assertEqual(m.renovacoes.count(), 1)
+
+    def test_confirmar_fora_da_janela_nao_renova(self):
+        from .servicos import fim_vigencia
+        m = self.matricula_com_fim_em(60)
+        r = self.client.post(
+            reverse('confirmar_renovacao', args=[m.pk]),
+            {'fim_vigencia': fim_vigencia(m).isoformat()}, follow=True,
+        )
+        self.assertContains(r, 'ainda não está no período')
+        self.assertFalse(m.renovacoes.exists())
+
+    def test_confirmar_com_data_invalida_nao_renova(self):
+        m = self.matricula_com_fim_em(5)
+        self.client.post(reverse('confirmar_renovacao', args=[m.pk]), {'fim_vigencia': 'lixo'})
+        self.assertFalse(m.renovacoes.exists())
+
+    def test_confirmar_renovacao_nao_limpa_divida(self):
+        m = self.matricula_com_fim_em(5)
+        from .servicos import fim_vigencia
+        devidas = list(m.cobrancas.filter(vencimento__lt=self.hoje, paga=False).values_list('pk', 'valor'))
+        self.assertTrue(devidas)    # a matrícula nasceu há ~3 meses sem pagar
+        self.client.post(
+            reverse('confirmar_renovacao', args=[m.pk]), {'fim_vigencia': fim_vigencia(m).isoformat()},
+        )
+        depois = list(
+            m.cobrancas.filter(pk__in=[d[0] for d in devidas], paga=False, cancelada=False)
+            .values_list('pk', 'valor')
+        )
+        self.assertEqual(sorted(depois), sorted(devidas))
+
+    def test_get_na_confirmacao_nao_renova(self):
+        m = self.matricula_com_fim_em(5)
+        self.client.get(reverse('confirmar_renovacao', args=[m.pk]))
+        self.assertFalse(m.renovacoes.exists())
+
+    def test_so_a_recepcao_ve_e_confirma(self):
+        from .servicos import fim_vigencia
+        m = self.matricula_com_fim_em(5)
+        outro = Client()
+        outro.force_login(criar_usuario('prof_t18', 'professor'))
+        self.assertEqual(outro.get(reverse('listar_renovacoes')).status_code, 302)
+        outro.post(reverse('confirmar_renovacao', args=[m.pk]), {'fim_vigencia': fim_vigencia(m).isoformat()})
+        self.assertFalse(m.renovacoes.exists())
+        self.assertEqual(Client().get(reverse('listar_renovacoes')).status_code, 302)
+
+
+class TarefaT18PlanoTests(TestCase):
+    def test_plano_tem_a_opcao_no_formulario_e_na_lista(self):
+        from .forms import PlanoForm
+        self.assertIn('renovacao_automatica', PlanoForm().fields)
+        form = PlanoForm({
+            'nome': 'Gold', 'modalidades_incluidas': 'Musculação', 'periodicidade': 'mensal',
+            'valor': '99.90', 'fidelidade_meses': 0, 'multa_cancelamento': '0',
+            'taxa_adesao': '0', 'dia_vencimento': 10, 'renovacao_automatica': 'on', 'ativo': 'on',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertTrue(form.save().renovacao_automatica)
+        fin = Client()
+        fin.force_login(criar_usuario('fin_t18', 'financeiro'))
+        self.assertContains(fin.get(reverse('listar_planos')), 'Automática')
+
+
+class TarefaT18RenovacaoSemCliqueTests(TestCase):
+    """A renovação automática acontece sozinha: basta o sistema ser usado."""
+
+    def setUp(self):
+        from . import middleware
+        RegraFinanceira.obter()
+        middleware.reiniciar_estado()
+        self.addCleanup(middleware.reiniciar_estado)
+        self.hoje = timezone.localdate()
+        self.plano = Plano.objects.create(
+            nome='Trimestral auto', periodicidade='trimestral', valor=Decimal('90.00'),
+            dia_vencimento=10, renovacao_automatica=True,
+        )
+        inicio = self.hoje - relativedelta(months=3)    # vigência que terminou hoje
+        self.matricula = realizar_matricula(criar_aluno_valido(), self.plano, inicio, 'pix')
+        self.client = Client()
+        self.client.force_login(criar_usuario('rec_sem_clique', 'recepcao'))
+
+    def test_esta_ligado_no_projeto_e_desligado_so_nos_testes(self):
+        from django.conf import settings
+        self.assertIn('financeiro.middleware.RenovacaoAutomaticaMiddleware', settings.MIDDLEWARE)
+        self.assertFalse(settings.RENOVACAO_AUTOMATICA_NA_REQUISICAO)   # estamos em `manage.py test`
+
+    def test_desligado_nao_renova(self):
+        self.client.get(reverse('painel_recepcao'))
+        self.assertFalse(self.matricula.renovacoes.exists())
+
+    def test_primeira_requisicao_do_dia_renova_sozinha(self):
+        with self.settings(RENOVACAO_AUTOMATICA_NA_REQUISICAO=True):
+            self.client.get(reverse('painel_recepcao'))
+        r = self.matricula.renovacoes.get()
+        self.assertTrue(r.automatica)
+        self.assertEqual(r.inicio, self.hoje)
+        self.assertEqual(self.matricula.cobrancas.filter(tipo='mensalidade').count(), 6)
+
+    def test_so_uma_varredura_por_dia_e_sem_duplicar(self):
+        with self.settings(RENOVACAO_AUTOMATICA_NA_REQUISICAO=True):
+            for _ in range(3):
+                self.client.get(reverse('painel_recepcao'))
+        self.assertEqual(self.matricula.renovacoes.count(), 1)
+        self.assertEqual(self.matricula.cobrancas.filter(tipo='mensalidade').count(), 6)
+
+    def test_dia_seguinte_varre_de_novo(self):
+        from . import middleware
+        with self.settings(RENOVACAO_AUTOMATICA_NA_REQUISICAO=True):
+            self.client.get(reverse('painel_recepcao'))
+            middleware._estado['dia'] = self.hoje - timedelta(days=1)   # "virou o dia"
+            self.client.get(reverse('painel_recepcao'))
+        self.assertEqual(self.matricula.renovacoes.count(), 1)   # nada a fazer, nada duplicado
+
+    def test_nao_renova_plano_com_confirmacao(self):
+        manual = Plano.objects.create(
+            nome='Manual', periodicidade='trimestral', valor=Decimal('90.00'), dia_vencimento=10,
+        )
+        m = realizar_matricula(
+            criar_aluno_valido(), manual, self.hoje - relativedelta(months=3), 'pix',
+        )
+        with self.settings(RENOVACAO_AUTOMATICA_NA_REQUISICAO=True):
+            self.client.get(reverse('painel_recepcao'))
+        self.assertFalse(m.renovacoes.exists())
+
+    def test_falha_na_varredura_nao_derruba_a_tela(self):
+        from unittest import mock
+        from . import middleware
+        with self.settings(RENOVACAO_AUTOMATICA_NA_REQUISICAO=True), \
+                mock.patch('financeiro.servicos.renovar_automaticas', side_effect=RuntimeError('boom')), \
+                self.assertLogs('financeiro.middleware', level='ERROR'):
+            r = self.client.get(reverse('painel_recepcao'))
+        self.assertEqual(r.status_code, 200)
+        self.assertGreater(middleware._estado['nao_antes_de'], 0)   # espera antes de tentar de novo
+
+    def test_varredura_nao_trava_quem_ainda_nao_venceu(self):
+        from unittest import mock
+        from .servicos import renovar_automaticas
+        longe = realizar_matricula(criar_aluno_valido(), self.plano, self.hoje, 'pix')
+        with mock.patch('financeiro.servicos.renovar_matricula') as r:
+            r.return_value = {'renovada': False}
+            renovar_automaticas(self.hoje)
+        chamadas = [c.args[0].pk for c in r.call_args_list]
+        self.assertIn(self.matricula.pk, chamadas)
+        self.assertNotIn(longe.pk, chamadas)

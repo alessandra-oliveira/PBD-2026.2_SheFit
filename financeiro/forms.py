@@ -31,6 +31,7 @@ class PlanoForm(forms.ModelForm):
             'taxa_adesao': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'dia_vencimento': forms.NumberInput(attrs={'class': 'form-control'}),
             'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'renovacao_automatica': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 class RegraFinanceiraForm(forms.ModelForm):

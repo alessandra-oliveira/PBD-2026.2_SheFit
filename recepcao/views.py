@@ -1,3 +1,4 @@
+from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -15,6 +16,8 @@ from financeiro.servicos import (
     saldo_cobranca,
     simular_pagamento,
     total_estornado,
+    renovacoes_a_vencer,                            
+    renovar_matricula as efetuar_renovacao, 
 )
 from .forms import CancelamentoForm, EstornoForm, PagamentoForm
 from .servicos import (
@@ -342,3 +345,51 @@ def cancelar_matricula(request, matricula_id):
         'previsao': previsao,
         'form': form,
     })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def listar_renovacoes(request):
+    """Tarefa T18: matrículas de plano com confirmação que estão vencendo (ou já venceram)."""
+    return render(request, 'recepcao/renovacoes.html', {
+        'itens': renovacoes_a_vencer(timezone.localdate()),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def confirmar_renovacao(request, matricula_id):
+    """Tarefa T18: a recepção confirma a renovação (só POST).
+
+    O fim de vigência que a tela mostrou volta junto: se ela já andou (clique
+    duplo, outra aba), nada é gerado de novo.
+    """
+    if request.method != 'POST':
+        return redirect('listar_renovacoes')
+    matricula = get_object_or_404(Matricula.objects.select_related('aluno'), pk=matricula_id)
+    try:
+        fim_esperado = date.fromisoformat(request.POST.get('fim_vigencia', ''))
+    except ValueError:
+        messages.error(request, 'Renovação não confirmada: recarregue a lista e tente de novo.')
+        return redirect('listar_renovacoes')
+
+    try:
+        resultado = efetuar_renovacao(
+            matricula, hoje=timezone.localdate(), usuario=request.user, fim_esperado=fim_esperado,
+        )
+    except ValidationError as erro:
+        messages.error(request, erro.messages[0])
+    else:
+        if resultado['renovada']:
+            r = resultado['renovacao']
+            messages.success(
+                request,
+                f"Matrícula de {matricula.aluno.nome} renovada: ciclo {r.ciclo}, de "
+                f"{r.inicio:%d/%m/%Y} a {r.fim:%d/%m/%Y} "
+                f"({resultado['cobrancas_criadas']} cobrança(s) gerada(s)).",
+            )
+        elif resultado['motivo'] == 'desatualizada':
+            messages.info(request, f"A matrícula de {matricula.aluno.nome} já foi renovada. Nada foi duplicado.")
+        else:
+            messages.info(request, f"A matrícula de {matricula.aluno.nome} ainda não está no período de renovação.")
+    return redirect('listar_renovacoes')    
