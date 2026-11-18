@@ -714,8 +714,52 @@
             </div>
 
             <div class="turmas-grid" id="turmas-grid-container">
-                {% for turma in turmas %}
-                    <article class="turma-card" data-dia="{{ turma.dia_semana }}">
+
+                {% if turmas %}
+                    {% for turma in turmas %}
+                        <article class="turma-card" data-dia="{{ turma.dia_semana }}">
+                            <div class="turma-card-header">
+                                <h3 class="turma-card-title">{{ turma.modalidade.nome }}</h3>
+                                <span class="badge-dia-card">{{ turma.get_dia_semana_display }}</span>
+                            </div>
+
+                            <div class="turma-detalhes-lista">
+                                <div class="turma-detalhe-item">
+                                    <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                                    <span>{{ turma.horario|time:"H:i" }} &bull; 50 min</span>
+                                </div>
+                                <div class="turma-detalhe-item">
+                                    <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
+                                    <span>{{ turma.sala }}</span>
+                                </div>
+                            </div>
+
+                            <div class="turma-ocupacao-box">
+                                <div class="ocupacao-info-row">
+                                    <span>Ocupação da turma</span>
+                                    <strong class="texto-ocupacao-turma" 
+                                            data-capacidade="{{ turma.capacidade_maxima }}" 
+                                            data-restantes="{{ turma.vagas_restantes }}">
+                                        0 / {{ turma.capacidade_maxima }} alunas
+                                    </strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="turma-card-footer">
+                                <a href="{% url 'gerenciar_frequencia' turma.id %}" class="btn-chamada-action">
+                                    <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
+                                    <span>Registrar Presença</span>
+                                </a>
+                            </div>
+                        </article>
+                    {% endfor %}
+                {% else %}
+                    <!-- Cards de demonstração da grade conforme o Figma -->
+                     
+                    <article class="turma-card" data-dia="segunda">
                         <div class="turma-card-header">
                             <h3 class="turma-card-title">{{ turma.modalidade.nome }}</h3>
                             <span class="badge-dia-card">{{ turma.get_dia_semana_display }}</span>

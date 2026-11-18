@@ -72,3 +72,17 @@ class CancelamentoForm(forms.Form):
         if not motivo:
             raise forms.ValidationError('Informe o motivo do cancelamento.')
         return motivo
+
+class LiberacaoExcepcionalForm(forms.Form):
+    motivo = forms.CharField(
+        label='Motivo da liberação',
+        max_length=255,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        error_messages={'required': 'O motivo da liberação é obrigatório.'},
+    )
+
+    def clean_motivo(self):
+        motivo = self.cleaned_data['motivo'].strip()
+        if not motivo:
+            raise forms.ValidationError('O motivo da liberação é obrigatório.')
+        return motivo
