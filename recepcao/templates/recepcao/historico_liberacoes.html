@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Liberações excepcionais - SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 { color: #7c3aed; text-align: center; margin: 0 0 4px; font-size: 1.8rem; }
+        p.subtitle { text-align: center; color: #666; margin: 0 0 24px; }
+        h2 { font-size: 1.05rem; color: #333; margin: 24px 0 8px; }
+
+        .filtro { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        .filtro label { display: block; font-weight: bold; font-size: 0.9rem; color: #333; margin-bottom: 4px; }
+        .filtro input {
+            padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
+        }
+        .filtro button {
+            padding: 11px 20px; background: #7c3aed; color: white; border: none;
+            border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer;
+        }
+        .filtro button:hover { background: #6d28d9; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+        th { color: #7c3aed; font-size: 0.85rem; }
+        .vazio { color: #666; padding: 12px 0; }
+        .tabela-scroll { overflow-x: auto; }
+
+        .btn-voltar {
+            display: block; width: 100%; margin-top: 24px; padding: 12px; text-align: center;
+            text-decoration: none; color: #7c3aed; border: 2px solid #7c3aed;
+            border-radius: 8px; font-weight: bold;
+        }
+        .btn-voltar:hover { background: #7c3aed; color: white; }
+
+        @media (max-width: 480px) { .card { padding: 24px 16px; } }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>SheFit</h1>
+        <p class="subtitle">Liberações excepcionais</p>
+
+        <form method="get" class="filtro">
+            <div>
+                <label for="inicio">De</label>
+                <input type="date" id="inicio" name="inicio" value="{{ inicio|date:'Y-m-d' }}">
+            </div>
+            <div>
+                <label for="fim">Até</label>
+                <input type="date" id="fim" name="fim" value="{{ fim|date:'Y-m-d' }}">
+            </div>
+            <button type="submit">Filtrar</button>
+        </form>
+
+        <h2>Por atendente</h2>
+        {% if por_atendente %}
+            <table>
+                <thead><tr><th>Atendente</th><th>Liberações</th></tr></thead>
+                <tbody>
+                    {% for nome, total in por_atendente %}
+                        <tr><td>{{ nome }}</td><td>{{ total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="vazio">Nenhuma liberação neste período.</p>
+        {% endif %}
+
+        <h2>Histórico</h2>
+        {% if liberacoes %}
+            <div class="tabela-scroll">
+                <table>
+                    <thead>
+                        <tr><th>Data e hora</th><th>Aluna</th><th>Motivo</th><th>Liberado por</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for l in liberacoes %}
+                            <tr>
+                                <td>{{ l.data_hora|date:"d/m/Y H:i" }}</td>
+                                <td>{{ l.aluno.nome }}</td>
+                                <td>{{ l.motivo_excepcional }}</td>
+                                <td>{{ l.liberado_por|default:"—" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="vazio">Nenhuma liberação neste período.</p>
+        {% endif %}
+
+        <a href="{% url 'painel' %}" class="btn-voltar">Voltar ao painel</a>
+    </div>
+</body>
+
+</html>

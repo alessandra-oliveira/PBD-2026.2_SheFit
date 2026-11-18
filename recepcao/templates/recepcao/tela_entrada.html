@@ -200,6 +200,37 @@
             text-align: center;
         }
 
+        .form-liberar {
+            margin-top: 12px;
+        }
+
+        .form-liberar textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-liberar textarea:focus {
+            border-color: #7c3aed;
+        }
+
+        .form-liberar button {
+            width: 100%;
+            margin-top: 10px;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+        }
+
+        .form-liberar button:hover {
+            background: linear-gradient(135deg, #6d28d9, #db2777);
+            box-shadow: 0 6px 12px rgba(124, 58, 237, 0.35);
+        }
+
         @media (max-width: 480px) {
             .card {
                 padding: 24px 20px;
@@ -289,7 +320,7 @@
                 <p class="dica">A presença só é registrada ao clicar em "Registrar entrada".</p>
             {% else %}
                 <div class="alert alert-danger">
-                    <h4>🚫 Acesso Bloqueado</h4>
+                    <h4>Acesso Bloqueado</h4>
                     <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
                     <p><strong>Motivo:</strong> {{ resultado.mensagem }}</p>
                     {% if resultado.detalhes %}
@@ -302,6 +333,25 @@
                     <hr>
                     <p style="margin: 0; color: #666; font-size: 0.9rem;">Oriente a aluna a dirigir-se à recepção/tesouraria para regularizar.</p>
                 </div>
+
+                {% if liberacao_hoje %}
+                    <div class="alert alert-info">
+                        <strong>Liberação excepcional registrada hoje</strong> às
+                        {{ liberacao_hoje.data_hora|time:"H:i" }}
+                        por {{ liberacao_hoje.liberado_por }}.<br>
+                        Motivo: {{ liberacao_hoje.motivo_excepcional }}
+                    </div>
+                {% endif %}
+
+                <!-- Liberação excepcional (T10): só aparece quando o acesso está bloqueado -->
+                <form method="post" action="{% url 'liberar_excepcional_recepcao' %}" class="form-liberar">
+                    {% csrf_token %}
+                    <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">
+                    <label for="motivo">Motivo da liberação excepcional:</label>
+                    <textarea id="motivo" name="motivo" rows="2" maxlength="255" required placeholder="Ex.: vai pagar agora no caixa"></textarea>
+                    <button type="submit">Liberar excepcionalmente</button>
+                </form>
+                <p class="dica">Registra a entrada com o motivo e o seu usuário. Não altera matrícula nem cobrança.</p>
             {% endif %}
         {% endif %}
 
