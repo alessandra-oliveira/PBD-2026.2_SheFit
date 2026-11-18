@@ -1,5 +1,6 @@
 from django.db import models
 from alunos.models import Aluno
+from django.conf import settings
 
 class Frequencia(models.Model):
     aluno = models.ForeignKey(
@@ -21,6 +22,24 @@ class Frequencia(models.Model):
         blank=True, 
         null=True, 
         verbose_name="Observação / Aviso"
+    )
+
+    excepcional = models.BooleanField(
+        default=False,
+        verbose_name="Liberação excepcional?"
+    )
+    motivo_excepcional = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Motivo da liberação excepcional"
+    )
+    liberado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='liberacoes_excepcionais',
+        verbose_name="Liberado por"
     )
 
     class Meta:

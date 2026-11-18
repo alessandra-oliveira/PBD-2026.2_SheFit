@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Minha Situação Financeira - SheFit</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+        .container-financeiro {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px 32px;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+        .topo-voltar {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #7c3aed;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .topo-voltar:hover {
+            text-decoration: underline;
+        }
+        h2 {
+            color: #1f2937;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+        .secao-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .secao-card h3 {
+            color: #6d28d9;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .info-linha {
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 8px;
+        }
+        .info-linha strong {
+            color: #1f2937;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        .badge-ativa { background: #dcfce7; color: #15803d; }
+        .badge-inadimplente { background: #fef9c3; color: #a16207; }
+        .badge-bloqueada { background: #fee2e2; color: #dc2626; }
+        .badge-vencida { background: #fee2e2; color: #dc2626; font-size: 10px; padding: 2px 6px; margin-left: 6px; }
+
+        .alerta-aviso {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            color: #92400e;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .alerta-perigo {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+            text-align: left;
+        }
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+        }
+        th {
+            font-weight: 600;
+            color: #6b7280;
+            background: #f3f4f6;
+        }
+        .total-aberto {
+            text-align: right;
+            font-weight: 700;
+            color: #dc2626;
+            font-size: 15px;
+            margin-top: 12px;
+        }
+        .sem-registro {
+            color: #6b7280;
+            font-size: 14px;
+            font-style: italic;
+            text-align: center;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-financeiro">
+        <a href="{% url 'painel_aluno' %}" class="topo-voltar">← Voltar para o painel</a>
+        
+        <h2>Minha Situação Financeira</h2>
+
+        {% if not matricula %}
+            <div class="alerta-aviso">Você não possui matrículas ativas no momento.</div>
+        {% else %}
+            <!-- SITUAÇÃO DA MATRÍCULA -->
+            <div class="secao-card">
+                <h3>Status da Matrícula</h3>
+                <p class="info-linha">
+                    Situação atual: 
+                    <span class="badge 
+                        {% if matricula.situacao == 'ativa' %}badge-ativa
+                        {% elif matricula.situacao == 'inadimplente' %}badge-inadimplente
+                        {% else %}badge-bloqueada{% endif %}">
+                        {{ matricula.situacao_display }}
+                    </span>
+                </p>
+                <p class="info-linha"><strong>Plano Contratado:</strong> {{ matricula.plano.nome }} (R$ {{ matricula.plano.valor }})</p>
+                <p class="info-linha"><strong>Início da Matrícula:</strong> {{ matricula.data_inicio|date:"d/m/Y" }}</p>
+                <p class="info-linha"><strong>Forma de Pagamento:</strong> {{ matricula.get_forma_pagamento_display }}</p>
+            </div>
+
+            <!-- ALERTA DE BLOQUEIO NA CATRACA -->
+            {% if dias_para_bloqueio is not None %}
+                <div class="{% if dias_para_bloqueio > 0 %}alerta-aviso{% else %}alerta-perigo{% endif %}">
+                    <strong>⚠️ Atenção com o Acesso à Catraca!</strong><br>
+                    {% if dias_para_bloqueio > 0 %}
+                        Identificamos faturas em atraso. Faltam <strong>{{ dias_para_bloqueio }} dias</strong> para o bloqueio automático do seu acesso na catraca.
+                    {% else %}
+                        <strong>Seu acesso está bloqueado</strong> por atraso no pagamento. Por favor, regularize sua situação na recepção.
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- COBRANÇAS EM ABERTO -->
+            <div class="secao-card">
+                <h3>Cobranças em Aberto</h3>
+                {% if cobrancas_aberto %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Competência</th>
+                                <th>Vencimento</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cobranca in cobrancas_aberto %}
+                                <tr>
+                                    <td>{{ cobranca.get_tipo_display }}</td>
+                                    <td>{{ cobranca.competencia|default:"-" }}</td>
+                                    <td>
+                                        {{ cobranca.vencimento|date:"d/m/Y" }}
+                                        {% if cobranca.vencimento < today %}<span class="badge badge-bloqueada">Vencida</span>{% endif %}
+                                    </td>
+                                    <td>R$ {{ cobranca.valor }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="total-aberto">
+                        Total Atualizado em Aberto: R$ {{ total_aberto }}
+                    </div>
+                {% else %}
+                    <p style="color: #15803d; font-size: 14px;">Parabéns! Você não possui cobranças em aberto.</p>
+                {% endif %}
+            </div>
+
+            <!-- HISTÓRICO DE PAGAMENTOS -->
+            <div class="secao-card">
+                <h3>Histórico de Pagamentos</h3>
+                {% if historico_pagamentos %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Referência</th>
+                                <th>Forma</th>
+                                <th>Valor Pago</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pag in historico_pagamentos %}
+                                <tr>
+                                    <td>{{ pag.data_pagamento|date:"d/m/Y" }}</td>
+                                    <td>{{ pag.cobranca.get_tipo_display }} ({{ pag.cobranca.competencia|default:"À vista" }})</td>
+                                    <td>{{ pag.get_forma_pagamento_display }}</td>
+                                    <td>R$ {{ pag.valor_pago }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="sem-registro">Nenhum pagamento registrado no histórico.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

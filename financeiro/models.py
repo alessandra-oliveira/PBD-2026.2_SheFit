@@ -58,6 +58,12 @@ class Plano(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(31)],
         verbose_name="Dia Padrão de Vencimento"
     )
+    renovacao_automatica = models.BooleanField(
+        default=False,
+        verbose_name="Renovação automática?",
+        help_text="Marcado: o sistema gera o ciclo seguinte sozinho no fim da vigência. "
+                  "Desmarcado: a recepção confirma cada renovação.",
+    )
     ativo = models.BooleanField(
         default=True, 
         verbose_name="Plano Ativo?",
@@ -212,6 +218,7 @@ class Cobranca(models.Model):
     TIPO_CHOICES = [
         ('adesao', 'Taxa de Adesão'),
         ('mensalidade', 'Mensalidade'),
+        ('multa_cancelamento', 'Multa de Cancelamento'),   
     ]
 
     matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='cobrancas', verbose_name="Matrícula")
@@ -220,8 +227,12 @@ class Cobranca(models.Model):
     vencimento = models.DateField(verbose_name="Data de Vencimento")
     competencia = models.CharField(max_length=7, null=True, blank=True, verbose_name="Competência (AAAA-MM)")
     paga = models.BooleanField(default=False, verbose_name="Paga?")
+    cancelada = models.BooleanField(                          # novo
+        default=False, verbose_name="Cancelada?",
+        help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
+                  "A linha continua existindo, mas não é mais devida.",
+    )
     ultima_sequencia_evento = models.PositiveBigIntegerField(default=0, editable=False)
-
     class Meta:
         verbose_name = "Cobrança"
         verbose_name_plural = "Cobranças"
@@ -366,3 +377,49 @@ class Cancelamento(models.Model):
 
     def __str__(self):
         return f"Cancelamento da matrícula #{self.matricula_id} em {self.data}"
+
+    TIPO_CHOICES = [
+        ('adesao', 'Taxa de Adesão'),
+        ('mensalidade', 'Mensalidade'),
+        ('multa_cancelamento', 'Multa de Cancelamento'),   # novo
+    ]
+    ...
+    paga = models.BooleanField(default=False, verbose_name="Paga?")
+    cancelada = models.BooleanField(                         # novo
+        default=False, verbose_name="Cancelada?",
+        help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
+                  "A linha continua existindo, mas não é mais devida.",
+    )
+
+class Renovacao(models.Model):
+    """Um ciclo de vigência depois do primeiro (T18). O ciclo 1 é a própria matrícula.
+    Cada linha diz de quando a quando vai o ciclo. A vigência da matrícula termina
+    no `fim` do último ciclo. (matrícula, ciclo) é único: é a trava que impede
+    gerar dois ciclos iguais mesmo se a renovação rodar duas vezes ao mesmo tempo.
+    """
+    
+    matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='renovacoes')
+    ciclo = models.PositiveIntegerField(verbose_name="Ciclo")
+    inicio = models.DateField(verbose_name="Início do ciclo")
+    fim = models.DateField(verbose_name="Fim do ciclo")
+    meses_acumulados = models.PositiveIntegerField(
+        help_text="Meses entre o início da matrícula e o fim deste ciclo.",
+    )
+    automatica = models.BooleanField(default=False, verbose_name="Renovação automática?")
+    confirmada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='+',
+    )
+    confirmada_por_nome = models.CharField(max_length=150, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Renovação"
+        verbose_name_plural = "Renovações"
+        ordering = ['matricula_id', 'ciclo']
+        constraints = [
+            models.UniqueConstraint(fields=['matricula', 'ciclo'], name='uq_renovacao_matricula_ciclo'),
+        ]
+
+    def __str__(self):
+        return f"Matrícula #{self.matricula_id} - ciclo {self.ciclo} ({self.inicio} a {self.fim})"

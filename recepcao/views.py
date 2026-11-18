@@ -1,23 +1,34 @@
+from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.urls import reverse
+from .models import Frequencia
+from collections import Counter
+from datetime import date
 
 from accounts.decorators import perfil_requerido
 from alunos.models import Aluno
-from financeiro.models import Cobranca, Pagamento
+from financeiro.models import Cancelamento, Cobranca, Matricula, Pagamento
 from financeiro.servicos import (
+    cancelar_matricula as efetuar_cancelamento,
+    previsao_cancelamento,
     registrar_estorno as salvar_estorno,
     registrar_pagamento as salvar_pagamento,
     saldo_cobranca,
     simular_pagamento,
     total_estornado,
+    renovacoes_a_vencer,                            
+    renovar_matricula as efetuar_renovacao, 
 )
+
+from .forms import CancelamentoForm, EstornoForm, LiberacaoExcepcionalForm, PagamentoForm
 from .servicos import (
-    LIMITE_RESULTADOS_BUSCA, avaliar_acesso, buscar_alunos, registrar_entrada,
+    LIMITE_RESULTADOS_BUSCA, avaliar_acesso, buscar_alunos,
+    liberar_excepcionalmente, registrar_entrada,
 )
-from .forms import EstornoForm, PagamentoForm
 
 
 def _aluno_ou_none(valor):
@@ -59,6 +70,51 @@ def _registrar(request):
         )
     return redirect('tela_entrada_recepcao')
 
+@login_required
+@perfil_requerido('recepcao')
+def liberar_excepcional(request):
+    """Tarefa T10: libera a entrada de uma aluna bloqueada, com motivo.
+
+    Só aceita POST. Grava uma Frequencia marcada como excepcional e não mexe
+    em matrícula nem cobrança.
+    """
+    if request.method != 'POST':
+        return redirect('tela_entrada_recepcao')
+
+    aluno = _aluno_ou_none(request.POST.get('aluno_id'))
+    if aluno is None:
+        messages.error(request, 'Aluna não identificada. Faça a busca novamente.')
+        return redirect('tela_entrada_recepcao')
+
+    voltar = f"{reverse('tela_entrada_recepcao')}?aluno={aluno.pk}"
+
+    form = LiberacaoExcepcionalForm(request.POST)
+    if not form.is_valid():
+        for erro in form.errors['motivo']:
+            messages.error(request, erro)
+        return redirect(voltar)
+
+    resultado = liberar_excepcionalmente(
+        aluno, form.cleaned_data['motivo'], request.user,
+    )
+
+    if resultado['erro']:
+        messages.error(request, resultado['erro'])
+        return redirect(voltar)
+    if resultado['duplicada']:
+        messages.info(
+            request,
+            f"A liberação de {aluno.nome} já foi registrada às "
+            f"{_hora(resultado['frequencia'])}. Nada foi duplicado.",
+        )
+        return redirect('tela_entrada_recepcao')
+
+    messages.success(
+        request,
+        f"Liberação excepcional de {aluno.nome} registrada às "
+        f"{_hora(resultado['frequencia'])}.",
+    )
+    return redirect('tela_entrada_recepcao')
 
 @login_required
 @perfil_requerido('recepcao')
@@ -90,6 +146,18 @@ def tela_entrada_recepcao(request):
         else:
             nao_encontrado = True
 
+    liberacao_hoje = None
+    if resultado and not resultado['sucesso']:
+        liberacao_hoje = (
+            Frequencia.objects.filter(
+                aluno=resultado['aluno'],
+                excepcional=True,
+                data_hora__date=timezone.localdate(),
+            )
+            .select_related('liberado_por')
+            .first()
+        )
+
     return render(request, 'recepcao/tela_entrada.html', {
         'resultado': resultado,
         'candidatos': candidatos,
@@ -97,6 +165,7 @@ def tela_entrada_recepcao(request):
         'nao_encontrado': nao_encontrado,
         'limite': LIMITE_RESULTADOS_BUSCA,
         'query': query,
+        'liberacao_hoje': liberacao_hoje,
     })
 
 
@@ -104,7 +173,7 @@ def tela_entrada_recepcao(request):
 @perfil_requerido('recepcao')
 def listar_cobrancas_pagamento(request):
     cobrancas = (
-        Cobranca.objects.filter(paga=False)
+        Cobranca.objects.filter(paga=False, cancelada=False)
         .select_related('matricula__aluno', 'matricula__plano')
         .prefetch_related('pagamentos__estornos')
         .order_by('vencimento', 'id')
@@ -211,4 +280,215 @@ def registrar_estorno(request, pagamento_id):
         'pagamento': pagamento,
         'disponivel': disponivel,
         'form': form,
+    })
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def buscar_matricula_cancelamento(request):
+    """Tarefa T17: a recepção acha a aluna (CPF ou nome) e escolhe a matrícula a cancelar."""
+    query = request.GET.get('q', '').strip()
+    matriculas = []
+    truncado = False
+    if query:
+        alunos, truncado = buscar_alunos(query)
+        matriculas = list(
+            Matricula.objects.filter(aluno__in=alunos, cancelamento__isnull=True)
+            .select_related('aluno', 'plano')
+            .order_by('aluno__nome', '-data_inicio')
+        )
+    return render(request, 'recepcao/buscar_cancelamento.html', {
+        'query': query,
+        'matriculas': matriculas,
+        'truncado': truncado,
+        'limite': LIMITE_RESULTADOS_BUSCA,
+    })
+
+
+def _avisos_do_cancelamento(request, matricula, resultado):
+    """Resume na tela o que o cancelamento fez (valores já gravados)."""
+    messages.success(
+        request,
+        f"Matrícula de {matricula.aluno.nome} cancelada em "
+        f"{resultado['cancelamento'].data:%d/%m/%Y}.",
+    )
+    multa = resultado['cobranca_multa']
+    if multa:
+        messages.info(
+            request,
+            f"Multa de R$ {multa.valor} registrada como cobrança, com vencimento "
+            f"em {multa.vencimento:%d/%m/%Y}.",
+        )
+    if resultado['canceladas']:
+        messages.info(
+            request,
+            f"{len(resultado['canceladas'])} cobrança(s) futura(s) ainda não vencida(s) "
+            f"cancelada(s).",
+        )
+    if resultado['canceladas_com_pagamento']:
+        messages.warning(
+            request,
+            f"{len(resultado['canceladas_com_pagamento'])} cobrança(s) cancelada(s) já tinha(m) "
+            f"pagamento. Confira com o financeiro se há valor a estornar.",
+        )
+    if resultado['total_dividas'] > 0:
+        messages.warning(
+            request,
+            f"As cobranças vencidas e não pagas continuam como dívida: "
+            f"R$ {resultado['total_dividas']} em aberto.",
+        )
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def cancelar_matricula(request, matricula_id):
+    """Tarefa T17: cancelamento da matrícula com a multa certa.
+
+    GET  -> MOSTRA o valor da multa e o que vai acontecer; não grava nada.
+    POST -> confirma. O valor que foi mostrado volta no POST e é conferido.
+    Matrícula já cancelada mostra o resumo do que foi feito.
+    """
+    matricula = get_object_or_404(
+        Matricula.objects.select_related('aluno', 'plano'), pk=matricula_id,
+    )
+    cancelamento = Cancelamento.objects.filter(matricula=matricula).first()
+    hoje = timezone.localdate()
+
+    if cancelamento is not None:
+        if request.method == 'POST':
+            messages.info(request, 'Esta matrícula já está cancelada.')
+            return redirect('cancelar_matricula', matricula_id=matricula.pk)
+        em_aberto = []
+        for cobranca in (
+            matricula.cobrancas.filter(paga=False, cancelada=False)
+            .prefetch_related('pagamentos__estornos').order_by('vencimento', 'id')
+        ):
+            saldo = saldo_cobranca(cobranca, hoje)
+            if saldo > 0:
+                em_aberto.append({'cobranca': cobranca, 'saldo': saldo})
+        return render(request, 'recepcao/cancelar_matricula.html', {
+            'matricula': matricula,
+            'cancelamento': cancelamento,
+            'em_aberto': em_aberto,
+            'canceladas': matricula.cobrancas.filter(cancelada=True).order_by('vencimento', 'id'),
+        })
+
+    form = None
+    motivo_digitado = ''
+    if request.method == 'POST':
+        enviado = CancelamentoForm(request.POST)
+        if enviado.is_valid():
+            try:
+                resultado = efetuar_cancelamento(
+                    matricula,
+                    enviado.cleaned_data['motivo'],
+                    hoje=hoje,
+                    multa_esperada=enviado.cleaned_data['multa_exibida'],
+                )
+            except ValidationError as erro:
+                if erro.code == 'multa_divergente':
+                    # Nada foi gravado: mostra de novo com o valor atual.
+                    messages.warning(request, erro.messages[0])
+                    motivo_digitado = enviado.cleaned_data['motivo']
+                else:
+                    for mensagem in erro.messages:
+                        enviado.add_error(None, mensagem)
+                    form = enviado
+            else:
+                _avisos_do_cancelamento(request, matricula, resultado)
+                return redirect('cancelar_matricula', matricula_id=matricula.pk)
+        else:
+            form = enviado
+
+    previsao = previsao_cancelamento(matricula, hoje)
+    if form is None:
+        form = CancelamentoForm(initial={'motivo': motivo_digitado})
+    return render(request, 'recepcao/cancelar_matricula.html', {
+        'matricula': matricula,
+        'previsao': previsao,
+        'form': form,
+    })
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def listar_renovacoes(request):
+    """Tarefa T18: matrículas de plano com confirmação que estão vencendo (ou já venceram)."""
+    return render(request, 'recepcao/renovacoes.html', {
+        'itens': renovacoes_a_vencer(timezone.localdate()),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def confirmar_renovacao(request, matricula_id):
+    """Tarefa T18: a recepção confirma a renovação (só POST).
+
+    O fim de vigência que a tela mostrou volta junto: se ela já andou (clique
+    duplo, outra aba), nada é gerado de novo.
+    """
+    if request.method != 'POST':
+        return redirect('listar_renovacoes')
+    matricula = get_object_or_404(Matricula.objects.select_related('aluno'), pk=matricula_id)
+    try:
+        fim_esperado = date.fromisoformat(request.POST.get('fim_vigencia', ''))
+    except ValueError:
+        messages.error(request, 'Renovação não confirmada: recarregue a lista e tente de novo.')
+        return redirect('listar_renovacoes')
+
+    try:
+        resultado = efetuar_renovacao(
+            matricula, hoje=timezone.localdate(), usuario=request.user, fim_esperado=fim_esperado,
+        )
+    except ValidationError as erro:
+        messages.error(request, erro.messages[0])
+    else:
+        if resultado['renovada']:
+            r = resultado['renovacao']
+            messages.success(
+                request,
+                f"Matrícula de {matricula.aluno.nome} renovada: ciclo {r.ciclo}, de "
+                f"{r.inicio:%d/%m/%Y} a {r.fim:%d/%m/%Y} "
+                f"({resultado['cobrancas_criadas']} cobrança(s) gerada(s)).",
+            )
+        elif resultado['motivo'] == 'desatualizada':
+            messages.info(request, f"A matrícula de {matricula.aluno.nome} já foi renovada. Nada foi duplicado.")
+        else:
+            messages.info(request, f"A matrícula de {matricula.aluno.nome} ainda não está no período de renovação.")
+    return redirect('listar_renovacoes')    
+def _data_ou_none(texto):
+    try:
+        return date.fromisoformat(texto)
+    except (TypeError, ValueError):
+        return None
+
+
+@login_required
+@perfil_requerido('recepcao', 'financeiro')
+def historico_liberacoes(request):
+    """Tarefa T10: histórico de liberações excepcionais e total por atendente.
+
+    Só consulta. Por padrão mostra o mês corrente.
+    """
+    hoje = timezone.localdate()
+    inicio = _data_ou_none(request.GET.get('inicio')) or hoje.replace(day=1)
+    fim = _data_ou_none(request.GET.get('fim')) or hoje
+
+    liberacoes = list(
+        Frequencia.objects.filter(
+            excepcional=True,
+            data_hora__date__gte=inicio,
+            data_hora__date__lte=fim,
+        )
+        .select_related('aluno', 'liberado_por')
+        .order_by('-data_hora')
+    )
+
+    por_atendente = Counter(
+        str(l.liberado_por) if l.liberado_por else '—' for l in liberacoes
+    ).most_common()
+
+    return render(request, 'recepcao/historico_liberacoes.html', {
+        'liberacoes': liberacoes,
+        'por_atendente': por_atendente,
+        'inicio': inicio,
+        'fim': fim,
     })

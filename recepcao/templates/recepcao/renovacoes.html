@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Renovações - Recepção SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
+        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+        main { max-width: 1000px; margin: 32px auto; padding: 0 18px; }
+        .card { margin-bottom: 16px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
+        h1 { margin: 0; font-size: 1.5rem; }
+        h2 { margin: 0 0 8px; font-size: 1.1rem; }
+        p { color: #64748b; }
+        .item { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+        .button { display: inline-block; padding: 10px 14px; color: white; text-decoration: none; background: #7c3aed; border: 0; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
+        .secondary { background: #475569; }
+        .muted { color: #64748b; font-size: .9rem; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: .8rem; font-weight: 700; background: #fef3c7; color: #92400e; }
+        .tag.vencida { background: #fee2e2; color: #991b1b; }
+        .message { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
+        .message.warning { color: #92400e; background: #fef3c7; }
+        .message.error { color: #991b1b; background: #fee2e2; }
+        @media (max-width: 600px) { .item { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header><h1>SheFit · Recepção</h1></header>
+    <main>
+        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+
+        <section class="card">
+            <h2>Renovações por confirmação</h2>
+            <p>
+                Matrículas de planos que exigem a confirmação da recepção para continuar.
+                O novo ciclo começa exatamente quando o atual termina, sem deixar nenhum dia de fora.
+                Renovar não altera cobranças em aberto: quem renova devendo continua devendo.
+            </p>
+            <a class="button secondary" href="{% url 'painel_recepcao' %}">Voltar ao painel</a>
+        </section>
+
+        {% for item in itens %}
+            <article class="card item">
+                <div>
+                    <h2>{{ item.matricula.aluno.nome }}</h2>
+                    <div class="muted">
+                        Matrícula #{{ item.matricula.id }} · {{ item.matricula.plano.nome }}
+                        · ciclo {{ item.ciclo }} vigente · próximo ciclo começa em {{ item.fim|date:"d/m/Y" }}
+                        · situação: {{ item.matricula.situacao_display }}
+                    </div>
+                    <div style="margin-top: 6px;">
+                        {% if item.dias < 0 %}
+                            <span class="tag vencida">Venceu há {% widthratio item.dias 1 -1 %} dia(s)</span>
+                        {% elif item.dias == 0 %}
+                            <span class="tag vencida">Vence hoje</span>
+                        {% else %}
+                            <span class="tag">Vence em {{ item.dias }} dia(s)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <form method="post" action="{% url 'confirmar_renovacao' item.matricula.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="fim_vigencia" value="{{ item.fim|date:'Y-m-d' }}">
+                    <button class="button" type="submit">Confirmar renovação</button>
+                </form>
+            </article>
+        {% empty %}
+            <section class="card"><p>Nenhuma renovação vencendo nos próximos dias.</p></section>
+        {% endfor %}
+    </main>
+</body>
+</html>

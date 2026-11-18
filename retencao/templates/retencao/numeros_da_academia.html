@@ -27,6 +27,29 @@
     {% endif %}
 </section>
 
+{# ---------------- Aulas coletivas ---------------- #}
+<section class="card">
+    <h2>Presença nas aulas coletivas</h2>
+    <p class="discreto">{{ presenca_aulas.rotulo }}.</p>
+    {% if presenca_aulas.total == 0 %}
+        <p class="aviso-caixa">Nenhuma aula coletiva com chamada registrada neste período.</p>
+    {% else %}
+        <div class="metricas">
+            <div class="metrica"><span>Presenças</span><strong>{{ presenca_aulas.presencas }}</strong></div>
+            <div class="metrica"><span>Faltas</span><strong>{{ presenca_aulas.faltas }}</strong></div>
+            <div class="metrica"><span>Aproveitamento</span><strong>{{ presenca_aulas.percentual }}%</strong></div>
+        </div>
+        <table>
+            <thead><tr><th>Modalidade</th><th class="num">Presenças</th><th class="num">Faltas</th></tr></thead>
+            <tbody>
+            {% for item in presenca_aulas.por_modalidade %}
+                <tr><td>{{ item.modalidade }}</td><td class="num">{{ item.presencas }}</td><td class="num">{{ item.faltas }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</section>
+
 {# ---------------- Avaliações físicas ---------------- #}
 <section class="card">
     <h2>Suas avaliações físicas</h2>
@@ -131,4 +154,54 @@
     {% endif %}
 </section>
 {% endif %}
+{# ---------------- Evolução da carga ---------------- #}
+<section class="card">
+    <h2>Evolução da carga por exercício</h2>
+    {% if not cargas %}
+        <p class="aviso-caixa">
+            Você ainda não registrou nenhuma carga. Registre o que usou em cada exercício na
+            <a href="{% url 'ficha_ativa_aluno' %}">sua ficha de treino</a> para acompanhar a evolução.
+        </p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Exercício</th><th class="num">Primeira</th><th class="num">Atual</th>
+                    <th class="num">Maior</th><th class="num">Evolução</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in cargas %}
+                <tr>
+                    <td>{{ c.nome }} <span class="discreto">({{ c.quantidade }} registro{{ c.quantidade|pluralize }})</span></td>
+                    <td class="num">{{ c.primeira|floatformat:"-2" }} kg</td>
+                    <td class="num">{{ c.ultima|floatformat:"-2" }} kg</td>
+                    <td class="num">{{ c.maior|floatformat:"-2" }} kg</td>
+                    <td class="num"><strong>{% if c.diferenca is None %}—{% elif c.diferenca > 0 %}+{{ c.diferenca|floatformat:"-2" }} kg{% else %}{{ c.diferenca|floatformat:"-2" }} kg{% endif %}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="5">
+                        <details>
+                            <summary class="discreto">Ver histórico de {{ c.nome }}</summary>
+                            <table>
+                                <thead><tr><th>Data</th><th class="num">Carga</th><th class="num">Séries × reps</th></tr></thead>
+                                <tbody>
+                                {% for r in c.registros %}
+                                    <tr>
+                                        <td>{{ r.data|date:"d/m/Y" }}</td>
+                                        <td class="num">{{ r.carga_kg|floatformat:"-2" }} kg</td>
+                                        <td class="num">{% if r.series and r.repeticoes %}{{ r.series }} × {{ r.repeticoes }}{% else %}—{% endif %}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </details>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</section>
+
 {% endblock %}
