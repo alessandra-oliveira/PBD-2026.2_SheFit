@@ -9,12 +9,13 @@ from django.utils import timezone
 
 from accounts.models import Perfil
 from alunos.models import Aluno, Anamnese
-from financeiro.models import Plano
+from financeiro.models import Cobranca, Matricula, Pagamento, Plano
 from financeiro.servicos import realizar_matricula
 from .models import Frequencia
 from .servicos import (
     JANELA_ENTRADA_DUPLICADA, LIMITE_RESULTADOS_BUSCA, avaliar_acesso,
-    buscar_alunos, processar_entrada_aluno, registrar_entrada,
+    buscar_alunos, liberar_excepcionalmente, processar_entrada_aluno,
+    registrar_entrada,
 )
 
 _seq = count(1)
@@ -246,3 +247,206 @@ class TelaEntradaViewTests(TestCase):
         self.assertEqual(self.client.get(self.url).status_code, 302)
         self.assertEqual(self.client.post(self.url, {'aluno_id': aluna.id}).status_code, 302)
         self.assertEqual(Frequencia.objects.count(), 0)
+
+class LiberarExcepcionalmenteServicoTests(TestCase):
+    def setUp(self):
+        self.usuario = criar_usuario(Perfil.RECEPCAO)
+
+    def test_libera_aluna_bloqueada_e_grava_frequencia_excepcional(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        resultado = liberar_excepcionalmente(aluna, 'Vai pagar agora no caixa', self.usuario)
+        self.assertTrue(resultado['registrada'])
+        self.assertIsNone(resultado['erro'])
+        frequencia = Frequencia.objects.get()
+        self.assertEqual(frequencia.aluno, aluna)
+        self.assertTrue(frequencia.liberado)
+        self.assertTrue(frequencia.excepcional)
+        self.assertEqual(frequencia.motivo_excepcional, 'Vai pagar agora no caixa')
+        self.assertEqual(frequencia.liberado_por, self.usuario)
+
+    def test_motivo_vazio_ou_so_espacos_e_recusado(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        for motivo in ('', '   ', None):
+            resultado = liberar_excepcionalmente(aluna, motivo, self.usuario)
+            self.assertFalse(resultado['registrada'])
+            self.assertTrue(resultado['erro'])
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_motivo_maior_que_255_caracteres_e_recusado(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        resultado = liberar_excepcionalmente(aluna, 'x' * 256, self.usuario)
+        self.assertFalse(resultado['registrada'])
+        self.assertTrue(resultado['erro'])
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_sem_responsavel_a_liberacao_e_recusada(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        resultado = liberar_excepcionalmente(aluna, 'Vai pagar hoje', None)
+        self.assertFalse(resultado['registrada'])
+        self.assertTrue(resultado['erro'])
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_aluna_com_acesso_liberado_nao_gera_liberacao_excepcional(self):
+        aluna = criar_aluna('Ana Lima')
+        resultado = liberar_excepcionalmente(aluna, 'Vai pagar hoje', self.usuario)
+        self.assertFalse(resultado['registrada'])
+        self.assertTrue(resultado['erro'])
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_nao_altera_matricula_nem_cobranca(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        matricula = Matricula.objects.get(aluno=aluna)
+        situacao_antes = matricula.situacao
+        campos = ('id', 'valor', 'paga', 'cancelada', 'vencimento')
+        cobrancas_antes = list(Cobranca.objects.order_by('id').values(*campos))
+        self.assertTrue(cobrancas_antes)
+
+        liberar_excepcionalmente(aluna, 'Vai pagar agora no caixa', self.usuario)
+
+        matricula = Matricula.objects.get(pk=matricula.pk)
+        self.assertEqual(matricula.situacao, situacao_antes)
+        self.assertEqual(
+            list(Cobranca.objects.order_by('id').values(*campos)), cobrancas_antes,
+        )
+        self.assertEqual(Pagamento.objects.count(), 0)
+
+    def test_repetir_logo_em_seguida_nao_duplica(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        liberar_excepcionalmente(aluna, 'Vai pagar hoje', self.usuario)
+        segunda = liberar_excepcionalmente(aluna, 'Vai pagar hoje', self.usuario)
+        self.assertFalse(segunda['registrada'])
+        self.assertTrue(segunda['duplicada'])
+        self.assertEqual(Frequencia.objects.count(), 1)
+
+    def test_entrada_normal_nao_e_marcada_como_excepcional(self):
+        aluna = criar_aluna('Ana Lima')
+        registrar_entrada(aluna)
+        frequencia = Frequencia.objects.get()
+        self.assertFalse(frequencia.excepcional)
+        self.assertEqual(frequencia.motivo_excepcional, '')
+        self.assertIsNone(frequencia.liberado_por)
+
+
+class LiberarExcepcionalViewTests(TestCase):
+    def setUp(self):
+        self.usuario = criar_usuario(Perfil.RECEPCAO)
+        self.client.force_login(self.usuario)
+        self.url = reverse('liberar_excepcional_recepcao')
+        self.tela = reverse('tela_entrada_recepcao')
+
+    def test_post_com_motivo_libera_e_volta_para_a_tela(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        resposta = self.client.post(
+            self.url, {'aluno_id': aluna.id, 'motivo': 'Vai pagar agora no caixa'},
+        )
+        self.assertRedirects(resposta, self.tela, fetch_redirect_response=False)
+        frequencia = Frequencia.objects.get()
+        self.assertTrue(frequencia.excepcional)
+        self.assertEqual(frequencia.liberado_por, self.usuario)
+
+    def test_post_sem_motivo_nao_grava_e_volta_para_a_mesma_aluna(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        resposta = self.client.post(self.url, {'aluno_id': aluna.id, 'motivo': '   '})
+        self.assertRedirects(
+            resposta, f'{self.tela}?aluno={aluna.pk}', fetch_redirect_response=False,
+        )
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_get_nao_libera_nada(self):
+        resposta = self.client.get(self.url)
+        self.assertEqual(resposta.status_code, 302)
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_aluna_com_acesso_liberado_nao_recebe_liberacao_excepcional(self):
+        aluna = criar_aluna('Ana Lima')
+        self.client.post(self.url, {'aluno_id': aluna.id, 'motivo': 'Vai pagar hoje'})
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_post_com_id_invalido_nao_quebra(self):
+        for dados in ({'aluno_id': 'abc'}, {'aluno_id': '99999'}, {}):
+            resposta = self.client.post(self.url, dados)
+            self.assertEqual(resposta.status_code, 302)
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_perfil_financeiro_nao_libera(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        self.client.force_login(criar_usuario(Perfil.FINANCEIRO))
+        resposta = self.client.post(
+            self.url, {'aluno_id': aluna.id, 'motivo': 'Vai pagar hoje'},
+        )
+        self.assertEqual(resposta.status_code, 302)
+        self.assertEqual(Frequencia.objects.count(), 0)
+
+    def test_botao_so_aparece_quando_o_acesso_esta_bloqueado(self):
+        criar_aluna('Bia Souza', cpf='11111111111', ativo=False)
+        criar_aluna('Ana Lima', cpf='22222222222')
+        bloqueada = self.client.get(self.tela, {'q': '11111111111'})
+        liberada = self.client.get(self.tela, {'q': '22222222222'})
+        self.assertContains(bloqueada, 'Liberar excepcionalmente')
+        self.assertNotContains(liberada, 'Liberar excepcionalmente')
+
+    def test_tela_mostra_a_liberacao_feita_hoje(self):
+        aluna = criar_aluna('Ana Lima', cpf='12345678901', ativo=False)
+        liberar_excepcionalmente(aluna, 'Vai pagar agora no caixa', self.usuario)
+        resposta = self.client.get(self.tela, {'q': '12345678901'})
+        self.assertIsNotNone(resposta.context['liberacao_hoje'])
+        self.assertContains(resposta, 'Vai pagar agora no caixa')
+
+
+class HistoricoLiberacoesViewTests(TestCase):
+    def setUp(self):
+        self.usuario = criar_usuario(Perfil.RECEPCAO)
+        self.client.force_login(self.usuario)
+        self.url = reverse('historico_liberacoes')
+
+    def test_lista_so_liberacoes_excepcionais(self):
+        liberar_excepcionalmente(
+            criar_aluna('Ana Lima', ativo=False), 'Vai pagar hoje', self.usuario,
+        )
+        registrar_entrada(criar_aluna('Bia Souza'))
+        resposta = self.client.get(self.url)
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(len(resposta.context['liberacoes']), 1)
+
+    def test_total_por_atendente(self):
+        outro = criar_usuario(Perfil.RECEPCAO)
+        for nome in ('Ana Lima', 'Bia Souza'):
+            liberar_excepcionalmente(
+                criar_aluna(nome, ativo=False), 'Vai pagar hoje', self.usuario,
+            )
+        liberar_excepcionalmente(
+            criar_aluna('Cris Dias', ativo=False), 'Vai pagar hoje', outro,
+        )
+        resposta = self.client.get(self.url)
+        self.assertEqual(
+            dict(resposta.context['por_atendente']),
+            {str(self.usuario): 2, str(outro): 1},
+        )
+
+    def test_filtro_de_periodo(self):
+        aluna = criar_aluna('Ana Lima', ativo=False)
+        liberar_excepcionalmente(aluna, 'Vai pagar hoje', self.usuario)
+        Frequencia.objects.update(data_hora=timezone.now() - timedelta(days=10))
+        hoje = timezone.localdate()
+
+        recente = self.client.get(self.url, {
+            'inicio': (hoje - timedelta(days=1)).isoformat(), 'fim': hoje.isoformat(),
+        })
+        self.assertEqual(len(recente.context['liberacoes']), 0)
+
+        ampla = self.client.get(self.url, {
+            'inicio': (hoje - timedelta(days=11)).isoformat(), 'fim': hoje.isoformat(),
+        })
+        self.assertEqual(len(ampla.context['liberacoes']), 1)
+
+    def test_data_invalida_nao_quebra_a_tela(self):
+        resposta = self.client.get(self.url, {'inicio': 'abc', 'fim': 'xyz'})
+        self.assertEqual(resposta.status_code, 200)
+
+    def test_financeiro_tambem_acessa(self):
+        self.client.force_login(criar_usuario(Perfil.FINANCEIRO))
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+
+    def test_perfil_aluna_nao_acessa(self):
+        self.client.force_login(criar_usuario(Perfil.ALUNO))
+        self.assertEqual(self.client.get(self.url).status_code, 302)

@@ -67,3 +67,22 @@ class ExercicioTreino(models.Model):
 
     def __str__(self):
         return self.nome
+
+class ExecucaoExercicio(models.Model):
+    """O que a aluna realmente fez num exercício (≠ `carga_sugerida`, que é a prescrição)."""
+    aluno = models.ForeignKey('alunos.Aluno', on_delete=models.PROTECT, related_name='execucoes_exercicio')
+    exercicio = models.ForeignKey(ExercicioTreino, on_delete=models.PROTECT, related_name='execucoes')
+    data = models.DateField(default=timezone.localdate, verbose_name='Data')
+    carga_kg = models.DecimalField(max_digits=8, decimal_places=2,
+                                   validators=[MinValueValidator(0)], verbose_name='Carga (kg)')
+    series = models.PositiveIntegerField(null=True, blank=True, verbose_name='Séries')
+    repeticoes = models.PositiveIntegerField(null=True, blank=True, verbose_name='Repetições')
+    registrada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['data', 'pk']
+        verbose_name = 'Execução de exercício'
+        verbose_name_plural = 'Execuções de exercício'
+
+    def __str__(self):
+        return f'{self.exercicio.nome}: {self.carga_kg} kg em {self.data:%d/%m/%Y}'

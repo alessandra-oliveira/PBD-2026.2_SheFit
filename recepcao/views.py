@@ -4,6 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.urls import reverse
+from .models import Frequencia
+from collections import Counter
+from datetime import date
 
 from accounts.decorators import perfil_requerido
 from alunos.models import Aluno
@@ -19,12 +23,12 @@ from financeiro.servicos import (
     renovacoes_a_vencer,                            
     renovar_matricula as efetuar_renovacao, 
 )
-from .forms import CancelamentoForm, EstornoForm, PagamentoForm
-from .servicos import (
-    LIMITE_RESULTADOS_BUSCA, avaliar_acesso, buscar_alunos, registrar_entrada,
-)
-from .forms import EstornoForm, PagamentoForm
 
+from .forms import CancelamentoForm, EstornoForm, LiberacaoExcepcionalForm, PagamentoForm
+from .servicos import (
+    LIMITE_RESULTADOS_BUSCA, avaliar_acesso, buscar_alunos,
+    liberar_excepcionalmente, registrar_entrada,
+)
 
 
 def _aluno_ou_none(valor):
@@ -66,6 +70,51 @@ def _registrar(request):
         )
     return redirect('tela_entrada_recepcao')
 
+@login_required
+@perfil_requerido('recepcao')
+def liberar_excepcional(request):
+    """Tarefa T10: libera a entrada de uma aluna bloqueada, com motivo.
+
+    Só aceita POST. Grava uma Frequencia marcada como excepcional e não mexe
+    em matrícula nem cobrança.
+    """
+    if request.method != 'POST':
+        return redirect('tela_entrada_recepcao')
+
+    aluno = _aluno_ou_none(request.POST.get('aluno_id'))
+    if aluno is None:
+        messages.error(request, 'Aluna não identificada. Faça a busca novamente.')
+        return redirect('tela_entrada_recepcao')
+
+    voltar = f"{reverse('tela_entrada_recepcao')}?aluno={aluno.pk}"
+
+    form = LiberacaoExcepcionalForm(request.POST)
+    if not form.is_valid():
+        for erro in form.errors['motivo']:
+            messages.error(request, erro)
+        return redirect(voltar)
+
+    resultado = liberar_excepcionalmente(
+        aluno, form.cleaned_data['motivo'], request.user,
+    )
+
+    if resultado['erro']:
+        messages.error(request, resultado['erro'])
+        return redirect(voltar)
+    if resultado['duplicada']:
+        messages.info(
+            request,
+            f"A liberação de {aluno.nome} já foi registrada às "
+            f"{_hora(resultado['frequencia'])}. Nada foi duplicado.",
+        )
+        return redirect('tela_entrada_recepcao')
+
+    messages.success(
+        request,
+        f"Liberação excepcional de {aluno.nome} registrada às "
+        f"{_hora(resultado['frequencia'])}.",
+    )
+    return redirect('tela_entrada_recepcao')
 
 @login_required
 @perfil_requerido('recepcao')
@@ -97,6 +146,18 @@ def tela_entrada_recepcao(request):
         else:
             nao_encontrado = True
 
+    liberacao_hoje = None
+    if resultado and not resultado['sucesso']:
+        liberacao_hoje = (
+            Frequencia.objects.filter(
+                aluno=resultado['aluno'],
+                excepcional=True,
+                data_hora__date=timezone.localdate(),
+            )
+            .select_related('liberado_por')
+            .first()
+        )
+
     return render(request, 'recepcao/tela_entrada.html', {
         'resultado': resultado,
         'candidatos': candidatos,
@@ -104,6 +165,7 @@ def tela_entrada_recepcao(request):
         'nao_encontrado': nao_encontrado,
         'limite': LIMITE_RESULTADOS_BUSCA,
         'query': query,
+        'liberacao_hoje': liberacao_hoje,
     })
 
 
@@ -346,7 +408,6 @@ def cancelar_matricula(request, matricula_id):
         'form': form,
     })
 
-
 @login_required(login_url='entrar')
 @perfil_requerido('recepcao')
 def listar_renovacoes(request):
@@ -393,3 +454,41 @@ def confirmar_renovacao(request, matricula_id):
         else:
             messages.info(request, f"A matrícula de {matricula.aluno.nome} ainda não está no período de renovação.")
     return redirect('listar_renovacoes')    
+def _data_ou_none(texto):
+    try:
+        return date.fromisoformat(texto)
+    except (TypeError, ValueError):
+        return None
+
+
+@login_required
+@perfil_requerido('recepcao', 'financeiro')
+def historico_liberacoes(request):
+    """Tarefa T10: histórico de liberações excepcionais e total por atendente.
+
+    Só consulta. Por padrão mostra o mês corrente.
+    """
+    hoje = timezone.localdate()
+    inicio = _data_ou_none(request.GET.get('inicio')) or hoje.replace(day=1)
+    fim = _data_ou_none(request.GET.get('fim')) or hoje
+
+    liberacoes = list(
+        Frequencia.objects.filter(
+            excepcional=True,
+            data_hora__date__gte=inicio,
+            data_hora__date__lte=fim,
+        )
+        .select_related('aluno', 'liberado_por')
+        .order_by('-data_hora')
+    )
+
+    por_atendente = Counter(
+        str(l.liberado_por) if l.liberado_por else '—' for l in liberacoes
+    ).most_common()
+
+    return render(request, 'recepcao/historico_liberacoes.html', {
+        'liberacoes': liberacoes,
+        'por_atendente': por_atendente,
+        'inicio': inicio,
+        'fim': fim,
+    })
