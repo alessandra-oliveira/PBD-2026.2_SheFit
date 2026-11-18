@@ -1,44 +1,482 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de {{ ficha.aluno.nome }} - SheFit</title>
+    <!-- Fonte Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>Ficha de {{ ficha.aluno.nome }} - SheFit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 28px 16px; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #1f2937; }
-        main { max-width: 900px; margin: auto; }
-        .card { background: #fff; border-radius: 16px; padding: 28px; margin-bottom: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
-        h1, h2 { color: #6d28d9; }
-        .exercicio { border-top: 1px solid #e5e7eb; padding: 14px 0; }
-        .botao { display: inline-block; border-radius: 8px; padding: 11px 15px; background: #f3f4f6; color: #374151; text-decoration: none; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Lateral Padrão */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+
+        .btn-sair-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            color: #ef4444;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sair-sidebar:hover {
+            background: #fee2e2;
+            transform: translateY(-1px);
+        }
+
+        /* Área Principal de Conteúdo */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        /* Topbar com Perfil e Data Padronizada */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Card de Detalhes da Ficha */
+        .card-detalhe {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .detalhe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .detalhe-header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1e293b;
+            letter-spacing: -0.5px;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .badge-status.ativa {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-status.encerrada {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            background: #f8fafc;
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-item span {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .info-item strong {
+            font-size: 0.98rem;
+            color: #1e293b;
+        }
+
+        /* Exercícios */
+        .exercicios-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .exercicio-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: box-shadow 0.2s;
+        }
+
+        .exercicio-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .exercicio-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #7c3aed;
+        }
+
+        .exercicio-dados {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .exercicio-obs {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .btn-voltar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.92rem;
+            width: fit-content;
+            transition: all 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-wrapper { margin-left: 0; padding: 20px 16px; }
+        }
     </style>
 </head>
+
 <body>
-<main>
-    <section class="card">
-        <h1>Ficha de {{ ficha.aluno.nome }}</h1>
-        <p><strong>Professor:</strong> {{ ficha.professor.get_full_name|default:ficha.professor.username }}</p>
-        <p><strong>Criada em:</strong> {{ ficha.criada_em|date:"d/m/Y" }}</p>
-        <p><strong>Revisão prevista:</strong> {{ ficha.data_revisao|date:"d/m/Y" }}</p>
-        <p><strong>Situação:</strong> {% if ficha.ativa %}Ativa{% else %}Encerrada{% endif %}</p>
-        {% if ficha.encerrada_em %}<p><strong>Encerrada em:</strong> {{ ficha.encerrada_em|date:"d/m/Y H:i" }}</p>{% endif %}
-        <h2>Exercícios</h2>
-        {% for exercicio in ficha.exercicios.all %}
-            <div class="exercicio">
-                <strong>{{ exercicio.nome }}</strong>
-                <p>Séries: {{ exercicio.series|default_if_none:"Não informado" }} · Repetições: {{ exercicio.repeticoes|default_if_none:"Não informado" }}</p>
-                <p>Carga sugerida: {{ exercicio.carga_sugerida|default_if_none:"Não informada" }}</p>
-                <p>Observações: {{ exercicio.observacoes|default:"Nenhuma" }}</p>
+    <!-- Sidebar Lateral -->
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                    <span>SheFit</span>
+                </div>
             </div>
-        {% empty %}
-            <p>Esta ficha não possui exercícios cadastrados.</p>
-        {% endfor %}
-    </section>
-    <a class="botao" href="{% url 'listar_fichas' %}">Voltar às fichas</a>
-</main>
+
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                            <span>Painel</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'minhas_turmas_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                            <span>Minhas Turmas</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'listar_fichas' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                            <span>Consultar Fichas e Histórico</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'avaliacoes_alunos' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Avaliações Físicas</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sair-sidebar">
+                <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="main-wrapper">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                    <div class="role">Professor</div>
+                </div>
+            </div>
+        </header>
+
+        <section class="card-detalhe">
+            <div class="detalhe-header">
+                <div>
+                    <h1>Ficha de {{ ficha.aluno.nome }}</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Detalhes e sequência de exercícios montados</p>
+                </div>
+                {% if ficha.ativa %}
+                    <span class="badge-status ativa">Ficha Ativa</span>
+                {% else %}
+                    <span class="badge-status encerrada">Ficha Encerrada</span>
+                {% endif %}
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <span>Professor Responsável</span>
+                    <strong>{{ ficha.professor.get_full_name|default:ficha.professor.username }}</strong>
+                </div>
+                <div class="info-item">
+                    <span>Criada em</span>
+                    <strong>{{ ficha.criada_em|date:"d/m/Y" }}</strong>
+                </div>
+                <div class="info-item">
+                    <span>Revisão prevista</span>
+                    <strong>{{ ficha.data_revisao|date:"d/m/Y" }}</strong>
+                </div>
+                {% if ficha.encerrada_em %}
+                    <div class="info-item">
+                        <span>Encerrada em</span>
+                        <strong>{{ ficha.encerrada_em|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                {% endif %}
+            </div>
+
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-top: 10px;">Exercícios Cadastrados</h3>
+            <div class="exercicios-lista">
+                {% for exercicio in ficha.exercicios.all %}
+                    <div class="exercicio-card">
+                        <div class="exercicio-title">{{ exercicio.nome }}</div>
+                        <div class="exercicio-dados">
+                            <span><strong>Séries:</strong> {{ exercicio.series|default_if_none:"Não informado" }}</span>
+                            <span><strong>Repetições:</strong> {{ exercicio.repeticoes|default_if_none:"Não informado" }}</span>
+                            <span><strong>Carga sugerida:</strong> {{ exercicio.carga_sugerida|default_if_none:"Não informada" }} kg</span>
+                        </div>
+                        {% if exercicio.observacoes %}
+                            <div class="exercicio-obs"><strong>Obs:</strong> {{ exercicio.observacoes }}</div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p style="color: var(--text-muted); font-size: 0.92rem;">Esta ficha não possui exercícios cadastrados.</p>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 14px;">
+                <a href="{% url 'listar_fichas' %}" class="btn-voltar">
+                    <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                    Voltar para Fichas
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+    </script>
 </body>
+
 </html>

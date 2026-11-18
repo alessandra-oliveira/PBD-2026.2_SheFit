@@ -1,101 +1,924 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Regras Financeiras - Financeiro SheFit</title>
+    <title>Regras Financeiras - SheFit</title>
+    <!-- Fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
-        .navbar {
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            padding: 16px 32px;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-gradient: linear-gradient(180deg, #7c2ae8 0%, #d63384 100%);
+            --btn-gradient: linear-gradient(135deg, #7c2ae8 0%, #d63384 100%);
+            --primary-purple: #7c2ae8;
+            --primary-pink: #d63384;
+            --bg-color: #f8f7fc;
+            --card-bg: #ffffff;
+            --card-radius: 16px;
+            --card-shadow: 0 4px 20px rgba(124, 42, 232, 0.05);
+            --border-light: #f1f0f7;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Lateral Fixa */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 36px;
+            padding: 0 10px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .sidebar-logo .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .sidebar-logo .brand-icon svg {
+            width: 22px;
+            height: 22px;
+            color: #ffffff;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #e11d48;
+            background: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fff1f2;
+            transform: translateY(-1px);
+        }
+
+        .btn-sidebar-sair svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .portal-label {
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* Área Principal de Conteúdo */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        /* Topbar Superior Padronizada com Recepção / Admin / Professor */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: white;
+            padding-bottom: 8px;
         }
-        .container { max-width: 900px; margin: 32px auto; padding: 0 20px; }
-        .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 24px; }
-        h1 { color: #1e293b; font-size: 1.6rem; }
-        h2 { color: #7c3aed; font-size: 1.2rem; margin-bottom: 14px; }
-        .subtitulo { color: #64748b; margin: 6px 0 24px; line-height: 1.4; }
-        .aviso { background: #f5f3ff; color: #5b21b6; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 18px; line-height: 1.4; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-        .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.85rem; color: #334155; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
-        .btn-salvar {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
             color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Mensagens de Alerta */
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alert-msg {
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .alert-msg.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-msg.info {
+            background: #f5f3ff;
+            color: #5b21b6;
+            border: 1px solid #ddd6fe;
+        }
+
+        /* Cabeçalho da Página */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Layout em 2 Colunas */
+        .regras-grid {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* Coluna Esquerda: Formulário Principal em Card Branco */
+        .card-form {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+        }
+
+        .aviso-regras {
+            background: #fbf9ff;
+            border: 1.5px solid #ede9fe;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .aviso-titulo {
+            color: var(--primary-purple);
+            font-weight: 800;
+            font-size: 0.98rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .aviso-texto {
+            color: #4b5563;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .grid-inputs-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .campo-regra {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .campo-regra label {
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .input-suffix-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-suffix-wrapper input {
+            width: 100%;
+            padding: 11px 52px 11px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-suffix-wrapper input:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(124, 42, 232, 0.15);
+        }
+
+        .suffix-badge {
+            position: absolute;
+            right: 10px;
+            background: #f1f0f7;
+            color: var(--primary-purple);
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            pointer-events: none;
+        }
+
+        .campo-ajuda {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        .field-error {
+            color: #dc2626;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .card-form-footer {
+            display: flex;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid #f1f0f7;
+            gap: 16px;
+        }
+
+        .btn-salvar-regras {
+            background: var(--btn-gradient);
+            color: #ffffff;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
             cursor: pointer;
-            margin-top: 20px;
+            box-shadow: 0 4px 16px rgba(124, 42, 232, 0.3);
+            transition: opacity 0.2s, transform 0.1s;
         }
-        .btn-voltar { color: #64748b; text-decoration: none; font-size: 0.9rem; margin-left: 16px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: #f8fafc; color: #64748b; font-size: 0.8rem; text-transform: uppercase; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
-        .tabela-scroll { overflow-x: auto; }
+
+        .btn-salvar-regras:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .link-descartar {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .link-descartar:hover {
+            color: #e11d48;
+        }
+
+        /* Coluna Direita: 2 Cards Empilhados */
+        .coluna-direita {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Card 1: Destaque em Gradiente Roxo/Rosa (Simulação de Atraso) */
+        .card-simulacao {
+            background: var(--sidebar-gradient);
+            border-radius: var(--card-radius);
+            padding: 26px;
+            color: #ffffff;
+            box-shadow: 0 10px 30px -5px rgba(124, 42, 232, 0.35);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-simulacao-header h3 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-simulacao-header p {
+            font-size: 0.86rem;
+            color: rgba(255, 255, 255, 0.88);
+            margin-top: 4px;
+        }
+
+        .caixa-translucida {
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .caixa-translucida .total-header {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .caixa-translucida .total-valor {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .sim-detalhes {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sim-linha {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Card 2: Branco (Linha do Tempo do Atraso / Stepper Vertical) */
+        .card-timeline {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 26px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card-timeline h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .stepper-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 16px;
+            position: relative;
+            padding-bottom: 24px;
+        }
+
+        .step-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .step-indicator-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .step-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #ffffff;
+            z-index: 2;
+        }
+
+        .step-circle.purple {
+            background: var(--primary-purple);
+            box-shadow: 0 0 0 4px #f5f3ff;
+        }
+
+        .step-circle.pink {
+            background: var(--primary-pink);
+            box-shadow: 0 0 0 4px #fdf2f8;
+        }
+
+        .step-circle.danger {
+            background: #ea580c;
+            box-shadow: 0 0 0 4px #fff7ed;
+        }
+
+        .step-line {
+            width: 2px;
+            flex: 1;
+            background: #e2e8f0;
+            margin: 4px 0;
+        }
+
+        .step-content {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding-top: 4px;
+        }
+
+        .step-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .step-desc {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        /* Card de Histórico de Alterações */
+        .card-historico {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+            margin-top: 10px;
+        }
+
+        .card-historico h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #faf9fe;
+            color: #64748b;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f1f0f7;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #faf9fe;
+        }
+
+        .sem-historico {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1024px) {
+            .regras-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 640px) {
+            .grid-inputs-2x2 {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <header class="navbar">
-        <h2 style="color: white; margin: 0;">SheFit <span>Financeiro</span></h2>
-        <a href="{% url 'sair' %}" style="color:white; text-decoration:none;">Sair</a>
-    </header>
-
-    <main class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div style="background: #fdf2f8; color: #9d174d; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="card">
-            <h1>Regras Financeiras</h1>
-            <p class="subtitulo">
-                Esses quatro números valem para toda a academia e são usados pelo cálculo do pagamento atrasado,
-                pela situação da matrícula e pelo controle de acesso.
-            </p>
-
-            <div class="aviso">
-                Mudar uma regra vale apenas para o que vem depois. Pagamentos já realizados não são recalculados.
+    <!-- Sidebar Lateral -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
             </div>
-
-            <form method="POST" novalidate>
-                {% csrf_token %}
-                {% if form.non_field_errors %}
-                    <div style="color: #dc2626; font-size: 0.85rem; margin-bottom: 12px;">{{ form.non_field_errors|striptags }}</div>
-                {% endif %}
-                <div class="grid">
-                    {% for field in form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.help_text %}
-                                <small style="color: #64748b; font-size: 0.75rem;">{{ field.help_text }}</small>
-                            {% endif %}
-                            {% if field.errors %}
-                                <div style="color: #dc2626; font-size: 0.8rem;">{{ field.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-                <button type="submit" class="btn-salvar">Salvar Regras</button>
-                <a href="{% url 'painel_financeiro' %}" class="btn-voltar">Voltar ao painel</a>
-            </form>
+            <!-- SEM ícone de menu hambúrguer conforme especificação -->
         </div>
 
-        <div class="card">
-            <h2>Histórico de alterações</h2>
-            <div class="tabela-scroll">
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_financeiro' %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_planos' %}">
+                        <i data-lucide="layers"></i>
+                        <span>Planos & Modalidades</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'regras_financeiras' %}">
+                        <i data-lucide="sliders"></i>
+                        <span>Regras Financeiras</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+            <div class="portal-label">Portal financeiro</div>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="main-content">
+        <!-- Topbar Padronizada com outros painéis (Recepção / Admin / Professor) -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Financeiro)</div>
+                    <div class="role">Financeiro</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mensagens do Django -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-msg {% if message.tags == 'error' %}desativado{% else %}{{ message.tags|default:'info' }}{% endif %}">
+                        <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Cabeçalho da Página -->
+        <div class="page-header">
+            <div>
+                <h1>Regras Financeiras</h1>
+                <p>Defina como atrasos afetam cobranças, matrículas e controle de acesso.</p>
+            </div>
+        </div>
+
+        <!-- Layout em 2 Colunas -->
+        <div class="regras-grid">
+            <!-- Coluna Esquerda: Formulário Principal em Card Branco -->
+            <div class="card-form">
+                <!-- Caixa de aviso lilás claro no topo -->
+                <div class="aviso-regras">
+                    <div class="aviso-titulo">
+                        <i data-lucide="shield-alert" style="width: 18px; height: 18px;"></i>
+                        <span>Regras globais da academia</span>
+                    </div>
+                    <div class="aviso-texto">
+                        As mudanças valem apenas para cobranças futuras. Pagamentos já realizados não serão recalculados.
+                    </div>
+                </div>
+
+                <form method="POST" novalidate id="formRegras">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="field-error" style="margin-bottom: 16px;">
+                            {{ form.non_field_errors|striptags }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Grid 2x2 de inputs com sufixo embutido e texto explicativo -->
+                    <div class="grid-inputs-2x2">
+                        <!-- Campo 1: Dias de tolerância -->
+                        <div class="campo-regra">
+                            <label for="{{ form.dias_tolerancia.id_for_label }}">Dias de tolerância</label>
+                            <div class="input-suffix-wrapper">
+                                {{ form.dias_tolerancia }}
+                                <span class="suffix-badge">dias</span>
+                            </div>
+                            <span class="campo-ajuda">Dias após o vencimento antes de considerar o aluno inadimplente.</span>
+                            {% if form.dias_tolerancia.errors %}
+                                <span class="field-error">{{ form.dias_tolerancia.errors|striptags }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Campo 2: Juros por dia de atraso (%) -->
+                        <div class="campo-regra">
+                            <label for="{{ form.juros_diario.id_for_label }}">Juros por dia de atraso (%)</label>
+                            <div class="input-suffix-wrapper">
+                                {{ form.juros_diario }}
+                                <span class="suffix-badge">%</span>
+                            </div>
+                            <span class="campo-ajuda">Percentual cobrado por cada dia de atraso. Ex: 0,033</span>
+                            {% if form.juros_diario.errors %}
+                                <span class="field-error">{{ form.juros_diario.errors|striptags }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Campo 3: Multa por atraso (%) -->
+                        <div class="campo-regra">
+                            <label for="{{ form.multa_atraso.id_for_label }}">Multa por atraso (%)</label>
+                            <div class="input-suffix-wrapper">
+                                {{ form.multa_atraso }}
+                                <span class="suffix-badge">%</span>
+                            </div>
+                            <span class="campo-ajuda">Percentual único cobrado quando o pagamento atrasa. Ex: 2,00</span>
+                            {% if form.multa_atraso.errors %}
+                                <span class="field-error">{{ form.multa_atraso.errors|striptags }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Campo 4: Dias de atraso que bloqueiam o acesso -->
+                        <div class="campo-regra">
+                            <label for="{{ form.dias_bloqueio.id_for_label }}">Dias de atraso que bloqueiam o acesso</label>
+                            <div class="input-suffix-wrapper">
+                                {{ form.dias_bloqueio }}
+                                <span class="suffix-badge">dias</span>
+                            </div>
+                            <span class="campo-ajuda">A partir de quantos dias de atraso a entrada do aluno é bloqueada.</span>
+                            {% if form.dias_bloqueio.errors %}
+                                <span class="field-error">{{ form.dias_bloqueio.errors|striptags }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Rodapé do Card com Botão Salvar e Link Descartar -->
+                    <div class="card-form-footer">
+                        <button type="submit" class="btn-salvar-regras">Salvar regras</button>
+                        <a href="{% url 'regras_financeiras' %}" class="link-descartar">Descartar alterações</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Coluna Direita (2 Cards Empilhados) -->
+            <div class="coluna-direita">
+                <!-- Card 1: Destaque em Gradiente Roxo/Rosa (Simulação de Atraso) -->
+                <div class="card-simulacao">
+                    <div class="card-simulacao-header">
+                        <h3>
+                            <i data-lucide="calculator" style="width: 20px; height: 20px;"></i>
+                            Simulação de atraso
+                        </h3>
+                        <p>Mensalidade de R$ 120,00 paga com 10 dias de atraso.</p>
+                    </div>
+
+                    <div class="caixa-translucida">
+                        <span class="total-header">Total estimado:</span>
+                        <div id="simTotal" class="total-valor">R$ 122,68</div>
+                        <div class="sim-detalhes">
+                            <div class="sim-linha">
+                                <span>Mensalidade base:</span>
+                                <strong>R$ 120,00</strong>
+                            </div>
+                            <div class="sim-linha">
+                                <span>Multa (<span id="simMultaPct">2,00</span>%):</span>
+                                <strong id="simMultaVal">+ R$ 2,40</strong>
+                            </div>
+                            <div class="sim-linha">
+                                <span>Juros (<span id="simJurosPct">0,033</span>%/dia × <span id="simDiasCobrados">7</span>d):</span>
+                                <strong id="simJurosVal">+ R$ 0,28</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Branco (Linha do Tempo do Atraso) -->
+                <div class="card-timeline">
+                    <h3>Linha do tempo do atraso</h3>
+
+                    <div class="stepper-vertical">
+                        <!-- Step 1: Vencimento -->
+                        <div class="step-item">
+                            <div class="step-indicator-wrapper">
+                                <div class="step-circle purple">1</div>
+                                <div class="step-line"></div>
+                            </div>
+                            <div class="step-content">
+                                <div class="step-title">Vencimento</div>
+                                <div class="step-desc">Cobrança ainda sem acréscimos</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Tolerância -->
+                        <div class="step-item">
+                            <div class="step-indicator-wrapper">
+                                <div class="step-circle pink">2</div>
+                                <div class="step-line"></div>
+                            </div>
+                            <div class="step-content">
+                                <div class="step-title">Após <span id="labelTolerancia">3</span> dias</div>
+                                <div class="step-desc">Juros e multa passam a valer</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Bloqueio -->
+                        <div class="step-item">
+                            <div class="step-indicator-wrapper">
+                                <div class="step-circle danger">3</div>
+                            </div>
+                            <div class="step-content">
+                                <div class="step-title">Após <span id="labelBloqueio">15</span> dias</div>
+                                <div class="step-desc">Bloqueio de acesso</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Histórico de Alterações -->
+        <div class="card-historico">
+            <h3>Histórico de alterações</h3>
+            <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -111,13 +934,13 @@
                             <tr>
                                 <td>{{ item.alterado_em|date:"d/m/Y H:i" }}</td>
                                 <td>{{ item.alterado_por_nome }}</td>
-                                <td>{{ item.get_campo_display }}</td>
+                                <td><span style="font-weight: 600; color: var(--primary-purple);">{{ item.get_campo_display }}</span></td>
                                 <td>{{ item.valor_anterior }}</td>
                                 <td><strong>{{ item.valor_novo }}</strong></td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 24px; color: #94a3b8;">
+                                <td colspan="5" class="sem-historico">
                                     Nenhuma alteração registrada ainda.
                                 </td>
                             </tr>
@@ -127,5 +950,81 @@
             </div>
         </div>
     </main>
+
+    <script>
+        // Inicialização de ícones Lucide
+        lucide.createIcons();
+
+        // Data atual padronizada com os outros painéis (Recepção / Admin / Professor)
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+
+        // Simulação Dinâmica de Atraso e Atualização da Linha do Tempo
+        (function() {
+            const inputTolerancia = document.getElementById('id_dias_tolerancia');
+            const inputJuros = document.getElementById('id_juros_diario');
+            const inputMulta = document.getElementById('id_multa_atraso');
+            const inputBloqueio = document.getElementById('id_dias_bloqueio');
+
+            const simTotal = document.getElementById('simTotal');
+            const simMultaPct = document.getElementById('simMultaPct');
+            const simMultaVal = document.getElementById('simMultaVal');
+            const simJurosPct = document.getElementById('simJurosPct');
+            const simDiasCobrados = document.getElementById('simDiasCobrados');
+            const simJurosVal = document.getElementById('simJurosVal');
+
+            const labelTolerancia = document.getElementById('labelTolerancia');
+            const labelBloqueio = document.getElementById('labelBloqueio');
+
+            function atualizarSimulacao() {
+                const tol = parseInt(inputTolerancia.value, 10) || 0;
+                const jurosDiario = parseFloat(inputJuros.value.toString().replace(',', '.')) || 0;
+                const multaPct = parseFloat(inputMulta.value.toString().replace(',', '.')) || 0;
+                const bloq = parseInt(inputBloqueio.value, 10) || 0;
+
+                // Atualizar labels da linha do tempo
+                if (labelTolerancia) labelTolerancia.textContent = tol;
+                if (labelBloqueio) labelBloqueio.textContent = bloq;
+
+                // Cálculo da simulação com atraso de 10 dias sobre R$ 120,00
+                const valorBase = 120.00;
+                const diasAtraso = 10;
+
+                let multa = 0;
+                let juros = 0;
+                let diasCobrados = 0;
+
+                if (diasAtraso > tol) {
+                    multa = valorBase * (multaPct / 100);
+                    // Regra de juros: dias excedentes de atraso (diasAtraso - tol)
+                    diasCobrados = diasAtraso - tol;
+                    juros = valorBase * (jurosDiario / 100) * diasCobrados;
+                }
+
+                const total = valorBase + multa + juros;
+
+                if (simMultaPct) simMultaPct.textContent = multaPct.toFixed(2).replace('.', ',');
+                if (simMultaVal) simMultaVal.textContent = `+ R$ ${multa.toFixed(2).replace('.', ',')}`;
+                if (simJurosPct) simJurosPct.textContent = jurosDiario.toFixed(3).replace('.', ',');
+                if (simDiasCobrados) simDiasCobrados.textContent = diasCobrados;
+                if (simJurosVal) simJurosVal.textContent = `+ R$ ${juros.toFixed(2).replace('.', ',')}`;
+                if (simTotal) simTotal.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            }
+
+            inputTolerancia.addEventListener('input', atualizarSimulacao);
+            inputJuros.addEventListener('input', atualizarSimulacao);
+            inputMulta.addEventListener('input', atualizarSimulacao);
+            inputBloqueio.addEventListener('input', atualizarSimulacao);
+
+            // Chamada inicial
+            atualizarSimulacao();
+        })();
+    </script>
 </body>
+
 </html>

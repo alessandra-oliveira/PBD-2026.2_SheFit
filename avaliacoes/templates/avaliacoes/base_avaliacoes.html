@@ -1,59 +1,577 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Avaliações Físicas{% endblock %} - SheFit</title>
+    <!-- Fonte Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>{% block titulo %}Avaliações físicas{% endblock %} - SheFit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 28px 16px; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #1f2937; }
-        main { max-width: 900px; margin: auto; }
-        .card { background: #fff; border-radius: 16px; padding: 28px; margin-bottom: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
-        h1, h2, h3 { color: #6d28d9; margin-top: 0; }
-        h1 { font-size: 1.7rem; }
-        h2 { font-size: 1.15rem; }
-        h3 { font-size: 1rem; margin-bottom: 6px; }
-        .topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
-        .botao { border: 0; border-radius: 8px; padding: 11px 15px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; display: inline-block; }
-        .primario { background: #7c3aed; color: #fff; }
-        .secundario { background: #f3f4f6; color: #374151; }
-        .pequeno { padding: 7px 11px; font-size: .88rem; }
-        .badge { display: inline-block; border-radius: 12px; padding: 3px 10px; font-size: .8rem; background: #ede9fe; color: #6d28d9; }
-        .badge.aviso { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-        .badge.cinza { background: #f3f4f6; color: #6b7280; }
-        .aviso-caixa { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; margin: 10px 0; }
-        .mensagem { border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; background: #ede9fe; color: #5b21b6; }
-        .mensagem.error { background: #fef2f2; color: #b91c1c; }
-        .mensagem.success { background: #ecfdf5; color: #065f46; }
-        .metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 14px 0; }
-        .metrica { background: #faf5ff; border-radius: 10px; padding: 10px 12px; }
-        .metrica span { display: block; font-size: .78rem; color: #6b7280; }
-        .metrica strong { font-size: 1.05rem; }
-        .discreto { color: #6b7280; font-size: .9rem; }
-        .campo { margin-bottom: 14px; }
-        label { display: block; font-weight: 600; margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 11px 12px; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
-        .grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-        .erro { color: #b91c1c; font-size: .9rem; margin: 4px 0 0; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 10px 8px; border-top: 1px solid #e5e7eb; vertical-align: top; }
-        th { color: #6b7280; font-size: .85rem; font-weight: 600; border-top: 0; }
-        td.num, th.num { text-align: right; white-space: nowrap; }
-        @media (max-width: 600px) { .card { padding: 20px; } .grade { grid-template-columns: 1fr; } }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Lateral Padrão */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+
+        .btn-sair-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            color: #ef4444;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sair-sidebar:hover {
+            background: #fee2e2;
+            transform: translateY(-1px);
+        }
+
+        /* Área Principal de Conteúdo */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        .main-wrapper.no-sidebar {
+            margin-left: 0;
+            max-width: 900px;
+            margin: auto;
+            padding: 30px 16px;
+        }
+
+        /* Topbar com Perfil e Data Padronizada */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Card Branco Arredondado Padrão */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+        }
+
+        .card h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: #1e293b;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 0;
+        }
+
+        .card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 16px 0 8px;
+        }
+
+        .topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .acoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .botao {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 18px;
+            font: inherit;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .primario {
+            background: var(--btn-gradient);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+        }
+
+        .primario:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .secundario {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .secundario:hover {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .pequeno {
+            padding: 7px 14px;
+            font-size: 0.88rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.aviso {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .badge.cinza {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .aviso-caixa {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+            color: #92400e;
+        }
+
+        .mensagem {
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            background: #f5f3ff;
+            color: #5b21b6;
+            font-weight: 600;
+        }
+
+        .mensagem.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .mensagem.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .metricas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .metrica {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
+        .metrica span {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .metrica strong {
+            font-size: 1.15rem;
+            color: #1e293b;
+        }
+
+        .discreto {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .campo {
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: #1e293b;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 0.95rem;
+            background: #ffffff;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea.form-control {
+            height: auto;
+            min-height: 80px;
+            padding: 10px 14px;
+        }
+
+        .form-control:focus {
+            border-color: #8b3dff;
+            box-shadow: 0 0 0 3px rgba(139, 61, 255, 0.15);
+        }
+
+        .grade {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .erro {
+            color: #dc2626;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin: 4px 0 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #faf9fe;
+            color: #64748b;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f1f0f7;
+            font-size: 0.92rem;
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #faf9fe;
+        }
+
+        td.num, th.num {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+            .main-wrapper {
+                margin-left: 0;
+                padding: 20px 16px;
+            }
+            .grade {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
-<main>
-    {% if messages %}
-        {% for mensagem in messages %}
-            <div class="mensagem {{ mensagem.tags }}">{{ mensagem }}</div>
-        {% endfor %}
+    {% if eh_professor is not False %}
+        <!-- Sidebar Padrão do Professor -->
+        <aside class="sidebar">
+            <div>
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                        <span>SheFit</span>
+                    </div>
+                </div>
+
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{% url 'painel_professor' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                                <span>Painel</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'minhas_turmas_professor' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                                <span>Minhas Turmas</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'listar_fichas' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                                <span>Consultar Fichas e Histórico</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{% url 'avaliacoes_alunos' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                                <span>Avaliações Físicas</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="{% url 'sair' %}" class="btn-sair-sidebar">
+                    <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                    <span>Sair</span>
+                </a>
+            </div>
+        </aside>
     {% endif %}
-    {% block conteudo %}{% endblock %}
-</main>
+
+    <!-- Área Principal de Conteúdo -->
+    <main class="main-wrapper {% if eh_professor is False %}no-sidebar{% endif %}">
+        {% if eh_professor is not False %}
+            <!-- Topbar Padronizada -->
+            <header class="topbar">
+                <div class="date-display" id="data-atual">
+                    Hoje
+                </div>
+                <div class="user-profile">
+                    <div class="avatar">
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                    <div class="user-info">
+                        <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                        <div class="role">Professor</div>
+                    </div>
+                </div>
+            </header>
+        {% endif %}
+
+        {% if messages %}
+            {% for mensagem in messages %}
+                <div class="mensagem {{ mensagem.tags }}">{{ mensagem }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% block conteudo %}{% endblock %}
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // Data atual padronizada
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+    </script>
 </body>
+
 </html>

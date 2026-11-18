@@ -5,165 +5,879 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Financeiro - SheFit</title>
+    <title>Dashboard Financeiro - SheFit</title>
+    <!-- Fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-gradient: linear-gradient(180deg, #7c2ae8 0%, #d63384 100%);
+            --btn-gradient: linear-gradient(135deg, #7c2ae8 0%, #d63384 100%);
+            --primary-purple: #7c2ae8;
+            --primary-pink: #d63384;
+            --bg-color: #f8f7fc;
+            --card-bg: #ffffff;
+            --card-radius: 16px;
+            --card-shadow: 0 4px 20px rgba(124, 42, 232, 0.05);
+            --border-light: #f1f0f7;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
             min-height: 100vh;
         }
 
-        .navbar {
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            padding: 16px 32px;
+        /* Sidebar Lateral Fixa */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 36px;
+            padding: 0 10px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #e11d48;
+            background: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fff1f2;
+            transform: translateY(-1px);
+        }
+
+        .btn-sidebar-sair svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .portal-label {
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* Área Principal de Conteúdo */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        /* Topbar Superior Padronizada com Recepção / Admin / Professor */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
             color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
         }
 
-        .navbar-brand h1 {
-            font-size: 1.5rem;
-            letter-spacing: -0.5px;
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
         }
 
-        .navbar-brand span {
+        .user-info .role {
             font-size: 0.8rem;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 3px 8px;
-            border-radius: 6px;
-            margin-left: 8px;
-            text-transform: uppercase;
+            color: var(--text-muted);
         }
 
-        .btn-sair {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            transition: background 0.2s;
+        /* Cabeçalho da Página */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
         }
 
-        .btn-sair:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 32px auto;
-            padding: 0 20px;
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
         }
 
-        .bem-vindo {
-            margin-bottom: 28px;
-        }
-
-        .grid-cards {
+        /* 4 Cards de KPIs */
+        .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
-            margin-bottom: 32px;
         }
 
-        .card-modulo {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 22px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            border: 1px solid #f1f5f9;
+            gap: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .card-modulo h3 {
-            color: #7c3aed;
-            font-size: 1.2rem;
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(124, 42, 232, 0.08);
+        }
+
+        .kpi-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .kpi-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .kpi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kpi-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .kpi-icon.purple {
+            background: #f5f3ff;
+            color: #7c2ae8;
+        }
+
+        .kpi-icon.pink {
+            background: #fdf2f8;
+            color: #d63384;
+        }
+
+        .kpi-icon.orange {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .kpi-icon.green {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .kpi-footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .badge-kpi {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .badge-kpi.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Seção Central de 2 Colunas */
+        .central-grid {
+            display: grid;
+            grid-template-columns: 1.65fr 1fr;
+            gap: 20px;
+        }
+
+        .card-grafico {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 26px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .card-header-flex h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .card-header-flex p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Gráfico de Barras com Gradiente */
+        .bar-chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 220px;
+            padding-top: 30px;
+            padding-bottom: 8px;
+            gap: 16px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        .bar-value {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-muted);
             margin-bottom: 8px;
+            white-space: nowrap;
         }
 
-        .card-modulo p {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            line-height: 1.4;
+        .bar-pill {
+            width: 44px;
+            border-radius: 10px 10px 4px 4px;
+            background: linear-gradient(180deg, #d63384 0%, #7c2ae8 100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(124, 42, 232, 0.15);
         }
 
-        .btn-modulo {
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            color: white;
-            text-decoration: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-            font-size: 0.9rem;
-            transition: opacity 0.2s;
-        }
-
-        .btn-modulo:hover {
+        .bar-group:hover .bar-pill {
             opacity: 0.9;
+            transform: scaleY(1.03);
+            transform-origin: bottom;
+        }
+
+        .bar-label {
+            margin-top: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Card Resumo do Mês (Donut Chart) */
+        .donut-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 0 20px;
+        }
+
+        .donut-chart {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(124, 42, 232, 0.12);
+        }
+
+        .donut-hole {
+            width: 114px;
+            height: 114px;
+            border-radius: 50%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donut-percent {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            line-height: 1;
+        }
+
+        .donut-tag {
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--primary-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+
+        .meta-quadro {
+            background: #fbfaff;
+            border: 1px solid #ede9fe;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .meta-linha {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .meta-linha .label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .meta-linha .val-destaque {
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .meta-linha .val-restante {
+            font-weight: 700;
+            color: var(--primary-pink);
+        }
+
+        /* Seção Inferior: Tabela de Pagamentos Recentes */
+        .card-tabela {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+        }
+
+        .card-tabela-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-tabela-header h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .card-tabela-header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .link-gerenciar {
+            color: var(--primary-purple);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .link-gerenciar:hover {
+            color: var(--primary-pink);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #faf9fe;
+            color: #64748b;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 15px 18px;
+            border-bottom: 1px solid #f1f0f7;
+            font-size: 0.92rem;
+            color: var(--text-dark);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #faf9fe;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .badge-status.pago {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-status.pendente {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .valor-col {
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .sem-dados {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .central-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-    <header class="navbar">
-        <div class="navbar-brand">
-            <h1>SheFit <span>Financeiro</span></h1>
-        </div>
-        <div>
-            <span style="font-size: 0.9rem; margin-right: 16px;">Operador: <strong>{{ request.user.username }}</strong></span>
-            <a href="{% url 'sair' %}" class="btn-sair">Sair</a>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="bem-vindo">
-            <h2>Visão Geral do Financeiro</h2>
-            <p style="color: #64748b;">Gestão de planos, fluxo de caixa e indicadores de receita.</p>
+    <!-- Sidebar Navegação Lateral -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+            <!-- SEM ícone de menu hambúrguer conforme especificação -->
         </div>
 
-        <div class="grid-cards">
-            <!-- Card da Tarefa T03: Gestão de Planos -->
-            <div class="card-modulo">
-                <div>
-                    <h3>Planos & Modalidades</h3>
-                    <p>Cadastre planos, defina valores, periodicidades, prazos de fidelidade e multas contratuais.</p>
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item active">
+                    <a href="{% url 'painel_financeiro' %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_planos' %}">
+                        <i data-lucide="layers"></i>
+                        <span>Planos & Modalidades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'regras_financeiras' %}">
+                        <i data-lucide="sliders"></i>
+                        <span>Regras Financeiras</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+            <div class="portal-label">Portal financeiro</div>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="main-content">
+        <!-- Topbar Padronizada com outros painéis (Recepção / Admin / Professor) -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
-                <a href="{% url 'listar_planos' %}" class="btn-modulo">Acessar Gestão de Planos</a>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Financeiro)</div>
+                    <div class="role">Financeiro</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cabeçalho da Página -->
+        <div class="page-header">
+            <div>
+                <h1>Dashboard Financeiro</h1>
+                <p>Acompanhe os principais resultados financeiros da SheFit.</p>
+            </div>
+        </div>
+
+        <!-- Linha de 4 Cards de KPIs com Dados Dinâmicos do Banco -->
+        <div class="kpi-grid">
+            <!-- KPI 1: Receita no mês -->
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-title">Receita no mês</span>
+                    <div class="kpi-icon purple">
+                        <i data-lucide="dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">{{ receita_mes_formatada|default:"R$ 0,00" }}</div>
+                <div class="kpi-footer">
+                    <span class="badge-kpi success">
+                        <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
+                        {% if crescimento_pct > 0 %}+{{ crescimento_pct|floatformat:1 }}%{% elif crescimento_pct < 0 %}{{ crescimento_pct|floatformat:1 }}%{% else %}0%{% endif %}
+                    </span>
+                    <span>em relação ao mês anterior</span>
+                </div>
             </div>
 
-            <!-- Card da Tarefa T05: Regras Financeiras -->
-            <div class="card-modulo">
-                <div>
-                    <h3>Regras Financeiras</h3>
-                    <p>Configure tolerância, juros por dia, multa por atraso e quantos dias de atraso bloqueiam o acesso.</p>
+            <!-- KPI 2: Total recebido -->
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-title">Total recebido</span>
+                    <div class="kpi-icon pink">
+                        <i data-lucide="credit-card"></i>
+                    </div>
                 </div>
-                <a href="{% url 'regras_financeiras' %}" class="btn-modulo">Configurar Regras</a>
+                <div class="kpi-value">{{ total_recebido_formatado|default:"R$ 0,00" }}</div>
+                <div class="kpi-footer">
+                    <span>{{ pct_recebido_previsto|floatformat:0 }}% da receita prevista</span>
+                </div>
             </div>
 
-            <!-- Card Placeholder de Indicadores -->
-            <div class="card-modulo">
-                <div>
-                    <h3>Indicadores de Receita</h3>
-                    <p>Métricas de faturamento mensal, ticket médio e previsão de recebimentos futuros.</p>
+            <!-- KPI 3: A receber -->
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-title">A receber</span>
+                    <div class="kpi-icon orange">
+                        <i data-lucide="clock"></i>
+                    </div>
                 </div>
-                <span style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">Em desenvolvimento</span>
+                <div class="kpi-value">{{ a_receber_formatado|default:"R$ 0,00" }}</div>
+                <div class="kpi-footer">
+                    <span>{{ qtd_a_receber }} {% if qtd_a_receber == 1 %}pagamento aguardando{% else %}pagamentos aguardando{% endif %}</span>
+                </div>
+            </div>
+
+            <!-- KPI 4: Assinaturas ativas -->
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-title">Assinaturas ativas</span>
+                    <div class="kpi-icon green">
+                        <i data-lucide="users"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">{{ assinaturas_ativas|default:"0" }}</div>
+                <div class="kpi-footer">
+                    <span>+{{ novos_planos_mes|default:"0" }} novos planos neste mês</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Central (2 Colunas com Dados do Banco) -->
+        <div class="central-grid">
+            <!-- Esquerda (Maior): Receita dos últimos meses -->
+            <div class="card-grafico">
+                <div class="card-header-flex">
+                    <div>
+                        <h3>Receita dos últimos meses</h3>
+                        <p>Evolução dos recebimentos confirmados</p>
+                    </div>
+                    <span class="badge-kpi success" style="padding: 4px 10px; font-size: 0.82rem;">
+                        <i data-lucide="trending-up" style="width: 13px; height: 13px;"></i>
+                        {% if crescimento_pct > 0 %}+{{ crescimento_pct|floatformat:1 }}%{% else %}0%{% endif %}
+                    </span>
+                </div>
+
+                <!-- Gráfico de Colunas Verticais Dinâmico -->
+                <div class="bar-chart-container">
+                    {% for item in evolucao_meses %}
+                        <div class="bar-group">
+                            <span class="bar-value">{{ item.valor_formatado }}</span>
+                            <div class="bar-pill" style="height: {{ item.altura_pct }}%;"></div>
+                            <span class="bar-label">{{ item.mes }}</span>
+                        </div>
+                    {% empty %}
+                        <div class="sem-dados" style="width: 100%;">
+                            Nenhum histórico de recebimentos registrado até o momento.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Direita (Menor): Resumo do mês -->
+            <div class="card-grafico">
+                <div class="card-header-flex">
+                    <div>
+                        <h3>Resumo do mês</h3>
+                        <p>Meta de receita em {{ nome_mes_atual }}</p>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Rosca (Donut Chart) Dinâmico -->
+                <div class="donut-wrapper">
+                    <div class="donut-chart" style="background: conic-gradient(var(--primary-purple) 0% {{ pct_meta }}%, #ede9fe {{ pct_meta }}% 100%);">
+                        <div class="donut-hole">
+                            <span class="donut-percent">{{ pct_meta }}%</span>
+                            <span class="donut-tag">Meta</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quadro Inferior de Metas -->
+                <div class="meta-quadro">
+                    <div class="meta-linha">
+                        <span class="label">Meta mensal:</span>
+                        <span class="val-destaque">{{ meta_mensal_formatada|default:"R$ 0,00" }}</span>
+                    </div>
+                    <div class="meta-linha">
+                        <span class="label">Faltam:</span>
+                        <span class="val-restante">{{ faltam_meta_formatada|default:"R$ 0,00" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Inferior (Tabela): Pagamentos Recentes do Banco -->
+        <div class="card-tabela">
+            <div class="card-tabela-header">
+                <div>
+                    <h3>Pagamentos recentes</h3>
+                    <p>Últimas movimentações registradas</p>
+                </div>
+                <a href="{% url 'listar_planos' %}" class="link-gerenciar">
+                    Gerenciar planos <i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plano</th>
+                            <th>Cliente</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mov in pagamentos_recentes %}
+                            <tr>
+                                <td><strong>{{ mov.plano }}</strong></td>
+                                <td>{{ mov.cliente }}</td>
+                                <td><span class="badge-status {{ mov.status_class }}">{{ mov.status }}</span></td>
+                                <td class="valor-col" style="text-align: right;">R$ {{ mov.valor|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="sem-dados">
+                                    Nenhuma movimentação financeira registrada no momento.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
+
+    <script>
+        // Inicialização de ícones Lucide
+        lucide.createIcons();
+
+        // Data atual padronizada com os outros painéis (Recepção / Admin / Professor)
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+    </script>
 </body>
 
 </html>

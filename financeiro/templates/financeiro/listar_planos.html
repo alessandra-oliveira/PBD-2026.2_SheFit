@@ -1,113 +1,1149 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planos - Financeiro SheFit</title>
+    <title>Planos & Modalidades - SheFit</title>
+    <!-- Fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
-        .navbar {
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            padding: 16px 32px;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-gradient: linear-gradient(180deg, #7c2ae8 0%, #d63384 100%);
+            --btn-gradient: linear-gradient(135deg, #7c2ae8 0%, #d63384 100%);
+            --modal-btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --primary-purple: #7c2ae8;
+            --primary-pink: #d63384;
+            --bg-color: #f8f7fc;
+            --card-bg: #ffffff;
+            --card-radius: 16px;
+            --card-shadow: 0 4px 20px rgba(124, 42, 232, 0.05);
+            --border-light: #f1f0f7;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Lateral Fixa */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 36px;
+            padding: 0 10px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #e11d48;
+            background: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fff1f2;
+            transform: translateY(-1px);
+        }
+
+        .btn-sidebar-sair svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .portal-label {
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* Área Principal de Conteúdo */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        /* Topbar Superior Padronizada com Recepção / Admin / Professor */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: white;
+            padding-bottom: 8px;
         }
-        .container { max-width: 1200px; margin: 32px auto; padding: 0 20px; }
-        .header-acoes { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .btn-primary {
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
             color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Mensagens de Alerta */
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alert-msg {
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .alert-msg.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-msg.info {
+            background: #f5f3ff;
+            color: #5b21b6;
+            border: 1px solid #ddd6fe;
+        }
+
+        .alert-msg.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        /* Cabeçalho da Página */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header-text h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-header-text p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .btn-novo-plano {
+            background: var(--btn-gradient);
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(124, 42, 232, 0.3);
+            transition: opacity 0.2s, transform 0.1s;
             text-decoration: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: bold;
         }
-        .card-tabela { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: #f8fafc; color: #64748b; font-size: 0.8rem; text-transform: uppercase; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; }
-        .badge-ativo { background: #dcfce7; color: #166534; }
-        .badge-inativo { background: #fee2e2; color: #991b1b; }
-        .btn-link { color: #7c3aed; text-decoration: none; font-weight: bold; margin-right: 10px; font-size: 0.85rem; }
-                button.btn-link-botao { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; color: #64748b; }
+
+        .btn-novo-plano:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* 3 Cards de KPIs Reais */
+        .kpi-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 22px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(124, 42, 232, 0.08);
+        }
+
+        .kpi-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .kpi-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .kpi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kpi-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .kpi-icon.purple {
+            background: #f5f3ff;
+            color: #7c2ae8;
+        }
+
+        .kpi-icon.pink {
+            background: #fdf2f8;
+            color: #d63384;
+        }
+
+        .kpi-icon.green {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .kpi-footer {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        /* Tabela Planos Cadastrados */
+        .card-tabela {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+        }
+
+        .card-tabela-header {
+            margin-bottom: 20px;
+        }
+
+        .card-tabela-header h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .card-tabela-header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #faf9fe;
+            color: #64748b;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 14px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 16px 18px;
+            border-bottom: 1px solid #f1f0f7;
+            font-size: 0.92rem;
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #faf9fe;
+        }
+
+        .plano-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .plano-nome {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .plano-modalidades {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            max-width: 260px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .badge-status.ativo {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-status.desativado {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .acoes-col {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-acao-editar {
+            color: var(--primary-purple);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+
+        .btn-acao-editar:hover {
+            background: #f5f3ff;
+        }
+
+        .btn-acao-status {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .btn-acao-status:hover {
+            background: #f1f5f9;
+            color: var(--text-dark);
+        }
+
+        .sem-dados {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* ================= MODAL PADRONIZADO (REFERÊNCIA NOVA TURMA) ================= */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(6px);
+            background-color: rgba(15, 23, 42, 0.45);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 580px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.25s ease;
+        }
+
+        .modal-card form {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            flex: 1;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(15px); opacity: 0.8; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Cabeçalho Limpo: Título direto em negrito à esquerda e ✕ no canto direito */
+        .modal-header {
+            padding: 20px 24px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-header-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .btn-modal-fechar {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 1.35rem;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s;
+        }
+
+        .btn-modal-fechar:hover {
+            color: #0f172a;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            padding: 18px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.88rem;
+            display: block;
+        }
+
+        .form-group .form-control {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #ffffff;
+            font-size: 0.95rem;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group textarea.form-control {
+            height: auto;
+            min-height: 52px;
+            padding: 8px 12px;
+            resize: vertical;
+        }
+
+        .form-group .form-control:focus {
+            border-color: #8b3dff;
+            box-shadow: 0 0 0 3px rgba(139, 61, 255, 0.15);
+        }
+
+        .form-help-text {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding-top: 4px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #8b3dff;
+            cursor: pointer;
+        }
+
+        .checkbox-container span {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Rodapé de Botões Alinhados à Direita */
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .btn-modal-cancelar {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-cancelar:hover {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .btn-modal-salvar {
+            background: var(--modal-btn-gradient);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn-modal-salvar:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* Responsividade */
+        @media (max-width: 900px) {
+            .kpi-grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .form-row-2 {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
-<body>
-    <header class="navbar">
-        <h2>SheFit <span>Financeiro</span></h2>
-        <a href="{% url 'sair' %}" style="color:white; text-decoration:none;">Sair</a>
-    </header>
 
-    <main class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div style="background: #fdf2f8; color: #9d174d; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-                    {{ message }}
+<body>
+    <!-- Sidebar Navegação Lateral -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+            <!-- SEM ícone de menu hambúrguer conforme especificação -->
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_financeiro' %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'listar_planos' %}">
+                        <i data-lucide="layers"></i>
+                        <span>Planos & Modalidades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'regras_financeiras' %}">
+                        <i data-lucide="sliders"></i>
+                        <span>Regras Financeiras</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+            <div class="portal-label">Portal financeiro</div>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="main-content">
+        <!-- Topbar Padronizada com outros painéis (Recepção / Admin / Professor) -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
-            {% endfor %}
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Financeiro)</div>
+                    <div class="role">Financeiro</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mensagens do Django -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-msg {% if message.tags == 'error' %}error{% else %}{{ message.tags|default:'info' }}{% endif %}">
+                        <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
-        <div class="header-acoes">
-            <div>
-                <h1>Gestão de Planos</h1>
-                <p style="color: #64748b;">Definição de valores, periodicidades e taxas.</p>
+        <!-- Cabeçalho da Página com Botão + Novo plano -->
+        <div class="page-header">
+            <div class="page-header-text">
+                <h1>Planos & Modalidades</h1>
+                <p>Defina valores, periodicidades, modalidades e condições comerciais.</p>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;"><a href="{% url 'painel_financeiro' %}" style="background: white; color: #7c3aed; border: 1.5px solid #ddd6fe; text-decoration: none; padding: 11px 18px; border-radius: 8px; font-weight: bold; font-size: 0.95rem;">Voltar ao Painel</a><a href="{% url 'cadastrar_plano' %}" class="btn-primary">+ Novo Plano</a></div>
+            <button type="button" class="btn-novo-plano" onclick="openNovoPlanoModal()">
+                <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                Novo plano
+            </button>
         </div>
 
+        <!-- Linha de 3 Cards de KPIs Reais do Banco -->
+        <div class="kpi-grid-3">
+            <!-- KPI 1: Planos ativos -->
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-title">Planos ativos</span>
+                    <div class="kpi-icon purple">
+                        <i data-lucide="layers"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">{{ planos_ativos_count|default:"0" }}</div>
+                <div class="kpi-footer">
+                    <span>Disponíveis para novas matrículas</span>
+                </div>
+            </div>
+
+            <!-- KPI 2: Periodicidades -->
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-title">Periodicidades</span>
+                    <div class="kpi-icon pink">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">{{ periodicidades_count|default:"0" }}</div>
+                <div class="kpi-footer">
+                    <span>Entre planos mensais e recorrentes</span>
+                </div>
+            </div>
+
+            <!-- KPI 3: Ticket inicial -->
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-title">Ticket inicial</span>
+                    <div class="kpi-icon green">
+                        <i data-lucide="tag"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">R$ {{ ticket_inicial|floatformat:2|default:"0,00" }}</div>
+                <div class="kpi-footer">
+                    <span>Considerando os planos mensais</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Planos Cadastrados Reais do Banco -->
         <div class="card-tabela">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Periodicidade</th>
-                        <th>Valor (R$)</th>
-                        <th>Fidelidade</th>
-                        <th>Vencimento</th>
-                        <th>Status</th>
-                        <th style="text-align: right;">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for plano in planos %}
+            <div class="card-tabela-header">
+                <h3>Planos cadastrados</h3>
+                <p>Gestão completa da grade de planos da SheFit</p>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
                         <tr>
-                            <td><strong>{{ plano.nome }}</strong></td>
-                            <td>{{ plano.get_periodicidade_display }}</td>
-                            <td>R$ {{ plano.valor }}</td>
-                            <td>{% if plano.fidelidade_meses %}{{ plano.fidelidade_meses }} meses{% else %}Sem fidelidade{% endif %}</td>
-                            <td>Dia {{ plano.dia_vencimento }}</td>
-                            <td>
-                                {% if plano.ativo %}
-                                    <span class="badge badge-ativo">Ativo</span>
-                                {% else %}
-                                    <span class="badge badge-inativo">Desativado</span>
-                                {% endif %}
-                            </td>
-                            <td style="text-align: right;">
-                                <a href="{% url 'editar_plano' plano.id %}" class="btn-link">Editar</a>
-                                <form method="post" action="{% url 'alternar_status_plano' plano.id %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn-link btn-link-botao">
-                                    {% if plano.ativo %}Desativar{% else %}Ativar{% endif %}
-                                </button>
-                            </form>
-                            </td>
+                            <th>Plano</th>
+                            <th>Periodicidade</th>
+                            <th>Valor</th>
+                            <th>Fidelidade</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Ações</th>
                         </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">
-                                Nenhum plano cadastrado.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for plano in planos %}
+                            <tr>
+                                <td>
+                                    <div class="plano-cell">
+                                        <span class="plano-nome">{{ plano.nome }}</span>
+                                        <span class="plano-modalidades" title="{{ plano.modalidades_incluidas }}">{{ plano.modalidades_incluidas }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ plano.get_periodicidade_display }}</td>
+                                <td style="font-weight: 700;">R$ {{ plano.valor }}</td>
+                                <td>
+                                    {% if plano.fidelidade_meses %}
+                                        {{ plano.fidelidade_meses }} meses
+                                    {% else %}
+                                        Sem fidelidade
+                                    {% endif %}
+                                </td>
+                                <td>Dia {{ plano.dia_vencimento }}</td>
+                                <td>
+                                    {% if plano.ativo %}
+                                        <span class="badge-status ativo">Ativo</span>
+                                    {% else %}
+                                        <span class="badge-status desativado">Desativado</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="acoes-col">
+                                        <!-- Botão Editar: Abre o Modal padronizado preenchido -->
+                                        <button type="button" 
+                                                class="btn-acao-editar"
+                                                onclick="openEditarPlanoModal({
+                                                    id: '{{ plano.id }}',
+                                                    nome: '{{ plano.nome|escapejs }}',
+                                                    descricao: '{{ plano.descricao|default:''|escapejs }}',
+                                                    modalidades_incluidas: '{{ plano.modalidades_incluidas|escapejs }}',
+                                                    periodicidade: '{{ plano.periodicidade }}',
+                                                    valor: '{{ plano.valor|stringformat:'.2f' }}',
+                                                    fidelidade_meses: '{{ plano.fidelidade_meses }}',
+                                                    dia_vencimento: '{{ plano.dia_vencimento }}',
+                                                    taxa_adesao: '{{ plano.taxa_adesao|stringformat:'.2f' }}',
+                                                    multa_cancelamento: '{{ plano.multa_cancelamento|stringformat:'.2f' }}',
+                                                    ativo: {% if plano.ativo %}true{% else %}false{% endif %}
+                                                })">
+                                            Editar
+                                        </button>
+                                        <!-- Form de Alternar Status -->
+                                        <form method="post" action="{% url 'alternar_status_plano' plano.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-acao-status">
+                                                {% if plano.ativo %}Desativar{% else %}Ativar{% endif %}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="sem-dados">
+                                    Nenhum plano cadastrado ainda. Clique em <strong>+ Novo plano</strong> para cadastrar o primeiro.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
+
+    <!-- ================= MODAL DE FORMULÁRIO (PADRÃO NOVA TURMA) ================= -->
+    <div id="modalPlanoOverlay" class="modal-overlay">
+        <div class="modal-card">
+            <!-- Cabeçalho Limpo -->
+            <div class="modal-header">
+                <h3 id="modalTitle" class="modal-header-title">Novo Plano</h3>
+                <button type="button" class="btn-modal-fechar" onclick="closePlanoModal()" title="Fechar">✕</button>
+            </div>
+
+            <!-- Formulário Completo Conforme Requisitos -->
+            <form id="formPlano" method="POST" action="{% url 'cadastrar_plano' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Linha 1 (largura total): Nome do plano -->
+                    <div class="form-group">
+                        <label for="id_nome">Nome do plano</label>
+                        <input type="text" 
+                               name="nome" 
+                               id="id_nome" 
+                               class="form-control" 
+                               placeholder="Ex: Plano Gold SheFit" 
+                               required>
+                    </div>
+
+                    <!-- Linha 2 (largura total): Modalidades incluídas -->
+                    <div class="form-group">
+                        <label for="id_modalidades_incluidas">Modalidades incluídas</label>
+                        <textarea name="modalidades_incluidas" 
+                                  id="id_modalidades_incluidas" 
+                                  rows="2" 
+                                  class="form-control" 
+                                  placeholder="Ex: Musculação, Dança, Pilates" 
+                                  required></textarea>
+                    </div>
+
+                    <!-- Linha 3 (2 colunas lado a lado): Periodicidade e Valor (R$) -->
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="id_periodicidade">Periodicidade</label>
+                            <select name="periodicidade" id="id_periodicidade" class="form-control">
+                                <option value="mensal">Mensal</option>
+                                <option value="trimestral">Trimestral</option>
+                                <option value="semestral">Semestral</option>
+                                <option value="anual">Anual</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_valor">Valor (R$)</label>
+                            <input type="number" 
+                                   name="valor" 
+                                   id="id_valor" 
+                                   step="0.01" 
+                                   min="0" 
+                                   class="form-control" 
+                                   placeholder="0,00" 
+                                   required>
+                        </div>
+                    </div>
+
+                    <!-- Linha 4 (2 colunas lado a lado): Fidelidade e Dia de vencimento -->
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="id_fidelidade_meses">Fidelidade</label>
+                            <select name="fidelidade_meses" id="id_fidelidade_meses" class="form-control">
+                                <option value="0">Sem fidelidade</option>
+                                <option value="3">3 meses</option>
+                                <option value="6">6 meses</option>
+                                <option value="12">12 meses</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_dia_vencimento">Dia de vencimento</label>
+                            <select name="dia_vencimento" id="id_dia_vencimento" class="form-control">
+                                <option value="5">Dia 5</option>
+                                <option value="10" selected>Dia 10</option>
+                                <option value="15">Dia 15</option>
+                                <option value="20">Dia 20</option>
+                                <option value="25">Dia 25</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Linha 5: Descrição do Plano -->
+                    <div class="form-group">
+                        <label for="id_descricao">Descrição do plano (opcional)</label>
+                        <input type="text" 
+                               name="descricao" 
+                               id="id_descricao" 
+                               class="form-control" 
+                               placeholder="Descrição ou regras do plano...">
+                    </div>
+
+                    <!-- Campos ocultos/padrão do model -->
+                    <input type="hidden" name="taxa_adesao" id="id_taxa_adesao" value="0.00">
+                    <input type="hidden" name="multa_cancelamento" id="id_multa_cancelamento" value="0.00">
+
+                    <!-- Checkbox de Status Ativo -->
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="ativo" id="id_ativo" checked>
+                        <span>Plano Ativo (disponível para novas matrículas)</span>
+                    </label>
+                </div>
+
+                <!-- Rodapé de Botões Alinhados à Direita -->
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancelar" onclick="closePlanoModal()">Cancelar</button>
+                    <button type="submit" id="btnSubmitModal" class="btn-modal-salvar">Salvar plano</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Inicialização de ícones Lucide
+        lucide.createIcons();
+
+        // Data atual padronizada com os outros painéis (Recepção / Admin / Professor)
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+
+        // Funções do Modal de Planos (Abertura / Fechamento / Edição)
+        const modalOverlay = document.getElementById('modalPlanoOverlay');
+        const formPlano = document.getElementById('formPlano');
+        const modalTitle = document.getElementById('modalTitle');
+        const btnSubmitModal = document.getElementById('btnSubmitModal');
+
+        function openNovoPlanoModal() {
+            formPlano.reset();
+            formPlano.action = "{% url 'cadastrar_plano' %}";
+            modalTitle.textContent = "Novo Plano";
+            btnSubmitModal.textContent = "Salvar plano";
+            document.getElementById('id_ativo').checked = true;
+            document.getElementById('id_fidelidade_meses').value = "0";
+            document.getElementById('id_dia_vencimento').value = "10";
+            document.getElementById('id_taxa_adesao').value = "0.00";
+            document.getElementById('id_multa_cancelamento').value = "0.00";
+            modalOverlay.classList.add('open');
+        }
+
+        function openEditarPlanoModal(data) {
+            formPlano.action = "/financeiro/planos/editar/" + data.id + "/";
+            modalTitle.textContent = "Editar Plano";
+            btnSubmitModal.textContent = "Salvar alterações";
+
+            document.getElementById('id_nome').value = data.nome || '';
+            document.getElementById('id_descricao').value = data.descricao || '';
+            document.getElementById('id_modalidades_incluidas').value = data.modalidades_incluidas || '';
+            document.getElementById('id_periodicidade').value = data.periodicidade || 'mensal';
+            document.getElementById('id_valor').value = data.valor || '';
+            document.getElementById('id_fidelidade_meses').value = data.fidelidade_meses || '0';
+            document.getElementById('id_dia_vencimento').value = data.dia_vencimento || '10';
+            document.getElementById('id_taxa_adesao').value = data.taxa_adesao || '0.00';
+            document.getElementById('id_multa_cancelamento').value = data.multa_cancelamento || '0.00';
+            document.getElementById('id_ativo').checked = !!data.ativo;
+
+            modalOverlay.classList.add('open');
+        }
+
+        function closePlanoModal() {
+            modalOverlay.classList.remove('open');
+        }
+
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                closePlanoModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('open')) {
+                closePlanoModal();
+            }
+        });
+    </script>
 </body>
+
 </html>
