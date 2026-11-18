@@ -149,59 +149,24 @@
             overflow-y: auto;
         }
 
-        /* Topbar */
+        /* Topbar com Perfil e Data */
         .topbar {
-            background: #ffffff;
-            padding: 18px 36px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 8px;
         }
 
-        .topbar-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .topbar-date {
-            color: var(--text-dark);
+        .date-display {
+            color: #475569;
             font-size: 0.95rem;
-            font-weight: 700;
-            text-transform: capitalize;
-        }
-
-        .topbar-sub {
-            color: var(--text-muted);
-            font-size: 0.82rem;
+            font-weight: 500;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-            text-align: right;
-        }
-
-        .user-name {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text-dark);
-        }
-
-        .user-role {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .avatar-wrapper {
-            position: relative;
         }
 
         .avatar {
@@ -217,15 +182,15 @@
             font-size: 1.1rem;
         }
 
-        .status-dot {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 11px;
-            height: 11px;
-            background: #10b981;
-            border: 2px solid white;
-            border-radius: 50%;
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
 
         /* Conteúdo Principal */
@@ -455,40 +420,12 @@
         <div>
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i data-lucide="dumbbell" style="width: 28px; height: 28px;"></i>
+                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
                     <span>SheFit</span>
                 </div>
-                <i data-lucide="menu" style="width: 20px; height: 20px; cursor: pointer;"></i>
             </div>
 
-        <a href="{% url 'listar_turmas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
-            Minhas Turmas
-        </a>
-
-        <a href="{% url 'criar_ficha' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
-            Montar ficha de treino
-        </a>
-        <a href="{% url 'listar_fichas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
-            Consultar fichas e histórico
-        
-        <a href="{% url 'avaliacoes_alunos' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">
-            Avaliações físicas
-            
-        </a>
-        </a>
-        {% if fichas_revisao_pendente %}
-            <section style="margin: 18px 0; text-align: left;">
-                <h3 style="color: #6d28d9; margin-bottom: 8px;">Revisões pendentes</h3>
-                {% for ficha in fichas_revisao_pendente %}
-                    <p style="font-size: 13px; margin-bottom: 8px;">
-                        <a href="{% url 'detalhe_ficha' ficha.id %}">{{ ficha.aluno.nome }}</a>
-                        — revisão prevista para {{ ficha.data_revisao|date:"d/m/Y" }}
-                    </p>
-                {% endfor %}
-            </section>
-        {% endif %}
-
-        <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
+            <!-- Menu com os 4 itens estruturados do professor -->
             <ul class="nav-list">
                 <li class="nav-item active">
                     <a href="{% url 'painel_professor' %}">
@@ -501,16 +438,24 @@
                 <li class="nav-item">
                     <a href="{% url 'minhas_turmas_professor' %}">
                         <div class="nav-item-left">
-                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
                             <span>Minhas Turmas</span>
                         </div>
                     </a>
                 </li>
-                <li class="nav-item" style="opacity: 0.7; cursor: default;">
-                    <a href="#" onclick="event.preventDefault();" style="cursor: default;">
+                <li class="nav-item">
+                    <a href="{% url 'listar_fichas' %}">
                         <div class="nav-item-left">
-                            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
-                            <span>Estudantes</span>
+                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                            <span>Consultar Fichas e Histórico</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'avaliacoes_alunos' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Avaliações Físicas</span>
                         </div>
                     </a>
                 </li>
@@ -527,33 +472,44 @@
 
     <!-- ÁREA PRINCIPAL -->
     <div class="main-wrapper">
-        <!-- TOPBAR -->
+        <!-- TOPBAR PADRONIZADA COM OUTROS PAINÉIS (RECEPÇÃO / FINANCEIRO / ADMIN) -->
         <header class="topbar">
-            <div class="topbar-info">
-                <div class="topbar-date" id="data-atual">
-                    Hoje
-                </div>
-                <div class="topbar-sub">
-                    Sua próxima aula começa às 10:30
-                </div>
+            <div class="date-display" id="data-atual">
+                Hoje
             </div>
-
             <div class="user-profile">
-                <div class="user-info">
-                    <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
-                    <span class="user-role">Professora &bull; Yoga e Pilates</span>
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
-                <div class="avatar-wrapper">
-                    <div class="avatar">
-                        {{ request.user.first_name|slice:":1"|default:request.user.username|slice:":1"|upper }}
-                    </div>
-                    <span class="status-dot"></span>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                    <div class="role">Professor</div>
                 </div>
             </div>
         </header>
 
         <!-- CONTEÚDO PRINCIPAL -->
         <main class="content-area">
+            {% if fichas_revisao_pendente %}
+                <section style="background: #ffffff; border-radius: 16px; border: 1px solid #fed7aa; padding: 20px 24px; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.05); display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px; color: #c2410c; font-weight: 700; font-size: 1.05rem;">
+                        <i data-lucide="alert-circle" style="width: 20px; height: 20px; color: #f97316;"></i>
+                        <span>Revisões pendentes</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        {% for ficha in fichas_revisao_pendente %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff7ed; border-radius: 10px; font-size: 0.92rem;">
+                                <span>
+                                    <strong><a href="{% url 'detalhe_ficha' ficha.id %}" style="color: #9a3412; text-decoration: none; font-weight: 700;">{{ ficha.aluno.nome }}</a></strong>
+                                    — revisão prevista para {{ ficha.data_revisao|date:"d/m/Y" }}
+                                </span>
+                                <a href="{% url 'detalhe_ficha' ficha.id %}" style="color: #ea580c; font-weight: 600; text-decoration: none; font-size: 0.85rem;">Ver ficha &rarr;</a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
             <!-- Boas-vindas -->
             <div class="page-header">
                 <h1>Olá, {{ request.user.first_name|default:request.user.username }}!</h1>
@@ -582,7 +538,7 @@
                             <i data-lucide="users" style="width: 20px; height: 20px;"></i>
                         </div>
                     </div>
-                    <div class="stat-card-number">{{ total_estudantes|default:"28" }}</div>
+                    <div class="stat-card-number">{{ total_estudantes|default:0 }}</div>
                 </div>
             </section>
 
@@ -629,8 +585,8 @@
     <script>
         lucide.createIcons();
 
-        // Data atual por extenso
-        const opcoes = { weekday: 'long', day: 'numeric', month: 'long' };
+        // Data atual padronizada com os outros painéis (Recepção / Financeiro / Admin)
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
         const dataFormatada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
 

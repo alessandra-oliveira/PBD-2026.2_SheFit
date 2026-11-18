@@ -153,71 +153,49 @@
             max-width: 1400px;
         }
 
-        /* Topbar Superior */
+        /* Topbar com Perfil e Data Padronizada */
         .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding-bottom: 8px;
-            gap: 16px;
-        }
-
-        .topbar-left {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
         }
 
         .date-display {
-            color: var(--text-dark);
-            font-size: 1.05rem;
-            font-weight: 700;
-            letter-spacing: -0.2px;
-        }
-
-        .proxima-aula-aviso {
-            color: var(--text-muted);
-            font-size: 0.88rem;
+            color: #475569;
+            font-size: 0.95rem;
             font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
 
-        .topbar-right {
+        .user-profile {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
         }
 
-        .user-info {
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
             display: flex;
-            flex-direction: column;
-            text-align: right;
-            gap: 2px;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
         }
 
         .user-info .name {
             font-size: 0.95rem;
             font-weight: 700;
-            color: var(--text-dark);
+            color: #1e293b;
         }
 
         .user-info .role {
             font-size: 0.8rem;
             color: var(--text-muted);
         }
-
-        .avatar-wrapper {
-            position: relative;
-            width: 44px;
-            height: 44px;
-        }
-
-        .avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
             background: #8b5cf6;
             color: white;
             font-weight: 700;
@@ -592,12 +570,12 @@
         <div>
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i data-lucide="dumbbell" style="width: 28px; height: 28px;"></i>
+                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
                     <span>SheFit</span>
                 </div>
             </div>
 
-            <!-- Menu com os 3 itens do professor -->
+            <!-- Menu com os 4 itens estruturados do professor -->
             <ul class="nav-list">
                 <li class="nav-item">
                     <a href="{% url 'painel_professor' %}">
@@ -610,16 +588,24 @@
                 <li class="nav-item active">
                     <a href="{% url 'minhas_turmas_professor' %}">
                         <div class="nav-item-left">
-                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
                             <span>Minhas Turmas</span>
                         </div>
                     </a>
                 </li>
-                <li class="nav-item" style="opacity: 0.7; cursor: default;">
-                    <a href="#" onclick="event.preventDefault();" style="cursor: default;">
+                <li class="nav-item">
+                    <a href="{% url 'listar_fichas' %}">
                         <div class="nav-item-left">
-                            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
-                            <span>Estudantes</span>
+                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                            <span>Consultar Fichas e Histórico</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'avaliacoes_alunos' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Avaliações Físicas</span>
                         </div>
                     </a>
                 </li>
@@ -636,28 +622,18 @@
 
     <!-- ================= CONTEÚDO PRINCIPAL ================= -->
     <main class="main-content">
-        <!-- Topbar Superior -->
+        <!-- Topbar Superior Padronizada -->
         <header class="topbar">
-            <div class="topbar-left">
-                <div class="date-display" id="data-atual">
-                    Hoje
-                </div>
-                <div class="proxima-aula-aviso">
-                    <i data-lucide="clock" style="width: 14px; height: 14px; color: #7c3aed;"></i>
-                    <span>Sua próxima aula começa às {{ proxima_aula|default:"08:00" }}</span>
-                </div>
+            <div class="date-display" id="data-atual">
+                Hoje
             </div>
-
-            <div class="topbar-right">
-                <div class="user-info">
-                    <div class="name">{{ professor.nome|default:request.user.get_full_name|default:request.user.username }}</div>
-                    <div class="role">Professora / Modalidades</div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
-                <div class="avatar-wrapper">
-                    <div class="avatar">
-                        {% if request.user.first_name %}{{ request.user.first_name|slice:":1"|upper }}{% else %}{{ request.user.username|slice:":1"|upper }}{% endif %}
-                    </div>
-                    <span class="status-indicator-online" title="Online"></span>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                    <div class="role">Professor</div>
                 </div>
             </div>
         </header>
@@ -679,7 +655,7 @@
                     </div>
                 </div>
                 <div class="metric-number">
-                    {{ total_turmas|default:"4" }}
+                    {{ total_turmas|default:0 }}
                 </div>
                 <div class="metric-footer">
                     <i data-lucide="clock" style="width: 15px; height: 15px; color: #7c3aed;"></i>
@@ -696,7 +672,7 @@
                     </div>
                 </div>
                 <div class="metric-number">
-                    {{ total_estudantes|default:"28" }}
+                    {{ total_estudantes|default:0 }}
                 </div>
                 <div class="metric-footer" style="color: #10b981; font-weight: 600;">
                     <i data-lucide="check-circle-2" style="width: 15px; height: 15px;"></i>
@@ -713,7 +689,7 @@
                     </div>
                 </div>
                 <div class="metric-number">
-                    {{ ocupacao_media|default:"75" }}%
+                    {{ ocupacao_media|default:0 }}%
                 </div>
                 <div class="metric-footer" style="color: #10b981; font-weight: 600;">
                     <i data-lucide="bar-chart-3" style="width: 15px; height: 15px;"></i>
@@ -738,73 +714,38 @@
             </div>
 
             <div class="turmas-grid" id="turmas-grid-container">
-                {% if turmas %}
-                    {% for turma in turmas %}
-                        <article class="turma-card" data-dia="{{ turma.dia_semana }}">
-                            <div class="turma-card-header">
-                                <h3 class="turma-card-title">{{ turma.modalidade.nome }}</h3>
-                                <span class="badge-dia-card">{{ turma.get_dia_semana_display }}</span>
-                            </div>
-
-                            <div class="turma-detalhes-lista">
-                                <div class="turma-detalhe-item">
-                                    <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
-                                    <span>{{ turma.horario|time:"H:i" }} &bull; 50 min</span>
-                                </div>
-                                <div class="turma-detalhe-item">
-                                    <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
-                                    <span>{{ turma.sala }}</span>
-                                </div>
-                            </div>
-
-                            <div class="turma-ocupacao-box">
-                                <div class="ocupacao-info-row">
-                                    <span>Ocupação da turma</span>
-                                    <strong class="texto-ocupacao-turma" 
-                                            data-capacidade="{{ turma.capacidade_maxima }}" 
-                                            data-restantes="{{ turma.vagas_restantes }}">
-                                        0 / {{ turma.capacidade_maxima }} alunas
-                                    </strong>
-                                </div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="width: 0%;"></div>
-                                </div>
-                            </div>
-
-                            <div class="turma-card-footer">
-                                <button type="button" class="btn-chamada-action">
-                                    <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
-                                    <span>Registrar Presença</span>
-                                </button>
-                            </div>
-                        </article>
-                    {% endfor %}
-                {% else %}
-                    <!-- Cards de demonstração da grade conforme o Figma -->
-                    <article class="turma-card" data-dia="segunda">
+                {% for turma in turmas %}
+                    <article class="turma-card" data-dia="{{ turma.dia_semana }}">
                         <div class="turma-card-header">
-                            <h3 class="turma-card-title">Pilates Solo</h3>
-                            <span class="badge-dia-card">Segunda</span>
+                            <h3 class="turma-card-title">{{ turma.modalidade.nome }}</h3>
+                            <span class="badge-dia-card">{{ turma.get_dia_semana_display }}</span>
                         </div>
+
                         <div class="turma-detalhes-lista">
                             <div class="turma-detalhe-item">
                                 <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
-                                <span>08:00 - 08:50 &bull; 50 min</span>
+                                <span>{{ turma.horario|time:"H:i" }} &bull; 50 min</span>
                             </div>
                             <div class="turma-detalhe-item">
                                 <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
-                                <span>Sala 2</span>
+                                <span>{{ turma.sala }}</span>
                             </div>
                         </div>
+
                         <div class="turma-ocupacao-box">
                             <div class="ocupacao-info-row">
                                 <span>Ocupação da turma</span>
-                                <strong>14 / 18 alunas</strong>
+                                <strong class="texto-ocupacao-turma" 
+                                        data-capacidade="{{ turma.capacidade_maxima }}" 
+                                        data-restantes="{{ turma.vagas_restantes }}">
+                                    {{ turma.matriculados }} / {{ turma.capacidade_maxima }} alunas
+                                </strong>
                             </div>
                             <div class="progress-bar-container">
-                                <div class="progress-bar-fill" style="width: 78%;"></div>
+                                <div class="progress-bar-fill" style="width: {{ turma.ocupacao_int }}%;"></div>
                             </div>
                         </div>
+
                         <div class="turma-card-footer">
                             <button type="button" class="btn-chamada-action">
                                 <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
@@ -812,103 +753,12 @@
                             </button>
                         </div>
                     </article>
-
-                    <article class="turma-card" data-dia="terca">
-                        <div class="turma-card-header">
-                            <h3 class="turma-card-title">Ritmos & Dança</h3>
-                            <span class="badge-dia-card">Terça</span>
-                        </div>
-                        <div class="turma-detalhes-lista">
-                            <div class="turma-detalhe-item">
-                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
-                                <span>10:00 - 10:50 &bull; 50 min</span>
-                            </div>
-                            <div class="turma-detalhe-item">
-                                <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
-                                <span>Sala 1</span>
-                            </div>
-                        </div>
-                        <div class="turma-ocupacao-box">
-                            <div class="ocupacao-info-row">
-                                <span>Ocupação da turma</span>
-                                <strong>20 / 25 alunas</strong>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill" style="width: 80%;"></div>
-                            </div>
-                        </div>
-                        <div class="turma-card-footer">
-                            <button type="button" class="btn-chamada-action">
-                                <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
-                                <span>Registrar Presença</span>
-                            </button>
-                        </div>
-                    </article>
-
-                    <article class="turma-card" data-dia="quarta">
-                        <div class="turma-card-header">
-                            <h3 class="turma-card-title">Yoga Flow</h3>
-                            <span class="badge-dia-card">Quarta</span>
-                        </div>
-                        <div class="turma-detalhes-lista">
-                            <div class="turma-detalhe-item">
-                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
-                                <span>16:30 - 17:20 &bull; 50 min</span>
-                            </div>
-                            <div class="turma-detalhe-item">
-                                <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
-                                <span>Sala 3</span>
-                            </div>
-                        </div>
-                        <div class="turma-ocupacao-box">
-                            <div class="ocupacao-info-row">
-                                <span>Ocupação da turma</span>
-                                <strong>12 / 15 alunas</strong>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill" style="width: 80%;"></div>
-                            </div>
-                        </div>
-                        <div class="turma-card-footer">
-                            <button type="button" class="btn-chamada-action">
-                                <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
-                                <span>Registrar Presença</span>
-                            </button>
-                        </div>
-                    </article>
-
-                    <article class="turma-card" data-dia="quinta">
-                        <div class="turma-card-header">
-                            <h3 class="turma-card-title">Musculação Feminina</h3>
-                            <span class="badge-dia-card">Quinta</span>
-                        </div>
-                        <div class="turma-detalhes-lista">
-                            <div class="turma-detalhe-item">
-                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
-                                <span>18:00 - 18:50 &bull; 50 min</span>
-                            </div>
-                            <div class="turma-detalhe-item">
-                                <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
-                                <span>Sala Principal</span>
-                            </div>
-                        </div>
-                        <div class="turma-ocupacao-box">
-                            <div class="ocupacao-info-row">
-                                <span>Ocupação da turma</span>
-                                <strong>18 / 20 alunas</strong>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill" style="width: 90%;"></div>
-                            </div>
-                        </div>
-                        <div class="turma-card-footer">
-                            <button type="button" class="btn-chamada-action">
-                                <i data-lucide="clipboard-check" style="width: 16px; height: 16px;"></i>
-                                <span>Registrar Presença</span>
-                            </button>
-                        </div>
-                    </article>
-                {% endif %}
+                {% empty %}
+                    <div class="agenda-empty-state" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; color: var(--text-muted); background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 16px; gap: 10px;">
+                        <i data-lucide="calendar" style="width: 36px; height: 36px; color: #94a3b8;"></i>
+                        <p style="font-size: 0.95rem; font-weight: 500; color: #64748b; margin: 0;">Nenhuma turma cadastrada para você no momento.</p>
+                    </div>
+                {% endfor %}
             </div>
         </section>
     </main>

@@ -1,75 +1,486 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ titulo }} - SheFit</title>
+    <!-- Fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-gradient: linear-gradient(180deg, #7c2ae8 0%, #d63384 100%);
+            --btn-gradient: linear-gradient(135deg, #7c2ae8 0%, #d63384 100%);
+            --primary-purple: #7c2ae8;
+            --primary-pink: #d63384;
+            --bg-color: #f8f7fc;
+            --card-bg: #ffffff;
+            --card-radius: 16px;
+            --card-shadow: 0 4px 20px rgba(124, 42, 232, 0.05);
+            --border-light: #f1f0f7;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            min-height: 100vh;
         }
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        h1 { color: #7c3aed; text-align: center; margin-bottom: 20px; font-size: 1.6rem; }
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.85rem; color: #334155; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
-        .btn-salvar {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+
+        /* Sidebar Lateral Fixa */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 36px;
+            padding: 0 10px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .sidebar-logo .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .sidebar-logo .brand-icon svg {
+            width: 22px;
+            height: 22px;
+            color: #ffffff;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #e11d48;
+            background: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fff1f2;
+            transform: translateY(-1px);
+        }
+
+        .btn-sidebar-sair svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .portal-label {
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* Área Principal de Conteúdo */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        /* Topbar Superior Padronizada com Recepção / Admin / Professor */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Cabeçalho da Página */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Card do Formulário */
+        .card-form-plano {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 32px;
+            max-width: 720px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+        }
+
+        .tag-form {
+            background: #f5f3ff;
+            color: var(--primary-purple);
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 12px;
+        }
+
+        .form-plano-body {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
             margin-top: 10px;
         }
-        .btn-cancelar {
-            display: block;
-            text-align: center;
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .form-group .form-control {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group .form-control:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(124, 42, 232, 0.15);
+        }
+
+        .form-help-text {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .form-error-text {
+            color: #dc2626;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-footer-buttons {
+            display: flex;
+            align-items: center;
+            gap: 16px;
             margin-top: 10px;
-            color: #64748b;
+            padding-top: 20px;
+            border-top: 1px solid #f1f0f7;
+        }
+
+        .btn-salvar {
+            background: var(--btn-gradient);
+            color: #ffffff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(124, 42, 232, 0.3);
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn-salvar:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-cancelar {
+            color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .btn-cancelar:hover {
+            color: var(--primary-purple);
+        }
+
+        @media (max-width: 640px) {
+            .form-row-2 {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="card">
-        <h1>{{ titulo }}</h1>
-        <form method="POST">
-            {% csrf_token %}
-            {% for field in form %}
-                <div class="form-group">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                        <small style="color: #64748b; font-size: 0.75rem;">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% if field.errors %}
-                        <div style="color: #dc2626; font-size: 0.8rem;">{{ field.errors|striptags }}</div>
-                    {% endif %}
+    <!-- Sidebar Navegação Lateral -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+            <!-- SEM ícone de menu hambúrguer conforme especificação -->
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_financeiro' %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'listar_planos' %}">
+                        <i data-lucide="layers"></i>
+                        <span>Planos & Modalidades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'regras_financeiras' %}">
+                        <i data-lucide="sliders"></i>
+                        <span>Regras Financeiras</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+            <div class="portal-label">Portal financeiro</div>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="main-content">
+        <!-- Topbar Padronizada com outros painéis (Recepção / Admin / Professor) -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
-            {% endfor %}
-            <button type="submit" class="btn-salvar">Salvar Plano</button>
-            <a href="{% url 'listar_planos' %}" class="btn-cancelar">Voltar para lista</a>
-        </form>
-    </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Financeiro)</div>
+                    <div class="role">Financeiro</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cabeçalho da Página -->
+        <div class="page-header">
+            <div>
+                <h1>{{ titulo }}</h1>
+                <p>Configure condições comerciais e modalidades incluídas.</p>
+            </div>
+        </div>
+
+        <!-- Card do Formulário -->
+        <div class="card-form-plano">
+            <span class="tag-form">GESTÃO DE PLANOS</span>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-plano-body">
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <span class="form-help-text">{{ field.help_text }}</span>
+                            {% endif %}
+                            {% if field.errors %}
+                                <span class="form-error-text">{{ field.errors|striptags }}</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-footer-buttons">
+                    <button type="submit" class="btn-salvar">Salvar Plano</button>
+                    <a href="{% url 'listar_planos' %}" class="btn-cancelar">Voltar para lista</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // Data atual padronizada com os outros painéis (Recepção / Admin / Professor)
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+    </script>
 </body>
+
 </html>

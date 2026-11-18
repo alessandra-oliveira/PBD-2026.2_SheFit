@@ -1,21 +1,209 @@
+from decimal import Decimal
+from django.utils import timezone
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from accounts.decorators import perfil_requerido
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira
+from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca, Pagamento
 from .forms import PlanoForm, RegraFinanceiraForm
+
+
+def obter_metricas_dashboard():
+    """
+    Consolida todos os dados reais do banco para o Dashboard Financeiro.
+    """
+    hoje = timezone.localdate()
+    ano_atual = hoje.year
+    mes_atual = hoje.month
+
+    # 1. Total recebido no mês atual
+    total_recebido = Pagamento.objects.filter(
+        data_pagamento__year=ano_atual,
+        data_pagamento__month=mes_atual
+    ).aggregate(total=Sum('valor_pago'))['total'] or Decimal('0.00')
+
+    # 2. A receber no mês atual (cobranças que vencem neste mês e ainda não foram pagas)
+    a_receber = Cobranca.objects.filter(
+        vencimento__year=ano_atual,
+        vencimento__month=mes_atual,
+        paga=False
+    ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+    qtd_a_receber = Cobranca.objects.filter(
+        vencimento__year=ano_atual,
+        vencimento__month=mes_atual,
+        paga=False
+    ).count()
+
+    # 3. Receita no mês (Total recebido + A receber no mês)
+    receita_mes = total_recebido + a_receber
+    if receita_mes == Decimal('0.00'):
+        cobrancas_total_mes = Cobranca.objects.filter(
+            vencimento__year=ano_atual,
+            vencimento__month=mes_atual
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+        receita_mes = cobrancas_total_mes
+
+    # Comparativo percentual com mês anterior
+    mes_ant = mes_atual - 1 if mes_atual > 1 else 12
+    ano_ant = ano_atual if mes_atual > 1 else ano_atual - 1
+    receita_mes_ant = Pagamento.objects.filter(
+        data_pagamento__year=ano_ant,
+        data_pagamento__month=mes_ant
+    ).aggregate(total=Sum('valor_pago'))['total'] or Decimal('0.00')
+
+    if receita_mes_ant > 0:
+        crescimento_pct = ((receita_mes - receita_mes_ant) / receita_mes_ant) * 100
+    else:
+        crescimento_pct = Decimal('0.0')
+
+    pct_recebido_previsto = (total_recebido / receita_mes * 100) if receita_mes > 0 else Decimal('0.0')
+
+    # 4. Assinaturas ativas
+    matriculas = Matricula.objects.select_related('plano', 'aluno').all()
+    assinaturas_ativas = sum(1 for m in matriculas if m.situacao == 'ativa')
+    novos_planos_mes = Matricula.objects.filter(
+        criado_em__year=ano_atual,
+        criado_em__month=mes_atual
+    ).count()
+
+    # 5. Evolução dos últimos 6 meses para o gráfico
+    nomes_meses_abrev = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    evolucao_meses = []
+    for i in range(5, -1, -1):
+        m_num = (mes_atual - i - 1) % 12 + 1
+        y_num = ano_atual if (mes_atual - i) > 0 else ano_atual - 1
+
+        val_mes = Pagamento.objects.filter(
+            data_pagamento__year=y_num,
+            data_pagamento__month=m_num
+        ).aggregate(total=Sum('valor_pago'))['total'] or Decimal('0.00')
+
+        evolucao_meses.append({
+            'mes': nomes_meses_abrev[m_num - 1],
+            'ano': y_num,
+            'valor': val_mes,
+            'valor_formatado': f"R$ {val_mes:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        })
+
+    valores_meses = [item['valor'] for item in evolucao_meses]
+    max_val = max(valores_meses) if valores_meses and max(valores_meses) > 0 else Decimal('1.00')
+    for item in evolucao_meses:
+        if item['valor'] > 0:
+            item['altura_pct'] = min(100, max(15, int((item['valor'] / max_val) * 100)))
+        else:
+            item['altura_pct'] = 8
+
+    # 6. Meta do mês
+    nomes_meses_extenso = [
+        'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+        'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+    ]
+    nome_mes_atual = nomes_meses_extenso[mes_atual - 1]
+
+    soma_mensalidades = sum(m.plano.valor for m in matriculas if m.situacao == 'ativa')
+    meta_mensal = soma_mensalidades if soma_mensalidades > Decimal('0.00') else Decimal('50000.00')
+    faltam_meta = max(Decimal('0.00'), meta_mensal - total_recebido)
+    pct_meta = min(100, int((total_recebido / meta_mensal * 100))) if meta_mensal > 0 else 0
+
+    # 7. Pagamentos recentes (Últimas movimentações registradas)
+    pagamentos_qs = Pagamento.objects.select_related(
+        'cobranca__matricula__aluno',
+        'cobranca__matricula__plano'
+    ).order_by('-data_pagamento', '-id')[:10]
+
+    pagamentos_recentes = []
+    for p in pagamentos_qs:
+        pagamentos_recentes.append({
+            'plano': p.cobranca.matricula.plano.nome if p.cobranca and p.cobranca.matricula and p.cobranca.matricula.plano else 'Plano SheFit',
+            'cliente': p.cobranca.matricula.aluno.nome if p.cobranca and p.cobranca.matricula and p.cobranca.matricula.aluno else 'Aluna',
+            'status': 'Pago',
+            'status_class': 'pago',
+            'valor': p.valor_pago,
+            'data': p.data_pagamento,
+        })
+
+    if len(pagamentos_recentes) < 6:
+        cobrancas_pendentes = Cobranca.objects.filter(paga=False).select_related(
+            'matricula__aluno',
+            'matricula__plano'
+        ).order_by('-vencimento', '-id')[:6 - len(pagamentos_recentes)]
+
+        for c in cobrancas_pendentes:
+            pagamentos_recentes.append({
+                'plano': c.matricula.plano.nome if c.matricula and c.matricula.plano else 'Plano SheFit',
+                'cliente': c.matricula.aluno.nome if c.matricula and c.matricula.aluno else 'Aluna',
+                'status': 'Pendente',
+                'status_class': 'pendente',
+                'valor': c.valor,
+                'data': c.vencimento,
+            })
+
+    return {
+        'receita_mes': receita_mes,
+        'receita_mes_formatada': f"R$ {receita_mes:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        'crescimento_pct': crescimento_pct,
+        'total_recebido': total_recebido,
+        'total_recebido_formatado': f"R$ {total_recebido:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        'pct_recebido_previsto': pct_recebido_previsto,
+        'a_receber': a_receber,
+        'a_receber_formatado': f"R$ {a_receber:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        'qtd_a_receber': qtd_a_receber,
+        'assinaturas_ativas': assinaturas_ativas,
+        'novos_planos_mes': novos_planos_mes,
+        'evolucao_meses': evolucao_meses,
+        'nome_mes_atual': nome_mes_atual,
+        'meta_mensal': meta_mensal,
+        'meta_mensal_formatada': f"R$ {meta_mensal:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        'faltam_meta': faltam_meta,
+        'faltam_meta_formatada': f"R$ {faltam_meta:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        'pct_meta': pct_meta,
+        'pagamentos_recentes': pagamentos_recentes,
+    }
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def dashboard_financeiro(request):
+    """
+    Exibe os indicadores financeiros consolidados no Dashboard.
+    """
+    contexto = obter_metricas_dashboard()
+    return render(request, 'financeiro/dashboard.html', contexto)
 
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
 def listar_planos(request):
     """
-    Exibe todos os planos (ativos e inativos) para o gestor financeiro.
+    Exibe todos os planos (ativos e inativos) para o gestor financeiro
+    com os KPIs calculados diretamente do banco de dados.
     """
     planos = Plano.objects.all().order_by('-ativo', 'nome')
-    return render(request, 'financeiro/listar_planos.html', {'planos': planos})
+
+    planos_ativos_count = planos.filter(ativo=True).count()
+    periodicidades_count = planos.filter(ativo=True).values('periodicidade').distinct().count()
+    if periodicidades_count == 0:
+        periodicidades_count = planos.values('periodicidade').distinct().count()
+
+    plano_mensal_inicial = planos.filter(ativo=True, periodicidade='mensal').order_by('valor').first()
+    if not plano_mensal_inicial:
+        plano_mensal_inicial = planos.filter(ativo=True).order_by('valor').first()
+    ticket_inicial = plano_mensal_inicial.valor if plano_mensal_inicial else Decimal('0.00')
+
+    form = PlanoForm()
+
+    contexto = {
+        'planos': planos,
+        'planos_ativos_count': planos_ativos_count,
+        'periodicidades_count': periodicidades_count,
+        'ticket_inicial': ticket_inicial,
+        'form': form,
+    }
+    return render(request, 'financeiro/listar_planos.html', contexto)
 
 
 @login_required(login_url='entrar')

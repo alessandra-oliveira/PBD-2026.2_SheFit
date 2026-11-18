@@ -1,44 +1,990 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar Fichas e Histórico - SheFit</title>
+    <!-- Fonte Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>Fichas de treino - SheFit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 28px 16px; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #1f2937; }
-        main { max-width: 900px; margin: auto; }
-        .card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
-        h1 { color: #6d28d9; }
-        .topo, .linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .linha { padding: 14px 0; border-top: 1px solid #e5e7eb; }
-        .botao { border-radius: 8px; padding: 11px 15px; background: #7c3aed; color: white; text-decoration: none; font-weight: 600; }
-        .badge { display: inline-block; border-radius: 12px; padding: 3px 9px; background: #ede9fe; color: #6d28d9; font-size: .85rem; }
-        @media (max-width: 600px) { .topo, .linha { align-items: flex-start; flex-direction: column; } }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Lateral Padrão */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+
+        .btn-sair-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            color: #ef4444;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sair-sidebar:hover {
+            background: #fee2e2;
+            transform: translateY(-1px);
+        }
+
+        /* Área Principal de Conteúdo */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        /* Topbar com Perfil e Data Padronizada */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Cabeçalho da Página com Botão Primário */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header-text h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-header-text p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .btn-montar-ficha {
+            background: var(--btn-gradient);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(139, 61, 255, 0.3);
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn-montar-ficha:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* Mensagens de Alerta */
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alert-msg {
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-msg.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-msg.info {
+            background: #f5f3ff;
+            color: #5b21b6;
+            border: 1px solid #ddd6fe;
+        }
+
+        .alert-msg.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        /* Card da Tabela de Fichas */
+        .card-table {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+        }
+
+        .table-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 320px;
+            width: 100%;
+        }
+
+        .search-box input {
+            width: 100%;
+            height: 42px;
+            padding: 0 14px 0 38px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: #8b3dff;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            width: 18px;
+            height: 18px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #faf9fe;
+            color: #64748b;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 15px 18px;
+            border-bottom: 1px solid #f1f0f7;
+            font-size: 0.92rem;
+            color: var(--text-dark);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #faf9fe;
+        }
+
+        .aluno-nome {
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .badge-status.ativa {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-status.encerrada {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .btn-consultar-ficha {
+            background: #f5f3ff;
+            color: #7c3aed;
+            padding: 6px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-consultar-ficha:hover {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .sem-dados {
+            text-align: center;
+            padding: 36px !important;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* ================= MODAL MONTAR FICHA DE TREINO ================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(6px);
+            background-color: rgba(15, 23, 42, 0.45);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 620px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.25s ease;
+        }
+
+        .modal-card form {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            flex: 1;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(15px); opacity: 0.8; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 24px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-header-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .btn-modal-fechar {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 1.35rem;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s;
+        }
+
+        .btn-modal-fechar:hover {
+            color: #0f172a;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.88rem;
+            display: block;
+        }
+
+        .form-group .form-control {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #ffffff;
+            font-size: 0.95rem;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group .form-control:focus {
+            border-color: #8b3dff;
+            box-shadow: 0 0 0 3px rgba(139, 61, 255, 0.15);
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* Seção de Exercícios */
+        .exercicios-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .exercicios-section-header h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .btn-add-item {
+            background: #f5f3ff;
+            color: #7c3aed;
+            border: 1px dashed #c4b5fd;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add-item:hover {
+            background: #ede9fe;
+            border-color: #a78bfa;
+        }
+
+        .exercicio-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .btn-modal-cancelar {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-cancelar:hover {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .btn-modal-salvar {
+            background: var(--btn-gradient);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn-modal-salvar:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+            .main-wrapper {
+                margin-left: 0;
+                padding: 20px 16px;
+            }
+            .form-row-2, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
-<main class="card">
-    <div class="topo">
-        <h1>Fichas de treino</h1>
-        <a class="botao" href="{% url 'criar_ficha' %}">Nova ficha</a>
-    </div>
-    {% for ficha in fichas %}
-        <div class="linha">
-            <div>
-                <strong>{{ ficha.aluno.nome }}</strong>
-                <div>Criada em {{ ficha.criada_em|date:"d/m/Y" }} · Revisão em {{ ficha.data_revisao|date:"d/m/Y" }}</div>
-                <span class="badge">{% if ficha.ativa %}Ativa{% else %}Encerrada{% endif %}</span>
+    <!-- Sidebar Navegação Lateral -->
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                    <span>SheFit</span>
+                </div>
             </div>
-            <a href="{% url 'detalhe_ficha' ficha.id %}">Consultar ficha</a>
+
+            <!-- Menu com os 5 itens estruturados do professor -->
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                            <span>Painel</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'minhas_turmas_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                            <span>Minhas Turmas</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'listar_fichas' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                            <span>Consultar Fichas e Histórico</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'avaliacoes_alunos' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Avaliações Físicas</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
         </div>
-    {% empty %}
-        <p>Nenhuma ficha de treino cadastrada.</p>
-    {% endfor %}
-    <p><a href="{% url 'painel_professor' %}">Voltar ao painel</a></p>
-</main>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sair-sidebar">
+                <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="main-wrapper">
+        <!-- Topbar Superior Padronizada -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                    <div class="role">Professor</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mensagens do Django -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert-msg {% if message.tags == 'error' %}error{% else %}{{ message.tags|default:'info' }}{% endif %}">
+                        <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Cabeçalho com Botão Primário + Montar ficha de treino -->
+        <div class="page-header">
+            <div class="page-header-text">
+                <h1>Consultar Fichas e Histórico</h1>
+                <p>Consulte o histórico de fichas de treino ou monte uma nova ficha para os estudantes.</p>
+            </div>
+            <button type="button" class="btn-montar-ficha" onclick="abrirModalFicha()">
+                <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                Montar ficha de treino
+            </button>
+        </div>
+
+        <!-- Tabela de Fichas de Treino -->
+        <section class="card-table">
+            <div class="table-header-bar">
+                <div class="search-box">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="filtroFichas" placeholder="Buscar por aluno..." onkeyup="filtrarTabela()">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="tabelaFichas">
+                    <thead>
+                        <tr>
+                            <th>ALUNO</th>
+                            <th>PROFESSOR</th>
+                            <th>CRIADA EM</th>
+                            <th>REVISÃO PREVISTA</th>
+                            <th>SITUAÇÃO</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ficha in fichas %}
+                            <tr>
+                                <td class="aluno-nome">{{ ficha.aluno.nome }}</td>
+                                <td>{{ ficha.professor.get_full_name|default:ficha.professor.username }}</td>
+                                <td>{{ ficha.criada_em|date:"d/m/Y" }}</td>
+                                <td>{{ ficha.data_revisao|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if ficha.ativa %}
+                                        <span class="badge-status ativa">Ativa</span>
+                                    {% else %}
+                                        <span class="badge-status encerrada">Encerrada</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'detalhe_ficha' ficha.id %}" class="btn-consultar-ficha">
+                                        <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
+                                        Consultar ficha
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="sem-dados">
+                                    Nenhuma ficha de treino cadastrada. Clique em <strong>Montar ficha de treino</strong> para cadastrar a primeira.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================= MODAL MONTAR FICHA DE TREINO ================= -->
+    <div id="modalFichaOverlay" class="modal-overlay">
+        <div class="modal-card">
+            <!-- Cabeçalho Limpo -->
+            <div class="modal-header">
+                <h3 class="modal-header-title">Montar Ficha de Treino</h3>
+                <button type="button" class="btn-modal-fechar" onclick="fecharModalFicha()" title="Fechar">✕</button>
+            </div>
+
+            <!-- Formulário com action original para criar_ficha -->
+            <form method="POST" action="{% url 'criar_ficha' %}" id="formFichaTreino">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Seleção de Aluno -->
+                    <div class="form-group">
+                        <label for="id_aluno">Aluno(a) *</label>
+                        <select name="aluno" id="id_aluno" class="form-control" required>
+                            <option value="">Selecione o(a) aluno(a)...</option>
+                            {% for aluno in alunos %}
+                                <option value="{{ aluno.pk }}">{{ aluno.nome }}</option>
+                            {% empty %}
+                                {% for ficha in fichas %}
+                                    <option value="{{ ficha.aluno.pk }}">{{ ficha.aluno.nome }}</option>
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Data Prevista para Revisão -->
+                    <div class="form-group">
+                        <label for="id_data_revisao">Data prevista para revisão *</label>
+                        <input type="date" name="data_revisao" id="id_data_revisao" class="form-control" required>
+                    </div>
+
+                    <!-- Seção de Exercícios com Formset -->
+                    <div class="exercicios-section-header">
+                        <h4>Exercícios da Ficha</h4>
+                        <button type="button" class="btn-add-item" onclick="adicionarExercicio()">+ Adicionar exercício</button>
+                    </div>
+
+                    <!-- Management form do formset ExercicioTreinoFormSet -->
+                    <input type="hidden" name="exercicios-TOTAL_FORMS" id="id_exercicios-TOTAL_FORMS" value="1">
+                    <input type="hidden" name="exercicios-INITIAL_FORMS" id="id_exercicios-INITIAL_FORMS" value="0">
+                    <input type="hidden" name="exercicios-MIN_NUM_FORMS" id="id_exercicios-MIN_NUM_FORMS" value="0">
+                    <input type="hidden" name="exercicios-MAX_NUM_FORMS" id="id_exercicios-MAX_NUM_FORMS" value="1000">
+
+                    <!-- Container com os Exercícios -->
+                    <div id="exerciciosContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Exercício Inicial 0 -->
+                        <div class="exercicio-card" id="exercicio-0">
+                            <div class="form-group">
+                                <label>Nome do exercício *</label>
+                                <input type="text" name="exercicios-0-nome" class="form-control" placeholder="Ex: Agachamento livre, Supino reto..." required>
+                            </div>
+                            <div class="form-row-3">
+                                <div class="form-group">
+                                    <label>Séries</label>
+                                    <input type="number" name="exercicios-0-series" class="form-control" min="0" placeholder="3">
+                                </div>
+                                <div class="form-group">
+                                    <label>Repetições</label>
+                                    <input type="number" name="exercicios-0-repeticoes" class="form-control" min="0" placeholder="12">
+                                </div>
+                                <div class="form-group">
+                                    <label>Carga (kg)</label>
+                                    <input type="number" step="0.01" name="exercicios-0-carga_sugerida" class="form-control" min="0" placeholder="15.00">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações</label>
+                                <input type="text" name="exercicios-0-observacoes" class="form-control" placeholder="Ex: Descanso de 60 segundos">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rodapé de Botões Alinhados à Direita (100% visíveis) -->
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancelar" onclick="fecharModalFicha()">Cancelar</button>
+                    <button type="submit" class="btn-modal-salvar">Salvar ficha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Template oculto para clonar novos exercícios dinamicamente -->
+    <template id="exercicioTemplate">
+        <div class="exercicio-card" id="exercicio-__prefix__" style="margin-top: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.82rem; font-weight: 700; color: #7c3aed;">Exercício extra</span>
+                <button type="button" onclick="removerExercicio('exercicio-__prefix__')" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer; font-weight: 600;">Remover</button>
+            </div>
+            <div class="form-group">
+                <label>Nome do exercício *</label>
+                <input type="text" name="exercicios-__prefix__-nome" class="form-control" placeholder="Ex: Leg Press 45º..." required>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Séries</label>
+                    <input type="number" name="exercicios-__prefix__-series" class="form-control" min="0" placeholder="3">
+                </div>
+                <div class="form-group">
+                    <label>Repetições</label>
+                    <input type="number" name="exercicios-__prefix__-repeticoes" class="form-control" min="0" placeholder="12">
+                </div>
+                <div class="form-group">
+                    <label>Carga (kg)</label>
+                    <input type="number" step="0.01" name="exercicios-__prefix__-carga_sugerida" class="form-control" min="0" placeholder="20.00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Observações</label>
+                <input type="text" name="exercicios-__prefix__-observacoes" class="form-control" placeholder="Ex: 3 séries até a falha">
+            </div>
+        </div>
+    </template>
+
+    <script>
+        lucide.createIcons();
+
+        // Data atual padronizada
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+
+        // Filtro em tempo real na tabela
+        function filtrarTabela() {
+            const input = document.getElementById('filtroFichas');
+            const termo = input.value.toLowerCase();
+            const linhas = document.querySelectorAll('#tabelaFichas tbody tr');
+            linhas.forEach(linha => {
+                const colunaAluno = linha.querySelector('.aluno-nome');
+                if (colunaAluno) {
+                    const nome = colunaAluno.textContent.toLowerCase();
+                    linha.style.display = nome.includes(termo) ? '' : 'none';
+                }
+            });
+        }
+
+        // Funções do Modal Montar Ficha
+        const modalOverlay = document.getElementById('modalFichaOverlay');
+        const formFicha = document.getElementById('formFichaTreino');
+
+        function abrirModalFicha() {
+            modalOverlay.classList.add('open');
+        }
+
+        function fecharModalFicha() {
+            modalOverlay.classList.remove('open');
+        }
+
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                fecharModalFicha();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('open')) {
+                fecharModalFicha();
+            }
+        });
+
+        // Adicionar Exercício Dinâmico no Formset
+        function adicionarExercicio() {
+            const totalFormsEl = document.getElementById('id_exercicios-TOTAL_FORMS');
+            const currentTotal = parseInt(totalFormsEl.value, 10);
+            const template = document.getElementById('exercicioTemplate').innerHTML;
+            const novoExercicioHtml = template.replace(/__prefix__/g, currentTotal);
+            document.getElementById('exerciciosContainer').insertAdjacentHTML('beforeend', novoExercicioHtml);
+            totalFormsEl.value = currentTotal + 1;
+        }
+
+        function removerExercicio(id) {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                elemento.remove();
+            }
+        }
+    </script>
 </body>
+
 </html>
