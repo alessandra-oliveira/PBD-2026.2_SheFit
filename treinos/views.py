@@ -11,8 +11,12 @@ from .models import FichaTreino
 
 @perfil_requerido('professor')
 def listar_fichas(request):
-    fichas = FichaTreino.objects.select_related('aluno', 'professor')
-    return render(request, 'treinos/listar_fichas.html', {'fichas': fichas})
+    fichas = FichaTreino.objects.select_related('aluno', 'professor').order_by('-criada_em')
+    alunos = Aluno.objects.select_related('perfil').order_by('nome')
+    return render(request, 'treinos/listar_fichas.html', {
+        'fichas': fichas,
+        'alunos': alunos,
+    })
 
 
 @perfil_requerido('professor')

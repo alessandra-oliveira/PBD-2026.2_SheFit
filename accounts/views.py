@@ -193,8 +193,14 @@ def painel_professor(request):
         .select_related('aluno')
         .order_by('data_revisao', 'aluno__nome')
     )
+    total_estudantes = Aluno.objects.filter(
+        agendamentos__turma__professor=request.user,
+        agendamentos__turma__ativo=True,
+        agendamentos__status='reservado',
+    ).distinct().count()
     return render(request, 'accounts/painel_professor.html', {
         'fichas_revisao_pendente': fichas_revisao_pendente,
+        'total_estudantes': total_estudantes,
     })
 
 
@@ -335,7 +341,9 @@ def painel_recepcao(request):
 def painel_financeiro(request):
     if not hasattr(request.user, 'perfil') or request.user.perfil.tipo != 'financeiro':
         raise PermissionDenied
-    return render(request, 'accounts/painel_financeiro.html')
+    from financeiro.views import obter_metricas_dashboard
+    contexto = obter_metricas_dashboard()
+    return render(request, 'accounts/painel_financeiro.html', contexto)
 
 
 @login_required(login_url='entrar')

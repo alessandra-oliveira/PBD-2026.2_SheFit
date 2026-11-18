@@ -97,7 +97,11 @@ def minhas_turmas_professor(request):
     total_turmas = len(turmas)
     total_estudantes = sum(t.capacidade_maxima - t.vagas_restantes() for t in turmas)
     capacidade_total = sum(t.capacidade_maxima for t in turmas)
-    ocupacao_media = round((total_estudantes / capacidade_total * 100), 1) if capacidade_total > 0 else 0
+    if capacidade_total > 0:
+        calc = (total_estudantes / capacidade_total) * 100
+        ocupacao_media = int(calc) if calc.is_integer() else round(calc, 1)
+    else:
+        ocupacao_media = 0
 
     for turma in turmas:
         turma.matriculados = turma.capacidade_maxima - turma.vagas_restantes()
