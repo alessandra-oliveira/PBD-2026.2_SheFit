@@ -98,6 +98,56 @@ def registrar_entrada(aluno):
     resultado.update(registrada=True, frequencia=frequencia)
     return resultado
 
+def liberar_excepcionalmente(aluno, motivo, usuario):
+    """Libera a entrada de uma aluna BLOQUEADA, com motivo e responsável (T10).
+
+    Só grava uma Frequencia marcada como excepcional. Não altera matrícula,
+    cobrança nem situação: por isso este serviço não chama nada de escrita
+    do financeiro.
+    """
+    motivo = (motivo or '').strip()
+
+    # Reavalia no momento (não confia no que a tela mostrou antes).
+    resultado = avaliar_acesso(aluno)
+    resultado.update(registrada=False, duplicada=False, frequencia=None, erro=None)
+
+    if usuario is None or not getattr(usuario, 'pk', None):
+        resultado['erro'] = 'Informe quem está liberando.'
+    elif not motivo:
+        resultado['erro'] = 'O motivo da liberação é obrigatório.'
+    elif len(motivo) > 255:
+        resultado['erro'] = 'O motivo pode ter no máximo 255 caracteres.'
+    elif resultado['sucesso']:
+        resultado['erro'] = 'O acesso desta aluna já está liberado; não há o que liberar.'
+
+    if resultado['erro']:
+        return resultado
+
+    with transaction.atomic():
+        # Mesma trava do registrar_entrada: cliques simultâneos entram um por vez.
+        Aluno.objects.select_for_update().get(pk=aluno.pk)
+
+        recente = Frequencia.objects.filter(
+            aluno=aluno,
+            excepcional=True,
+            data_hora__gte=timezone.now() - JANELA_ENTRADA_DUPLICADA,
+        ).first()
+        if recente:
+            resultado.update(duplicada=True, frequencia=recente)
+            return resultado
+
+        frequencia = Frequencia.objects.create(
+            aluno=aluno,
+            liberado=True,
+            excepcional=True,
+            motivo_excepcional=motivo,
+            liberado_por=usuario,
+            observacao='Liberação excepcional',
+        )
+
+    resultado.update(registrada=True, frequencia=frequencia)
+    return resultado
+
 
 def processar_entrada_aluno(identificador):
     """Busca + registro em uma chamada (uso fora da tela, ex.: scripts/testes).
