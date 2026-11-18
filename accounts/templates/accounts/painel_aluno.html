@@ -59,6 +59,27 @@
             margin-bottom: 28px;
         }
         
+        .botao-menu {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            transition: all 0.2s ease-in-out;
+        }
+        .botao-menu:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.95);
+        }
+
+        .btn-ficha { background: #fdf2f8; color: #db2777; }
+        .btn-aulas { background: #ede9fe; color: #6d28d9; }
+        .btn-evolucao { background: #fdf2f8; color: #db2777; }
+        .btn-financeiro { background: #e0f2fe; color: #0284c7; }
+        
         .botao-sair {
             display: block;
             width: 100%;
@@ -77,15 +98,15 @@
         }
 
         .alerta-aviso {
-        background: #fffbeb;
-        border: 1px solid #fef3c7;
-        color: #92400e;
-        padding: 12px 14px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        line-height: 1.4;
-        margin: 16px 0;
-        text-align: center;
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            color: #92400e;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 16px 0;
+            text-align: center;
         }
     </style>
 </head>
@@ -95,11 +116,13 @@
         <div class="badge">Aluna</div>
         <h2 class="saudacao">Olá, {{ request.user.username }}!</h2>
         <p class="descricao">Bem-vinda ao seu espaço de treinos e evolução na SheFit.</p>
+        
         {% if aluno and not aluno.apto_para_treino %}
             <div class="alerta-aviso">
                 <strong>Aviso de Matrícula:</strong> Sua matrícula está pendente de anamnese médica. Por favor, procure a recepção para regularizar seu cadastro.
             </div>
         {% endif %}
+
         <section style="text-align: left; margin: 20px 0;">
             <h3 style="color: #6d28d9; margin-bottom: 10px;">Minha ficha de treino</h3>
             {% if ficha_ativa %}
@@ -114,15 +137,18 @@
                 {% empty %}
                     <p>Sua ficha ainda não possui exercícios.</p>
                 {% endfor %}
-                <a href="{% url 'ficha_ativa_aluno' %}" class="botao-sair" style="background: #fdf2f8; color: #db2777; margin-top: 10px;">Abrir ficha</a>
+                <a href="{% url 'ficha_ativa_aluno' %}" class="botao-menu btn-ficha" style="margin-top: 10px;">Abrir ficha</a>
             {% else %}
                 <div class="alerta-aviso">Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais informações.</div>
             {% endif %}
         </section>
-        <a href="{% url 'minhas_aulas' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Minhas aulas</a>
-        <a href="{% url 'minha_evolucao' %}" class="botao-sair" style="background: #fdf2f8; color: #db2777; margin-bottom: 10px;">Minha evolução</a>
-        <a href="{% url 'numeros_da_academia' %}" class="botao-sair" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Meus resultados</a>
+        
+        <a href="{% url 'minhas_aulas' %}" class="botao-menu btn-aulas" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Minhas aulas</a>
+        <a href="{% url 'minha_evolucao' %}" class="botao-menu btn-evolucao" style="background: #fdf2f8; color: #db2777; margin-bottom: 10px;">Minha evolução</a>
+        <a href="{% url 'minha_situacao_financeira' %}" class="botao-menu btn-financeiro" style="margin-bottom: 10px;">Minha Situação Financeira</a>
+        <a href="{% url 'numeros_da_academia' %}" class="botao-menu" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Meus resultados</a>
         <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
+
     </div>
 </body>
 </html>
