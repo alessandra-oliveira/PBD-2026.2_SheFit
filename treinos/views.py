@@ -6,8 +6,10 @@ from django.utils import timezone
 from accounts.decorators import perfil_requerido
 from alunos.models import Aluno
 from .forms import ExercicioTreinoFormSet, FichaTreinoForm
-from .models import FichaTreino
+from .models import FichaTreino, ExercicioTreino
 
+from django.views.decorators.http import require_POST
+from .forms import ExecucaoExercicioForm
 
 @perfil_requerido('professor')
 def listar_fichas(request):
@@ -86,3 +88,23 @@ def ficha_ativa_aluno(request):
         .first()
     )
     return render(request, 'treinos/ficha_aluno.html', {'ficha': ficha})
+
+@perfil_requerido('aluno')
+@require_POST
+def registrar_execucao(request, exercicio_id):
+    """A aluna registra a carga que usou num exercício da SUA ficha ativa."""
+    aluno = get_object_or_404(Aluno, perfil=request.user.perfil)
+    exercicio = get_object_or_404(
+        ExercicioTreino, pk=exercicio_id, ficha__aluno=aluno, ficha__ativa=True,
+    )
+    form = ExecucaoExercicioForm(request.POST)
+    if form.is_valid():
+        execucao = form.save(commit=False)
+        execucao.aluno = aluno
+        execucao.exercicio = exercicio
+        execucao.save()
+        messages.success(request, f'Carga de {exercicio.nome} registrada.')
+    else:
+        erros = ' '.join(e for lista in form.errors.values() for e in lista)
+        messages.error(request, f'Não foi possível registrar {exercicio.nome}: {erros}')
+    return redirect('ficha_ativa_aluno')

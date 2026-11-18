@@ -408,7 +408,6 @@ def cancelar_matricula(request, matricula_id):
         'form': form,
     })
 
-
 @login_required(login_url='entrar')
 @perfil_requerido('recepcao')
 def listar_renovacoes(request):
