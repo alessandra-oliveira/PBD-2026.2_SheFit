@@ -68,6 +68,11 @@ class ExercicioTreino(models.Model):
     def __str__(self):
         return self.nome
 
+
+# ---------------------------------------------------------------------------
+# T14: registro de execução do treino (imutável)
+# ---------------------------------------------------------------------------
+
 class RegistroImutavelError(Exception):
     """Execuções registradas não podem ser alteradas nem apagadas."""
 
@@ -122,7 +127,7 @@ class Execucao(RegistroImutavel):
         return f'Treino de {self.aluno.nome} em {self.data:%d/%m/%Y}'
 
 
-class ExecucaoExercicio(RegistroImutavel):
+class ItemExecucao(RegistroImutavel):
     execucao = models.ForeignKey(
         Execucao,
         on_delete=models.CASCADE,
@@ -133,7 +138,7 @@ class ExecucaoExercicio(RegistroImutavel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='execucoes',
+        related_name='itens_execucao',
     )
     nome = models.CharField(max_length=150, verbose_name='Exercício')
     carga_prescrita = models.DecimalField(
@@ -148,8 +153,32 @@ class ExecucaoExercicio(RegistroImutavel):
 
     class Meta:
         ordering = ['pk']
-        verbose_name = 'Exercício executado'
-        verbose_name_plural = 'Exercícios executados'
+        verbose_name = 'Item da execução'
+        verbose_name_plural = 'Itens da execução'
 
     def __str__(self):
         return self.nome
+
+
+# ---------------------------------------------------------------------------
+# T21: evolução de carga (model da main, mantido como está)
+# ---------------------------------------------------------------------------
+
+class ExecucaoExercicio(models.Model):
+    """O que a aluna realmente fez num exercício (≠ `carga_sugerida`, que é a prescrição)."""
+    aluno = models.ForeignKey('alunos.Aluno', on_delete=models.PROTECT, related_name='execucoes_exercicio')
+    exercicio = models.ForeignKey(ExercicioTreino, on_delete=models.PROTECT, related_name='execucoes')
+    data = models.DateField(default=timezone.localdate, verbose_name='Data')
+    carga_kg = models.DecimalField(max_digits=8, decimal_places=2,
+                                   validators=[MinValueValidator(0)], verbose_name='Carga (kg)')
+    series = models.PositiveIntegerField(null=True, blank=True, verbose_name='Séries')
+    repeticoes = models.PositiveIntegerField(null=True, blank=True, verbose_name='Repetições')
+    registrada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['data', 'pk']
+        verbose_name = 'Execução de exercício'
+        verbose_name_plural = 'Execuções de exercício'
+
+    def __str__(self):
+        return f'{self.exercicio.nome}: {self.carga_kg} kg em {self.data:%d/%m/%Y}'

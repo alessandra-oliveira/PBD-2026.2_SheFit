@@ -10,8 +10,12 @@ from accounts.models import Perfil
 from alunos.models import Aluno
 from avaliacoes.models import AvaliacaoFisica
 from recepcao.models import Frequencia
+from treinos.models import ExecucaoExercicio, ExercicioTreino, FichaTreino
+from turmas.models import Frequencia as PresencaAula, Modalidade, Turma
 
-from .servicos import frequencia_no_periodo, normalizar_periodo
+from .servicos import (
+    evolucao_de_carga, frequencia_no_periodo, normalizar_periodo, presenca_em_aulas_no_periodo,
+)
 
 
 class BaseRetencaoTest(TestCase):
@@ -210,3 +214,176 @@ class TelaTests(BaseRetencaoTest):
         self.entrar_como('ana')
         resposta = self.client.get(reverse('painel_aluno'))
         self.assertContains(resposta, self.url)
+
+
+class PresencaAulasTests(BaseRetencaoTest):
+    def setUp(self):
+        super().setUp()
+        self.zumba = Modalidade.objects.create(nome='Zumba')
+        self.yoga = Modalidade.objects.create(nome='Yoga')
+        self.turma_zumba = self.turma(self.zumba)
+        self.turma_yoga = self.turma(self.yoga)
+
+    def turma(self, modalidade):
+        return Turma.objects.create(
+            modalidade=modalidade, dia_semana='segunda', horario='08:00',
+            professor=self.professor, sala='A', capacidade_maxima=10,
+        )
+
+    def chamada(self, aluno, turma, dias_atras, presente):
+        return PresencaAula.objects.create(
+            turma=turma, aluno=aluno.perfil.usuario,
+            data=self.hoje - timedelta(days=dias_atras), presente=presente,
+        )
+
+    def test_conta_presencas_e_faltas_por_modalidade(self):
+        self.chamada(self.aluna, self.turma_zumba, 1, True)
+        self.chamada(self.aluna, self.turma_zumba, 2, True)
+        self.chamada(self.aluna, self.turma_zumba, 3, False)
+        self.chamada(self.aluna, self.turma_yoga, 4, True)
+        r = presenca_em_aulas_no_periodo(self.aluna, '30')
+        self.assertEqual((r['presencas'], r['faltas'], r['total']), (3, 1, 4))
+        self.assertEqual(r['percentual'], 75)
+        self.assertEqual(
+            [(i['modalidade'], i['presencas'], i['faltas']) for i in r['por_modalidade']],
+            [('Yoga', 1, 0), ('Zumba', 2, 1)],
+        )
+
+    def test_respeita_o_periodo(self):
+        self.chamada(self.aluna, self.turma_zumba, 2, True)
+        self.chamada(self.aluna, self.turma_zumba, 20, True)
+        self.assertEqual(presenca_em_aulas_no_periodo(self.aluna, '7')['presencas'], 1)
+        self.assertEqual(presenca_em_aulas_no_periodo(self.aluna, '30')['presencas'], 2)
+
+    def test_nao_conta_presenca_de_outra_aluna(self):
+        self.chamada(self.outra, self.turma_zumba, 1, True)
+        self.assertEqual(presenca_em_aulas_no_periodo(self.aluna, '30')['total'], 0)
+
+    def test_sem_chamada_nao_tem_percentual(self):
+        r = presenca_em_aulas_no_periodo(self.aluna, '30')
+        self.assertEqual(r['total'], 0)
+        self.assertIsNone(r['percentual'])
+
+    def test_tela_mostra_presencas(self):
+        self.chamada(self.aluna, self.turma_zumba, 1, True)
+        self.chamada(self.aluna, self.turma_zumba, 2, False)
+        self.entrar_como('ana')
+        resp = self.client.get(self.url)
+        self.assertContains(resp, 'Presença nas aulas coletivas')
+        self.assertContains(resp, 'Zumba')
+        self.assertContains(resp, '50%')
+
+    def test_tela_sem_chamada_mostra_aviso(self):
+        self.entrar_como('ana')
+        self.assertContains(self.client.get(self.url), 'Nenhuma aula coletiva com chamada')
+
+
+class EvolucaoCargaTests(BaseRetencaoTest):
+    def setUp(self):
+        super().setUp()
+        self.ficha = FichaTreino.objects.create(
+            aluno=self.aluna, professor=self.professor, data_revisao=self.hoje + timedelta(days=30),
+        )
+        self.agacho = ExercicioTreino.objects.create(ficha=self.ficha, nome='Agachamento')
+        self.remada = ExercicioTreino.objects.create(ficha=self.ficha, nome='Remada')
+
+    def execucao(self, exercicio, carga, dias_atras, aluno=None):
+        return ExecucaoExercicio.objects.create(
+            aluno=aluno or self.aluna, exercicio=exercicio, carga_kg=Decimal(carga),
+            data=self.hoje - timedelta(days=dias_atras),
+        )
+
+    def test_evolucao_por_exercicio_em_ordem_cronologica(self):
+        self.execucao(self.agacho, '30', 0)
+        self.execucao(self.agacho, '20', 20)
+        self.execucao(self.agacho, '25', 10)
+        self.execucao(self.remada, '10', 5)
+        r = {g['nome']: g for g in evolucao_de_carga(self.aluna)}
+        ag = r['Agachamento']
+        self.assertEqual([x.carga_kg for x in ag['registros']], [Decimal('20'), Decimal('25'), Decimal('30')])
+        self.assertEqual((ag['primeira'], ag['ultima'], ag['maior'], ag['diferenca']),
+                         (Decimal('20'), Decimal('30'), Decimal('30'), Decimal('10')))
+        self.assertIsNone(r['Remada']['diferenca'])
+
+    def test_serie_continua_quando_a_ficha_e_trocada(self):
+        self.execucao(self.agacho, '20', 30)
+        self.ficha.encerrar()
+        nova = FichaTreino.objects.create(
+            aluno=self.aluna, professor=self.professor, data_revisao=self.hoje + timedelta(days=30),
+        )
+        novo = ExercicioTreino.objects.create(ficha=nova, nome='  agachamento ')
+        self.execucao(novo, '35', 0)
+        grupos = evolucao_de_carga(self.aluna)
+        self.assertEqual(len(grupos), 1)
+        self.assertEqual(grupos[0]['quantidade'], 2)
+        self.assertEqual(grupos[0]['diferenca'], Decimal('15'))
+
+    def test_nao_mistura_execucoes_de_outra_aluna(self):
+        self.execucao(self.agacho, '20', 1, aluno=self.outra)
+        self.assertEqual(evolucao_de_carga(self.aluna), [])
+
+    def test_tela_mostra_evolucao(self):
+        self.execucao(self.agacho, '20', 10)
+        self.execucao(self.agacho, '27.5', 0)
+        self.entrar_como('ana')
+        resp = self.client.get(self.url)
+        self.assertContains(resp, 'Evolução da carga por exercício')
+        self.assertContains(resp, 'Agachamento')
+        self.assertContains(resp, '+7,50 kg')
+
+    def test_aluna_sem_execucao_ve_aviso_sem_erro(self):
+        self.entrar_como('ana')
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'ainda não registrou nenhuma carga')
+
+
+class RegistrarExecucaoTests(BaseRetencaoTest):
+    def setUp(self):
+        super().setUp()
+        self.ficha = FichaTreino.objects.create(
+            aluno=self.aluna, professor=self.professor, data_revisao=self.hoje + timedelta(days=30),
+        )
+        self.ex = ExercicioTreino.objects.create(ficha=self.ficha, nome='Agachamento')
+        self.url_reg = reverse('registrar_execucao', args=[self.ex.pk])
+
+    def test_aluna_registra_carga(self):
+        self.entrar_como('ana')
+        resp = self.client.post(self.url_reg, {
+            'data': self.hoje.isoformat(), 'carga_kg': '22.5', 'series': '3', 'repeticoes': '12',
+        })
+        self.assertRedirects(resp, reverse('ficha_ativa_aluno'))
+        e = ExecucaoExercicio.objects.get()
+        self.assertEqual((e.aluno, e.exercicio, e.carga_kg, e.series), (self.aluna, self.ex, Decimal('22.50'), 3))
+
+    def test_recusa_carga_negativa_e_data_futura(self):
+        self.entrar_como('ana')
+        self.client.post(self.url_reg, {'data': self.hoje.isoformat(), 'carga_kg': '-5'})
+        self.client.post(self.url_reg, {
+            'data': (self.hoje + timedelta(days=1)).isoformat(), 'carga_kg': '10',
+        })
+        self.assertEqual(ExecucaoExercicio.objects.count(), 0)
+
+    def test_nao_registra_em_exercicio_de_outra_aluna(self):
+        self.entrar_como('bia')
+        resp = self.client.post(self.url_reg, {'data': self.hoje.isoformat(), 'carga_kg': '10'})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(ExecucaoExercicio.objects.count(), 0)
+
+    def test_nao_registra_em_ficha_encerrada(self):
+        self.ficha.encerrar()
+        self.entrar_como('ana')
+        resp = self.client.post(self.url_reg, {'data': self.hoje.isoformat(), 'carga_kg': '10'})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_professor_nao_registra_e_get_nao_permitido(self):
+        self.entrar_como('prof')
+        self.client.post(self.url_reg, {'data': self.hoje.isoformat(), 'carga_kg': '10'})
+        self.assertEqual(ExecucaoExercicio.objects.count(), 0)
+        self.client.logout()
+        self.entrar_como('ana')
+        self.assertEqual(self.client.get(self.url_reg).status_code, 405)
+
+    def test_ficha_da_aluna_mostra_formulario_de_carga(self):
+        self.entrar_como('ana')
+        self.assertContains(self.client.get(reverse('ficha_ativa_aluno')), 'Registrar treino')

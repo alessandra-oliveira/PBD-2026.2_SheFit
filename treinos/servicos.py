@@ -3,7 +3,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 
-from .models import Execucao, ExecucaoExercicio, FichaTreino
+from .models import Execucao, ExecucaoExercicio, FichaTreino, ItemExecucao
 
 
 def ficha_ativa(aluno):
@@ -15,6 +15,7 @@ def registrar_execucao(aluno, itens, observacoes='', data=None):
 
     itens: lista de {'exercicio_id': int, 'carga_efetiva': Decimal | None}.
     Cria o registro com cópia dos dados da ficha; depois de criado, não muda mais.
+    As cargas informadas também alimentam a evolução da T21 (ExecucaoExercicio).
     """
     ficha = ficha_ativa(aluno)
     if ficha is None:
@@ -50,8 +51,8 @@ def registrar_execucao(aluno, itens, observacoes='', data=None):
             observacoes=(observacoes or '').strip(),
             total_prescritos=len(exercicios),
         )
-        ExecucaoExercicio.objects.bulk_create([
-            ExecucaoExercicio(
+        ItemExecucao.objects.bulk_create([
+            ItemExecucao(
                 execucao=execucao,
                 exercicio=exercicios[item['exercicio_id']],
                 nome=exercicios[item['exercicio_id']].nome,
@@ -60,6 +61,16 @@ def registrar_execucao(aluno, itens, observacoes='', data=None):
             )
             for item in itens
         ])
+        ExecucaoExercicio.objects.bulk_create([
+            ExecucaoExercicio(
+                aluno=aluno,
+                exercicio=exercicios[item['exercicio_id']],
+                data=data,
+                carga_kg=item['carga_efetiva'],
+            )
+            for item in itens
+            if item.get('carga_efetiva') is not None
+        ])
     return execucao
 
 
@@ -67,7 +78,7 @@ def aderencia(aluno, inicio, fim):
     """Exercícios feitos sobre os prescritos, nos treinos registrados no período."""
     execucoes = Execucao.objects.filter(aluno=aluno, data__gte=inicio, data__lte=fim)
     prescritos = execucoes.aggregate(total=Sum('total_prescritos'))['total'] or 0
-    feitos = ExecucaoExercicio.objects.filter(execucao__in=execucoes).count()
+    feitos = ItemExecucao.objects.filter(execucao__in=execucoes).count()
     return {
         'treinos': execucoes.count(),
         'feitos': feitos,
@@ -79,7 +90,7 @@ def aderencia(aluno, inicio, fim):
 def evolucao_carga(aluno):
     """Cargas efetivas por exercício, da mais antiga para a mais recente."""
     itens = (
-        ExecucaoExercicio.objects
+        ItemExecucao.objects
         .filter(execucao__aluno=aluno, carga_efetiva__isnull=False)
         .select_related('execucao')
         .order_by('execucao__data', 'execucao_id')

@@ -6,12 +6,14 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from accounts.decorators import perfil_requerido
 from alunos.models import Aluno
-from .forms import ExercicioTreinoFormSet, FichaTreinoForm
-from .models import Execucao, FichaTreino
-from .servicos import aderencia, evolucao_carga, ficha_ativa, registrar_execucao
+from .forms import ExecucaoExercicioForm, ExercicioTreinoFormSet, FichaTreinoForm
+from .models import Execucao, ExercicioTreino, FichaTreino
+from .servicos import aderencia, evolucao_carga, ficha_ativa
+from .servicos import registrar_execucao as registrar_execucao_servico
 
 
 @perfil_requerido('professor')
@@ -92,6 +94,36 @@ def ficha_ativa_aluno(request):
     )
     return render(request, 'treinos/ficha_aluno.html', {'ficha': ficha})
 
+
+# ---------------------------------------------------------------------------
+# T21: registro de carga por exercício (view da main, mantida como está)
+# ---------------------------------------------------------------------------
+
+@perfil_requerido('aluno')
+@require_POST
+def registrar_execucao(request, exercicio_id):
+    """A aluna registra a carga que usou num exercício da SUA ficha ativa."""
+    aluno = get_object_or_404(Aluno, perfil=request.user.perfil)
+    exercicio = get_object_or_404(
+        ExercicioTreino, pk=exercicio_id, ficha__aluno=aluno, ficha__ativa=True,
+    )
+    form = ExecucaoExercicioForm(request.POST)
+    if form.is_valid():
+        execucao = form.save(commit=False)
+        execucao.aluno = aluno
+        execucao.exercicio = exercicio
+        execucao.save()
+        messages.success(request, f'Carga de {exercicio.nome} registrada.')
+    else:
+        erros = ' '.join(e for lista in form.errors.values() for e in lista)
+        messages.error(request, f'Não foi possível registrar {exercicio.nome}: {erros}')
+    return redirect('ficha_ativa_aluno')
+
+
+# ---------------------------------------------------------------------------
+# T14: registro do treino (imutável), aderência e progressão de carga
+# ---------------------------------------------------------------------------
+
 def _data_ou_none(texto):
     try:
         return date.fromisoformat(texto)
@@ -145,7 +177,7 @@ def registrar_execucao_aluno(request):
         itens.append({'exercicio_id': exercicio.pk, 'carga_efetiva': carga})
 
     try:
-        registrar_execucao(aluno, itens, request.POST.get('observacoes', ''), data)
+        registrar_execucao_servico(aluno, itens, request.POST.get('observacoes', ''), data)
     except ValidationError as erro:
         for mensagem in erro.messages:
             messages.error(request, mensagem)
@@ -157,7 +189,7 @@ def registrar_execucao_aluno(request):
 
 @perfil_requerido('aluno')
 def evolucao_aluno(request):
-    """Tarefa T14: o aluno vê a evolução da carga dele, por exercício."""
+    """Tarefa T14: o aluno vê a progressão de carga dele, por exercício."""
     aluno = get_object_or_404(Aluno, perfil=request.user.perfil)
     exercicios = []
     for nome, pontos in evolucao_carga(aluno).items():

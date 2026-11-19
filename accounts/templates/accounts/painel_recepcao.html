@@ -841,6 +841,13 @@
                 <a href="{% url 'criar_matricula' %}" class="btn-primary">
                     + Nova Matrícula
                 </a>
+                                <a href="{% url 'listar_renovacoes' %}" class="btn-secondary">
+                    Renovações
+                </a>
+                <a href="{% url 'buscar_matricula_cancelamento' %}" class="btn-secondary">
+                    Cancelar Matrícula
+                </a>
+                
             </div>
         </div>
 
@@ -852,6 +859,19 @@
                 <span>Existem cobranças pendentes para o dia de hoje que requerem atenção na recepção.</span>
             </div>
             <a href="{% url 'tela_entrada_recepcao' %}" class="btn-retry">Verificar Entrada</a>
+        </div>
+        {% endif %}
+        <!-- Renovações por confirmação vencendo (T18) -->
+        {% if renovacoes_vencendo %}
+        <div class="alert-card">
+            <div class="alert-left">
+                <i data-lucide="refresh-cw"></i>
+                <span>
+                    {{ renovacoes_vencendo|length }} matrícula(s) com renovação por confirmação vencendo ou vencida:
+                    {% for item in renovacoes_vencendo|slice:":3" %}{{ item.matricula.aluno.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if renovacoes_vencendo|length > 3 %} e outras{% endif %}.
+                </span>
+            </div>
+            <a href="{% url 'listar_renovacoes' %}" class="btn-retry">Ver renovações</a>
         </div>
         {% endif %}
 
@@ -957,7 +977,7 @@
                                 <span class="badge-turmas">{{ mod.turmas_count }} turma{{ mod.turmas_count|pluralize }}</span>
                             </div>
                             <div class="popular-progress-bg">
-                                <div class="popular-progress-fill" style="width: {{ mod.porcentagem }}%;"></div>
+                                <div class="popular-progress-fill" style="width: {{ mod.porcentagem }}%; "></div>
                             </div>
                             <div class="popular-meta">
                                 <span>Capacidade: {{ mod.capacidade_total }} alunas</span>

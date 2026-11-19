@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,79 +9,211 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Minha ficha de treino - SheFit</title>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 28px 16px; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #1f2937; }
-        main { max-width: 760px; margin: auto; }
-        .card { background: #fff; border-radius: 16px; padding: 28px; margin-bottom: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
-        h1, h2 { color: #6d28d9; }
-        h2 { font-size: 1.1rem; margin: 0 0 4px; }
-        .exercicio { border-top: 1px solid #e5e7eb; padding: 14px 0; }
-        .exercicio-topo { display: flex; align-items: center; gap: 10px; }
-        .exercicio-topo input[type="checkbox"] { width: 20px; height: 20px; accent-color: #7c3aed; }
-        .exercicio p { margin: 4px 0 0 30px; font-size: .9rem; color: #4b5563; }
-        .carga { margin: 8px 0 0 30px; display: flex; align-items: center; gap: 8px; font-size: .9rem; }
-        .carga input { width: 110px; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; }
-        label.campo { display: block; font-weight: 600; margin: 16px 0 6px; font-size: .9rem; }
-        input[type="date"], textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; font-family: inherit; }
-        button { margin-top: 18px; width: 100%; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; font-weight: 600; font-size: 1rem; cursor: pointer; }
-        .botao { display: inline-block; border-radius: 8px; padding: 11px 15px; background: #f3f4f6; color: #374151; text-decoration: none; margin-right: 8px; }
-        .aviso { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; }
-        .msg { border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; font-size: .92rem; }
-        .msg.success { background: #dcfce7; color: #166534; }
-        .msg.error { background: #fee2e2; color: #991b1b; }
-        .msg.warning, .msg.info { background: #e0f2fe; color: #075985; }
-        .dica { font-size: .85rem; color: #6b7280; margin-top: 6px; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 28px 16px;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: #1f2937;
+        }
+
+        main {
+            max-width: 760px;
+            margin: auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, .15);
+        }
+
+        h1,
+        h2 {
+            color: #6d28d9;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin: 0 0 4px;
+        }
+
+        .exercicio {
+            border-top: 1px solid #e5e7eb;
+            padding: 14px 0;
+        }
+
+        .exercicio-topo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exercicio-topo input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #7c3aed;
+        }
+
+        .exercicio p {
+            margin: 4px 0 0 30px;
+            font-size: .9rem;
+            color: #4b5563;
+        }
+
+        .carga {
+            margin: 8px 0 0 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: .9rem;
+        }
+
+        .carga input {
+            width: 110px;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        label.campo {
+            display: block;
+            font-weight: 600;
+            margin: 16px 0 6px;
+            font-size: .9rem;
+        }
+
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        button {
+            margin-top: 18px;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .botao {
+            display: inline-block;
+            border-radius: 8px;
+            padding: 11px 15px;
+            background: #f3f4f6;
+            color: #374151;
+            text-decoration: none;
+            margin-right: 8px;
+        }
+
+        .aviso {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .msg {
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            font-size: .92rem;
+        }
+
+        .msg.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .msg.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .msg.warning,
+        .msg.info {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        .dica {
+            font-size: .85rem;
+            color: #6b7280;
+            margin-top: 6px;
+        }
     </style>
 </head>
-<body>
-<main>
-    {% for message in messages %}
-        <div class="msg {{ message.tags }}">{{ message }}</div>
-    {% endfor %}
 
-    <section class="card">
-        <h1>Minha ficha de treino</h1>
-        {% if ficha %}
+<body>
+    <main>
+        {% for message in messages %}
+        <div class="msg {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+
+        <section class="card">
+            <h1>Minha ficha de treino</h1>
+            {% if ficha %}
             <p><strong>Criada em:</strong> {{ ficha.criada_em|date:"d/m/Y" }}</p>
             <p><strong>Revisão prevista:</strong> {{ ficha.data_revisao|date:"d/m/Y" }}</p>
 
             <form method="post" action="{% url 'registrar_execucao_aluno' %}">
                 {% csrf_token %}
                 {% for exercicio in ficha.exercicios.all %}
-                    <article class="exercicio">
-                        <div class="exercicio-topo">
-                            <input type="checkbox" id="feito_{{ exercicio.pk }}" name="feito_{{ exercicio.pk }}" value="1">
-                            <h2><label for="feito_{{ exercicio.pk }}">{{ exercicio.nome }}</label></h2>
-                        </div>
-                        <p>Séries: {{ exercicio.series|default_if_none:"Não informado" }} · Repetições: {{ exercicio.repeticoes|default_if_none:"Não informado" }}</p>
-                        <p>Carga sugerida: {{ exercicio.carga_sugerida|default_if_none:"Não informada" }}</p>
-                        {% if exercicio.observacoes %}<p>Observações: {{ exercicio.observacoes }}</p>{% endif %}
-                        <div class="carga">
-                            <label for="carga_{{ exercicio.pk }}">Carga que usei (kg):</label>
-                            <input type="text" inputmode="decimal" id="carga_{{ exercicio.pk }}" name="carga_{{ exercicio.pk }}">
-                        </div>
-                    </article>
+                <article class="exercicio">
+                    <div class="exercicio-topo">
+                        <input type="checkbox" id="feito_{{ exercicio.pk }}" name="feito_{{ exercicio.pk }}" value="1">
+                        <h2><label for="feito_{{ exercicio.pk }}">{{ exercicio.nome }}</label></h2>
+                    </div>
+                    <p>Séries: {{ exercicio.series|default_if_none:"Não informado" }} · Repetições: {{ exercicio.repeticoes|default_if_none:"Não informado" }}</p>
+                    <p>Carga sugerida: {{ exercicio.carga_sugerida|default_if_none:"Não informada" }}</p>
+                    {% if exercicio.observacoes %}<p>Observações: {{ exercicio.observacoes }}</p>{% endif %}
+                    <div class="carga">
+                        <label for="carga_{{ exercicio.pk }}">Carga que usei (kg):</label>
+                        <input type="text" inputmode="decimal" id="carga_{{ exercicio.pk }}"
+                            name="carga_{{ exercicio.pk }}">
+                    </div>
+                </article>
                 {% empty %}
-                    <p>Sua ficha ainda não possui exercícios.</p>
+                <p>Sua ficha ainda não possui exercícios.</p>
                 {% endfor %}
 
                 {% if ficha.exercicios.all %}
-                    <label class="campo" for="data">Data do treino</label>
-                    <input type="date" id="data" name="data">
-                    <p class="dica">Deixe em branco para registrar hoje.</p>
+                <label class="campo" for="data">Data do treino</label>
+                <input type="date" id="data" name="data">
+                <p class="dica">Deixe em branco para registrar hoje.</p>
 
-                    <label class="campo" for="observacoes">Observações</label>
-                    <textarea id="observacoes" name="observacoes" rows="3"></textarea>
+                <label class="campo" for="observacoes">Observações</label>
+                <textarea id="observacoes" name="observacoes" rows="3"></textarea>
 
-                    <button type="submit">Registrar treino</button>
+                <button type="submit">Registrar treino</button>
                 {% endif %}
             </form>
-        {% else %}
-            <p class="aviso">Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais informações.</p>
-        {% endif %}
-    </section>
-    <a class="botao" href="{% url 'painel_aluno' %}">Voltar ao painel</a>
-    {% if ficha %}<a class="botao" href="{% url 'evolucao_aluno' %}">Ver minha evolução</a>{% endif %}
-</main>
+            {% else %}
+            <p class="aviso">Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais
+                informações.</p>
+            {% endif %}
+        </section>
+        <a class="botao" href="{% url 'painel_aluno' %}">Voltar ao painel</a>
+        {% if ficha %}<a class="botao" href="{% url 'evolucao_aluno' %}">Ver progressão de carga</a>{% endif %}
+    </main>
 </body>
+
 </html>

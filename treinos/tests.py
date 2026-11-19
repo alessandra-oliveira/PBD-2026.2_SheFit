@@ -7,13 +7,14 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.db.models import ProtectedError
 
 from accounts.models import Perfil
 from alunos.models import Aluno, Anamnese
 from django.core.exceptions import ValidationError
 
 from .models import (
-    Execucao, ExecucaoExercicio, ExercicioTreino, FichaTreino,
+    Execucao, ExecucaoExercicio, ItemExecucao, ExercicioTreino, FichaTreino,
     RegistroImutavelError,
 )
 from .servicos import aderencia, evolucao_carga, registrar_execucao
@@ -341,8 +342,8 @@ class RegistrarExecucaoServicoTests(BaseExecucaoTests):
         self.assertEqual(item.nome, 'Agachamento')
         self.assertEqual(item.carga_prescrita, Decimal('20.00'))
 
-    def test_apagar_o_exercicio_mantem_o_historico(self):
-        execucao = self.registrar((self.agachamento, Decimal('22.50')))
+    def test_apagar_o_exercicio_sem_carga_mantem_o_historico(self):
+        execucao = self.registrar((self.agachamento, None))
 
         self.agachamento.delete()
 
@@ -350,9 +351,23 @@ class RegistrarExecucaoServicoTests(BaseExecucaoTests):
         self.assertEqual(item.nome, 'Agachamento')
         self.assertIsNone(item.exercicio)
 
+    def test_exercicio_com_carga_registrada_nao_pode_ser_apagado(self):
+        self.registrar((self.agachamento, Decimal('22.50')))
+
+        with self.assertRaises(ProtectedError):
+            self.agachamento.delete()
+
     def test_carga_pode_ficar_em_branco(self):
         execucao = self.registrar((self.agachamento, None))
         self.assertIsNone(execucao.itens.get().carga_efetiva)
+
+        def test_cargas_tambem_alimentam_a_evolucao_da_t21(self):
+            self.registrar((self.agachamento, Decimal('22.50')), (self.remada, None))
+
+            registro = ExecucaoExercicio.objects.get()
+            self.assertEqual(registro.aluno, self.aluno)
+            self.assertEqual(registro.exercicio, self.agachamento)
+            self.assertEqual(registro.carga_kg, Decimal('22.50'))
 
     def test_sem_ficha_ativa_e_recusado(self):
         self.ficha.encerrar()
@@ -395,7 +410,7 @@ class RegistrarExecucaoServicoTests(BaseExecucaoTests):
                 (self.agachamento, Decimal('10')), (self.agachamento, Decimal('12')),
             )
         self.assertEqual(Execucao.objects.count(), 0)
-        self.assertEqual(ExecucaoExercicio.objects.count(), 0)
+        self.assertEqual(ItemExecucao.objects.count(), 0)
 
 
 class ImutabilidadeExecucaoTests(BaseExecucaoTests):
@@ -431,9 +446,9 @@ class ImutabilidadeExecucaoTests(BaseExecucaoTests):
         with self.assertRaises(RegistroImutavelError):
             Execucao.objects.filter(pk=self.execucao.pk).delete()
         with self.assertRaises(RegistroImutavelError):
-            ExecucaoExercicio.objects.update(carga_efetiva=Decimal('1.00'))
+            ItemExecucao.objects.update(carga_efetiva=Decimal('1.00'))
         with self.assertRaises(RegistroImutavelError):
-            ExecucaoExercicio.objects.all().delete()
+            ItemExecucao.objects.all().delete()
         self.execucao.refresh_from_db()
         self.item.refresh_from_db()
         self.assertEqual(self.execucao.observacoes, 'original')

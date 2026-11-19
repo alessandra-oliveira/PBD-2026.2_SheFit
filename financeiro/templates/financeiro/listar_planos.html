@@ -915,6 +915,7 @@
                                     {% endif %}
                                 </td>
                                 <td>Dia {{ plano.dia_vencimento }}</td>
+                                <td>{% if plano.renovacao_automatica %}Automática{% else %}Com confirmação{% endif %}</td>
                                 <td>
                                     {% if plano.ativo %}
                                         <span class="badge-status ativo">Ativo</span>
@@ -954,7 +955,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="7" class="sem-dados">
+                                <td colspan="8" class="sem-dados">
                                     Nenhum plano cadastrado ainda. Clique em <strong>+ Novo plano</strong> para cadastrar o primeiro.
                                 </td>
                             </tr>

@@ -2,8 +2,8 @@ from django import forms
 from django.forms import inlineformset_factory
 from django.utils import timezone
 from alunos.models import Aluno
-from .models import ExercicioTreino, FichaTreino
-
+from .models import ExercicioTreino, FichaTreino, ExecucaoExercicio
+from django.utils import timezone
 
 class FichaTreinoForm(forms.ModelForm):
     class Meta:
@@ -48,3 +48,20 @@ ExercicioTreinoFormSet = inlineformset_factory(
         ),
     },
 )
+
+class ExecucaoExercicioForm(forms.ModelForm):
+    class Meta:
+        model = ExecucaoExercicio
+        fields = ['data', 'carga_kg', 'series', 'repeticoes']
+        widgets = {
+            'data': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'carga_kg': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+            'series': forms.NumberInput(attrs={'min': '1'}),
+            'repeticoes': forms.NumberInput(attrs={'min': '1'}),
+        }
+
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        if data > timezone.localdate():
+            raise forms.ValidationError('A data da execução não pode ser no futuro.')
+        return data
