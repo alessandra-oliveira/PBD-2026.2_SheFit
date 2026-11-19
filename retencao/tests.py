@@ -386,4 +386,4 @@ class RegistrarExecucaoTests(BaseRetencaoTest):
 
     def test_ficha_da_aluna_mostra_formulario_de_carga(self):
         self.entrar_como('ana')
-        self.assertContains(self.client.get(reverse('ficha_ativa_aluno')), 'Registrar carga')
+        self.assertContains(self.client.get(reverse('ficha_ativa_aluno')), 'Registrar treino')

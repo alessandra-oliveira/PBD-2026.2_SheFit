@@ -8,4 +8,7 @@ urlpatterns = [
     path('minha-ficha/', views.ficha_ativa_aluno, name='ficha_ativa_aluno'),
     path('exercicio/<int:exercicio_id>/executar/', views.registrar_execucao, name='registrar_execucao'),
     path('<int:ficha_id>/', views.detalhe_ficha, name='detalhe_ficha'),
+    path('minha-ficha/registrar/', views.registrar_execucao_aluno, name='registrar_execucao_aluno'),
+    path('minha-ficha/evolucao/', views.evolucao_aluno, name='evolucao_aluno'),
+    path('aluno/<int:aluno_id>/execucoes/', views.execucoes_aluno, name='execucoes_aluno'),
 ]

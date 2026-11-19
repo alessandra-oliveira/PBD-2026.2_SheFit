@@ -68,6 +68,102 @@ class ExercicioTreino(models.Model):
     def __str__(self):
         return self.nome
 
+
+# ---------------------------------------------------------------------------
+# T14: registro de execução do treino (imutável)
+# ---------------------------------------------------------------------------
+
+class RegistroImutavelError(Exception):
+    """Execuções registradas não podem ser alteradas nem apagadas."""
+
+
+class ImutavelQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        raise RegistroImutavelError('Execuções registradas não podem ser alteradas.')
+
+    def delete(self):
+        raise RegistroImutavelError('Execuções registradas não podem ser apagadas.')
+
+
+class RegistroImutavel(models.Model):
+    objects = ImutavelQuerySet.as_manager()
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise RegistroImutavelError('Execuções registradas não podem ser alteradas.')
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise RegistroImutavelError('Execuções registradas não podem ser apagadas.')
+
+
+class Execucao(RegistroImutavel):
+    aluno = models.ForeignKey(
+        'alunos.Aluno',
+        on_delete=models.PROTECT,
+        related_name='execucoes_treino',
+    )
+    ficha = models.ForeignKey(
+        FichaTreino,
+        on_delete=models.PROTECT,
+        related_name='execucoes',
+    )
+    data = models.DateField(default=timezone.localdate, verbose_name='Data do treino')
+    registrada_em = models.DateTimeField(auto_now_add=True)
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    total_prescritos = models.PositiveIntegerField(
+        verbose_name='Exercícios prescritos na ficha',
+    )
+
+    class Meta:
+        ordering = ['-data', '-pk']
+        verbose_name = 'Execução de treino'
+        verbose_name_plural = 'Execuções de treino'
+
+    def __str__(self):
+        return f'Treino de {self.aluno.nome} em {self.data:%d/%m/%Y}'
+
+
+class ItemExecucao(RegistroImutavel):
+    execucao = models.ForeignKey(
+        Execucao,
+        on_delete=models.CASCADE,
+        related_name='itens',
+    )
+    exercicio = models.ForeignKey(
+        ExercicioTreino,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='itens_execucao',
+    )
+    nome = models.CharField(max_length=150, verbose_name='Exercício')
+    carga_prescrita = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True,
+        verbose_name='Carga prescrita',
+    )
+    carga_efetiva = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Carga efetiva',
+    )
+
+    class Meta:
+        ordering = ['pk']
+        verbose_name = 'Item da execução'
+        verbose_name_plural = 'Itens da execução'
+
+    def __str__(self):
+        return self.nome
+
+
+# ---------------------------------------------------------------------------
+# T21: evolução de carga (model da main, mantido como está)
+# ---------------------------------------------------------------------------
+
 class ExecucaoExercicio(models.Model):
     """O que a aluna realmente fez num exercício (≠ `carga_sugerida`, que é a prescrição)."""
     aluno = models.ForeignKey('alunos.Aluno', on_delete=models.PROTECT, related_name='execucoes_exercicio')

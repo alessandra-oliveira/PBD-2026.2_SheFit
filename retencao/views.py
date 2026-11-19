@@ -5,7 +5,13 @@ from accounts.decorators import perfil_requerido
 from alunos.models import Aluno
 from avaliacoes.servicos import chave_cronologica, comparar_avaliacoes
 
-from .servicos import PERIODOS, frequencia_no_periodo, normalizar_periodo
+from .servicos import (
+    PERIODOS,
+    evolucao_de_carga,
+    frequencia_no_periodo,
+    normalizar_periodo,
+    presenca_em_aulas_no_periodo,
+)
 
 
 def _inteiro(valor):
@@ -26,6 +32,8 @@ def numeros_da_academia(request):
     # 1. Frequência por período
     periodo = normalizar_periodo(request.GET.get('periodo'))
     frequencia = frequencia_no_periodo(aluno, periodo)
+    presenca_aulas = presenca_em_aulas_no_periodo(aluno, periodo)
+    cargas = evolucao_de_carga(aluno)
 
     # 3. Série histórica completa (inclui as corrigidas, marcadas), da mais antiga à mais nova
     avaliacoes = sorted(
@@ -61,6 +69,8 @@ def numeros_da_academia(request):
         'periodos': [(chave, rotulo) for chave, (rotulo, _) in PERIODOS.items()],
         'periodo': periodo,
         'frequencia': frequencia,
+        'presenca_aulas': presenca_aulas,
+        'cargas': cargas,
         'avaliacoes': avaliacoes,
         'escolhida_a': escolhida_a,
         'escolhida_b': escolhida_b,
