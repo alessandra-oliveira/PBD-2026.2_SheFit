@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django import forms
 from django.db import transaction
+from django.utils import timezone
 from .models import (
     Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula,
 )
@@ -96,3 +97,19 @@ class MatriculaForm(forms.ModelForm):
             'data_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'forma_pagamento': forms.Select(attrs={'class': 'form-control'}),
         }
+
+class TrancamentoForm(forms.Form):
+    data_inicio = forms.DateField(
+        label='Início do trancamento',
+        initial=timezone.localdate,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+    )
+    data_fim = forms.DateField(
+        label='Data de retorno',
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+    )
+    motivo = forms.CharField(
+        label='Motivo',
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+    )

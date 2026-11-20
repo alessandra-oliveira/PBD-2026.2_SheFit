@@ -56,7 +56,11 @@
                             · situação: {{ matricula.situacao_display }}
                         </div>
                     </div>
-                    <a class="button danger" href="{% url 'cancelar_matricula' matricula.id %}">Cancelar matrícula</a>
+                    <div>
+                        <a class="button danger" href="{% url 'cancelar_matricula' matricula.id %}">Cancelar matrícula</a>
+                        <a class="button" href="{% url 'trancar_matricula' matricula.id %}">Trancar</a>
+                        <a class="button secondary" href="{% url 'historico_trancamentos' matricula.id %}">Histórico</a>
+                    </div>
                 </article>
             {% empty %}
                 <section class="card"><p>Nenhuma matrícula ativa encontrada para essa busca.</p></section>

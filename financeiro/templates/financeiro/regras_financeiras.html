@@ -776,7 +776,7 @@
                         </div>
                     {% endif %}
 
-                    <!-- Grid 2x2 de inputs com sufixo embutido e texto explicativo -->
+                    <!-- Grid de inputs com sufixo embutido e texto explicativo -->
                     <div class="grid-inputs-2x2">
                         <!-- Campo 1: Dias de tolerância -->
                         <div class="campo-regra">
@@ -827,6 +827,19 @@
                             <span class="campo-ajuda">A partir de quantos dias de atraso a entrada do aluno é bloqueada.</span>
                             {% if form.dias_bloqueio.errors %}
                                 <span class="field-error">{{ form.dias_bloqueio.errors|striptags }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Campo 5: Limite anual de dias de trancamento -->
+                        <div class="campo-regra">
+                            <label for="{{ form.limite_dias_trancamento_ano.id_for_label }}">Limite anual de dias de trancamento</label>
+                            <div class="input-suffix-wrapper">
+                                {{ form.limite_dias_trancamento_ano }}
+                                <span class="suffix-badge">dias</span>
+                            </div>
+                            <span class="campo-ajuda">Máximo de dias que uma matrícula pode ficar trancada em cada ano.</span>
+                            {% if form.limite_dias_trancamento_ano.errors %}
+                                <span class="field-error">{{ form.limite_dias_trancamento_ano.errors|striptags }}</span>
                             {% endif %}
                         </div>
                     </div>

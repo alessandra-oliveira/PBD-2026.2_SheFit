@@ -29,6 +29,11 @@ from .servicos import (
     LIMITE_RESULTADOS_BUSCA, avaliar_acesso, buscar_alunos,
     liberar_excepcionalmente, registrar_entrada,
 )
+from financeiro.views import (
+    historico_geral_trancamentos,
+    historico_trancamentos,
+    trancar_matricula_view,
+)
 
 
 def _aluno_ou_none(valor):
