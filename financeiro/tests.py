@@ -391,8 +391,8 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         Trancamento.objects.create(
             matricula=self.matricula, data_inicio=self.hoje, data_fim=self.hoje + timedelta(days=10),
         )
-        self.assertEqual(self.situacao(self.hoje + timedelta(days=10)), SituacaoMatricula.TRANCADA)
-        self.assertEqual(self.situacao(self.hoje + timedelta(days=11)), SituacaoMatricula.BLOQUEADA)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=9)), SituacaoMatricula.TRANCADA)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=10)), SituacaoMatricula.BLOQUEADA)
 
     def test_trancamento_nao_aceita_fim_antes_do_inicio(self):
         t = Trancamento(matricula=self.matricula, data_inicio=self.hoje,
