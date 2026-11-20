@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from datetime import date, timedelta
 from itertools import count
@@ -20,7 +21,7 @@ from alunos.models import Aluno, Anamnese
 from .forms import MatriculaForm
 from .models import (
     RegraFinanceira, HistoricoRegraFinanceira, Plano, Matricula, Cobranca,
-    Trancamento, Cancelamento, SituacaoMatricula, Pagamento, Estorno,
+    Trancamento, Cancelamento, SituacaoMatricula, Pagamento, Estorno, Renovacao,
 )
 from .servicos import (
     realizar_matricula, gerar_cobrancas, calcular_situacao, avaliar_situacao_financeira_aluno,
@@ -64,6 +65,7 @@ DADOS_VALIDOS = {
     'juros_diario': '0.050',
     'multa_atraso': '3.00',
     'dias_bloqueio': '20',
+    'limite_dias_trancamento_ano': '90',
 }
 
 
@@ -125,6 +127,7 @@ class RegrasFinanceirasTests(TestCase):
             'juros_diario': '0.033',
             'multa_atraso': '2.5',
             'dias_bloqueio': '15',
+            'limite_dias_trancamento_ano': '90',
         }
         self.client.post(self.url, dados)
         historico = HistoricoRegraFinanceira.objects.all()

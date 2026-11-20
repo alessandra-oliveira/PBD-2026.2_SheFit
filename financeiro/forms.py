@@ -18,6 +18,7 @@ class PlanoForm(forms.ModelForm):
             'multa_cancelamento',
             'taxa_adesao',
             'dia_vencimento',
+            'renovacao_automatica',
             'ativo'
         ]
         widgets = {
@@ -35,16 +36,15 @@ class PlanoForm(forms.ModelForm):
         }
 
 class RegraFinanceiraForm(forms.ModelForm):
-
     class Meta:
         model = RegraFinanceira
-        fields = ['dias_tolerancia', 'juros_diario', 'multa_atraso', 'dias_bloqueio']
-        widgets = {
-            'dias_tolerancia': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
-            'juros_diario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.001'}),
-            'multa_atraso': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
-            'dias_bloqueio': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
-        }
+        fields = [
+            'dias_tolerancia',
+            'juros_diario',
+            'multa_atraso',
+            'dias_bloqueio',
+            'limite_dias_trancamento_ano',
+        ]
 
     def clean(self):
         dados = super().clean()
