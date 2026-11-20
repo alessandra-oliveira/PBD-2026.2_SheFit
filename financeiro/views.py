@@ -7,8 +7,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from accounts.decorators import perfil_requerido
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca, Pagamento
+from .models import (
+    Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca,
+    Pagamento, Trancamento,
+)
 from .forms import PlanoForm, RegraFinanceiraForm
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+from financeiro.servicos import trancar_matricula, dias_trancados
+from .forms import TrancamentoForm
 
 
 def obter_metricas_dashboard():
@@ -294,4 +301,83 @@ def regras_financeiras(request):
         'form': form,
         'regras': regras,
         'historico': historico,
+    })
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def trancar_matricula_view(request, matricula_id):
+    matricula = get_object_or_404(
+        Matricula.objects.select_related('aluno', 'plano'), pk=matricula_id,
+    )
+    form = TrancamentoForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        dados = form.cleaned_data
+        try:
+            resultado = trancar_matricula(
+                matricula, dados['data_inicio'], dados['data_fim'],
+                motivo=dados['motivo'], usuario=request.user,
+            )
+        except ValidationError as erro:
+            for mensagem in erro.messages:
+                form.add_error(None, mensagem)
+        else:
+            messages.success(
+                request,
+                f"Matrícula trancada por {resultado['trancamento'].dias} dia(s). "
+                f"{resultado['cobrancas_suspensas']} cobrança(s) suspensa(s) "
+                f"e vigência prorrogada.",
+            )
+            return redirect('historico_trancamentos', matricula_id=matricula.pk)
+
+    return render(request, 'recepcao/trancar_matricula.html', {
+        'matricula': matricula, 'form': form,
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def historico_trancamentos(request, matricula_id):
+    matricula = get_object_or_404(
+        Matricula.objects.select_related('aluno', 'plano'), pk=matricula_id,
+    )
+    hoje = timezone.localdate()
+    itens = []
+    for t in matricula.trancamentos.prefetch_related('cobrancas_suspensas'):
+        if t.data_fim and t.data_fim <= hoje:
+            estado = 'Encerrado'
+        elif t.data_inicio > hoje:
+            estado = 'Agendado'
+        else:
+            estado = 'Em curso'
+        itens.append({'t': t, 'estado': estado, 'suspensas': t.cobrancas_suspensas.count()})
+
+    return render(request, 'recepcao/historico_trancamentos.html', {
+        'matricula': matricula, 'itens': itens, 'total_dias': dias_trancados(matricula),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def historico_geral_trancamentos(request):
+    hoje = timezone.localdate()
+    itens = []
+    trancamentos = Trancamento.objects.select_related(
+        'matricula__aluno', 'matricula__plano',
+    ).prefetch_related('cobrancas_suspensas').order_by('-data_inicio', '-id')
+    for trancamento in trancamentos:
+        if trancamento.data_fim and trancamento.data_fim <= hoje:
+            estado = 'Encerrado'
+        elif trancamento.data_inicio > hoje:
+            estado = 'Agendado'
+        else:
+            estado = 'Em curso'
+        itens.append({
+            't': trancamento,
+            'estado': estado,
+            'suspensas': trancamento.cobrancas_suspensas.count(),
+        })
+
+    return render(request, 'recepcao/historico_geral_trancamentos.html', {
+        'itens': itens,
     })

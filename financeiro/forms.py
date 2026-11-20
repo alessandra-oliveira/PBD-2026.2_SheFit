@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django import forms
 from django.db import transaction
+from django.utils import timezone
 from .models import (
     Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula,
 )
@@ -18,6 +19,7 @@ class PlanoForm(forms.ModelForm):
             'multa_cancelamento',
             'taxa_adesao',
             'dia_vencimento',
+            'renovacao_automatica',
             'ativo'
         ]
         widgets = {
@@ -35,16 +37,15 @@ class PlanoForm(forms.ModelForm):
         }
 
 class RegraFinanceiraForm(forms.ModelForm):
-
     class Meta:
         model = RegraFinanceira
-        fields = ['dias_tolerancia', 'juros_diario', 'multa_atraso', 'dias_bloqueio']
-        widgets = {
-            'dias_tolerancia': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
-            'juros_diario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.001'}),
-            'multa_atraso': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
-            'dias_bloqueio': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
-        }
+        fields = [
+            'dias_tolerancia',
+            'juros_diario',
+            'multa_atraso',
+            'dias_bloqueio',
+            'limite_dias_trancamento_ano',
+        ]
 
     def clean(self):
         dados = super().clean()
@@ -96,3 +97,19 @@ class MatriculaForm(forms.ModelForm):
             'data_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'forma_pagamento': forms.Select(attrs={'class': 'form-control'}),
         }
+
+class TrancamentoForm(forms.Form):
+    data_inicio = forms.DateField(
+        label='Início do trancamento',
+        initial=timezone.localdate,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+    )
+    data_fim = forms.DateField(
+        label='Data de retorno',
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+    )
+    motivo = forms.CharField(
+        label='Motivo',
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+    )

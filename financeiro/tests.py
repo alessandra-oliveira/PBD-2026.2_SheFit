@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from datetime import date, timedelta
 from itertools import count
@@ -20,7 +21,7 @@ from alunos.models import Aluno, Anamnese
 from .forms import MatriculaForm
 from .models import (
     RegraFinanceira, HistoricoRegraFinanceira, Plano, Matricula, Cobranca,
-    Trancamento, Cancelamento, SituacaoMatricula, Pagamento, Estorno,
+    Trancamento, Cancelamento, SituacaoMatricula, Pagamento, Estorno, Renovacao,
 )
 from .servicos import (
     realizar_matricula, gerar_cobrancas, calcular_situacao, avaliar_situacao_financeira_aluno,
@@ -64,6 +65,7 @@ DADOS_VALIDOS = {
     'juros_diario': '0.050',
     'multa_atraso': '3.00',
     'dias_bloqueio': '20',
+    'limite_dias_trancamento_ano': '90',
 }
 
 
@@ -125,6 +127,7 @@ class RegrasFinanceirasTests(TestCase):
             'juros_diario': '0.033',
             'multa_atraso': '2.5',
             'dias_bloqueio': '15',
+            'limite_dias_trancamento_ano': '90',
         }
         self.client.post(self.url, dados)
         historico = HistoricoRegraFinanceira.objects.all()
@@ -388,8 +391,8 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         Trancamento.objects.create(
             matricula=self.matricula, data_inicio=self.hoje, data_fim=self.hoje + timedelta(days=10),
         )
-        self.assertEqual(self.situacao(self.hoje + timedelta(days=10)), SituacaoMatricula.TRANCADA)
-        self.assertEqual(self.situacao(self.hoje + timedelta(days=11)), SituacaoMatricula.BLOQUEADA)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=9)), SituacaoMatricula.TRANCADA)
+        self.assertEqual(self.situacao(self.hoje + timedelta(days=10)), SituacaoMatricula.BLOQUEADA)
 
     def test_trancamento_nao_aceita_fim_antes_do_inicio(self):
         t = Trancamento(matricula=self.matricula, data_inicio=self.hoje,
@@ -2033,3 +2036,226 @@ class TarefaT18RenovacaoSemCliqueTests(TestCase):
         chamadas = [c.args[0].pk for c in r.call_args_list]
         self.assertIn(self.matricula.pk, chamadas)
         self.assertNotIn(longe.pk, chamadas)
+
+class TarefaT16TrancamentoTests(TestCase):
+    """Trancar a matrícula: suspende cobranças, prorroga vigência, respeita limite anual."""
+
+    def setUp(self):
+        RegraFinanceira.obter()
+        self.hoje = timezone.localdate()
+        self.plano = Plano.objects.create(
+            nome='Mensal T16', periodicidade='mensal', valor=Decimal('100.00'), dia_vencimento=10,
+        )
+        self.aluno = criar_aluno_valido()
+        self.matricula = Matricula.objects.create(
+            aluno=self.aluno, plano=self.plano,
+            data_inicio=self.hoje - timedelta(days=30), forma_pagamento='pix',
+        )
+        self._n = count(1)
+
+    def cobranca_em(self, dias_a_partir_de_hoje):
+        return Cobranca.objects.create(
+            matricula=self.matricula, tipo='mensalidade', valor=Decimal('100.00'),
+            vencimento=self.hoje + timedelta(days=dias_a_partir_de_hoje),
+            competencia=f'2090-{next(self._n):02d}',
+        )
+
+    def trancar(self, ini=1, fim=31, base=None, **kw):
+        from .servicos import trancar_matricula
+        base = base or self.hoje
+        return trancar_matricula(
+            self.matricula,
+            base + timedelta(days=ini),
+            base + timedelta(days=fim),
+            hoje=base,
+            **kw,
+        )
+
+    # 1. registro com início e retorno
+    def test_registra_inicio_e_retorno(self):
+        t = self.trancar(1, 31, motivo='Viagem')['trancamento']
+        self.assertEqual(t.dias, 30)
+        self.assertEqual(t.motivo, 'Viagem')
+        self.assertEqual(self.matricula.trancamentos.count(), 1)
+
+    def test_retorno_deve_ser_depois_do_inicio(self):
+        with self.assertRaises(ValidationError):
+            self.trancar(10, 10)
+        self.assertEqual(Trancamento.objects.count(), 0)
+
+    # 2. cobranças do período suspensas
+    def test_cobrancas_do_periodo_ficam_suspensas(self):
+        dentro = self.cobranca_em(10)
+        fora = self.cobranca_em(90)
+        r = self.trancar(1, 31)
+        dentro.refresh_from_db()
+        fora.refresh_from_db()
+        self.assertTrue(dentro.suspensa)
+        self.assertEqual(dentro.trancamento, r['trancamento'])
+        self.assertFalse(fora.suspensa)
+        self.assertEqual(r['cobrancas_suspensas'], 1)
+
+    def test_cobranca_paga_nao_e_suspensa(self):
+        paga = self.cobranca_em(10)
+        paga.paga = True
+        paga.save()
+        self.trancar(1, 31)
+        paga.refresh_from_db()
+        self.assertFalse(paga.suspensa)
+
+    # 3. vigência prorrogada
+    def test_vigencia_prorrogada_pelos_dias_trancados(self):
+        from .servicos import fim_vigencia
+        antes = fim_vigencia(self.matricula)
+        self.trancar(1, 21)
+        self.assertEqual(fim_vigencia(self.matricula), antes + timedelta(days=20))
+
+    # 4. acesso bloqueado
+    def test_acesso_bloqueado_durante_o_trancamento(self):
+        self.trancar(0, 10)
+        r = avaliar_situacao_financeira_aluno(self.aluno)
+        self.assertEqual(r['status'], 'bloqueado')
+        self.assertIn('TRANCADA', r['motivo'])
+
+    # 5. limite anual
+    def test_excesso_do_limite_e_recusado_com_motivo(self):
+        regras = RegraFinanceira.obter()
+        regras.limite_dias_trancamento_ano = 30
+        regras.save()
+        with self.assertRaises(ValidationError) as ctx:
+            self.trancar(1, 41)
+        self.assertIn('Limite de 30 dias', ctx.exception.messages[0])
+        self.assertEqual(Trancamento.objects.count(), 0)
+
+    def test_limite_soma_trancamentos_anteriores_no_mesmo_ano(self):
+        regras = RegraFinanceira.obter()
+        regras.limite_dias_trancamento_ano = 40
+        regras.save()
+        base = date(self.hoje.year + 1, 1, 1)
+        self.trancar(1, 31, base=base)    # 30 dias
+        with self.assertRaises(ValidationError):
+            self.trancar(40, 55, base=base)  # +15 > 40
+        self.assertEqual(Trancamento.objects.count(), 1)
+
+    def test_nao_aceita_periodos_sobrepostos(self):
+        self.trancar(1, 21)
+        with self.assertRaises(ValidationError):
+            self.trancar(10, 30)
+
+    # 6. trancada no período e volta a ativa
+    def test_trancada_no_periodo_e_ativa_no_retorno(self):
+        self.trancar(0, 10)
+        self.assertEqual(
+            calcular_situacao(self.matricula, hoje=self.hoje + timedelta(days=9)),
+            SituacaoMatricula.TRANCADA,
+        )
+        self.assertEqual(
+            calcular_situacao(self.matricula, hoje=self.hoje + timedelta(days=10)),
+            SituacaoMatricula.ATIVA,
+        )
+
+    def test_cobranca_suspensa_nao_gera_atraso(self):
+        c = self.cobranca_em(5)
+        self.trancar(1, 31)
+        depois = self.hoje + timedelta(days=60)
+        self.assertEqual(calcular_situacao(self.matricula, hoje=depois), SituacaoMatricula.ATIVA)
+
+    # 7. histórico
+    def test_historico_guarda_quem_registrou(self):
+        usuario = criar_usuario('rec_t16', Perfil.RECEPCAO)
+        self.trancar(1, 11, usuario=usuario, motivo='Lesão')
+        t = self.matricula.trancamentos.get()
+        self.assertEqual(t.registrado_por, usuario)
+        self.assertEqual(t.registrado_por_nome, 'rec_t16')
+
+    def test_matricula_cancelada_nao_tranca(self):
+        Cancelamento.objects.create(matricula=self.matricula, data=self.hoje)
+        with self.assertRaises(ValidationError):
+            self.trancar(1, 11)
+
+
+class TarefaT16TelaTests(TestCase):
+    def setUp(self):
+        RegraFinanceira.obter()
+        self.hoje = timezone.localdate()
+        self.recepcao = criar_usuario('rec_tela_t16', 'recepcao')
+        self.client = Client()
+        self.client.force_login(self.recepcao)
+        plano = Plano.objects.create(
+            nome='Mensal',
+            periodicidade='mensal',
+            valor=Decimal('100.00'),
+            dia_vencimento=10,
+        )
+        self.matricula = Matricula.objects.create(
+            aluno=criar_aluno_valido(),
+            plano=plano,
+            data_inicio=self.hoje - timedelta(days=10),
+            forma_pagamento='pix',
+        )
+        self.url = reverse(
+            'trancar_matricula',
+            args=[self.matricula.pk],
+        )
+
+    def dados(self, ini=1, fim=11):
+        return {
+            'data_inicio': (
+                self.hoje + timedelta(days=ini)
+            ).isoformat(),
+            'data_fim': (
+                self.hoje + timedelta(days=fim)
+            ).isoformat(),
+            'motivo': 'Viagem',
+        }
+
+    def test_post_valido_redireciona_para_o_historico(self):
+        resposta = self.client.post(self.url, self.dados())
+
+        self.assertRedirects(
+            resposta,
+            reverse(
+                'historico_trancamentos',
+                args=[self.matricula.pk],
+            ),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(
+            self.matricula.trancamentos.count(),
+            1,
+        )
+
+    def test_excesso_do_limite_mostra_o_motivo_na_tela(self):
+        regras = RegraFinanceira.obter()
+        regras.limite_dias_trancamento_ano = 5
+        regras.save()
+
+        resposta = self.client.post(
+            self.url,
+            self.dados(1, 31),
+        )
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'Limite de 5 dias')
+        self.assertEqual(Trancamento.objects.count(), 0)
+
+    def test_historico_lista_o_trancamento(self):
+        self.client.post(self.url, self.dados())
+
+        resposta = self.client.get(
+            reverse(
+                'historico_trancamentos',
+                args=[self.matricula.pk],
+            )
+        )
+
+        self.assertContains(resposta, 'Viagem')
+
+    def test_so_recepcao_acessa(self):
+        outro = Client()
+        outro.force_login(
+            criar_usuario('prof_t16', 'professor')
+        )
+
+        self.assertEqual(outro.get(self.url).status_code, 302)
+        self.assertEqual(Client().get(self.url).status_code, 302)
