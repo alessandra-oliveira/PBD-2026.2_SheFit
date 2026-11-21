@@ -17,7 +17,7 @@ from accounts.forms import CadastroColaboradorForm
 from accounts.decorators import admin_requerido, perfil_requerido
 from turmas.models import Turma, Modalidade
 from financeiro.models import Plano, Matricula, Cobranca, SituacaoMatricula
-from financeiro.servicos import obter_total_meses_periodicidade
+from financeiro.servicos import obter_total_meses_periodicidade, renovacoes_a_vencer
 
 
 
@@ -318,6 +318,10 @@ def painel_recepcao(request):
 
     except Exception:
         inadimplentes_hoje = []
+   
+    # 8. Renovações por confirmação que estão vencendo (T18)
+    from financeiro.servicos import renovacoes_a_vencer
+    renovacoes_vencendo = renovacoes_a_vencer(hoje)
 
     contexto = {
         'alunos': alunos,
@@ -332,6 +336,7 @@ def painel_recepcao(request):
         'aulas_populares': aulas_populares,
         'agenda_semana': agenda_semana,
         'inadimplentes_hoje': inadimplentes_hoje,
+        'renovacoes_vencendo': renovacoes_vencendo,
     }
 
     return render(request, 'accounts/painel_recepcao.html', contexto)
