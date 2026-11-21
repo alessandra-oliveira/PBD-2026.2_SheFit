@@ -6,11 +6,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Regras Financeiras - SheFit</title>
-    <!-- Fonte Inter -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -42,7 +42,7 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Lateral Fixa */
+
         .sidebar {
             width: var(--sidebar-width);
             background: var(--sidebar-gradient);
@@ -175,7 +175,7 @@
             letter-spacing: 0.02em;
         }
 
-        /* Área Principal de Conteúdo */
+
         .main-content {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -186,7 +186,7 @@
             min-height: 100vh;
         }
 
-        /* Topbar Superior Padronizada com Recepção / Admin / Professor */
+
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -230,7 +230,7 @@
             color: var(--text-muted);
         }
 
-        /* Mensagens de Alerta */
+
         .messages-container {
             display: flex;
             flex-direction: column;
@@ -260,7 +260,7 @@
             border: 1px solid #ddd6fe;
         }
 
-        /* Cabeçalho da Página */
+
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -280,7 +280,7 @@
             font-size: 0.95rem;
         }
 
-        /* Layout em 2 Colunas */
+
         .regras-grid {
             display: grid;
             grid-template-columns: 1.35fr 1fr;
@@ -288,7 +288,7 @@
             align-items: start;
         }
 
-        /* Coluna Esquerda: Formulário Principal em Card Branco */
+
         .card-form {
             background: var(--card-bg);
             border-radius: var(--card-radius);
@@ -427,14 +427,14 @@
             color: #e11d48;
         }
 
-        /* Coluna Direita: 2 Cards Empilhados */
+
         .coluna-direita {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
-        /* Card 1: Destaque em Gradiente Roxo/Rosa (Simulação de Atraso) */
+
         .card-simulacao {
             background: var(--sidebar-gradient);
             border-radius: var(--card-radius);
@@ -502,7 +502,7 @@
             justify-content: space-between;
         }
 
-        /* Card 2: Branco (Linha do Tempo do Atraso / Stepper Vertical) */
+
         .card-timeline {
             background: var(--card-bg);
             border-radius: var(--card-radius);
@@ -598,7 +598,7 @@
             line-height: 1.35;
         }
 
-        /* Card de Histórico de Alterações */
+
         .card-historico {
             background: var(--card-bg);
             border-radius: var(--card-radius);
@@ -658,7 +658,7 @@
             font-size: 0.92rem;
         }
 
-        /* Responsividade */
+
         @media (max-width: 1024px) {
             .regras-grid {
                 grid-template-columns: 1fr;
@@ -673,14 +673,14 @@
 </head>
 
 <body>
-    <!-- Sidebar Lateral -->
+
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
                 <span>SheFit</span>
             </div>
-            <!-- SEM ícone de menu hambúrguer conforme especificação -->
+
         </div>
 
         <nav class="sidebar-nav">
@@ -715,9 +715,9 @@
         </div>
     </aside>
 
-    <!-- Área Principal -->
+
     <main class="main-content">
-        <!-- Topbar Padronizada com outros painéis (Recepção / Admin / Professor) -->
+
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -733,7 +733,7 @@
             </div>
         </header>
 
-        <!-- Mensagens do Django -->
+
         {% if messages %}
             <div class="messages-container">
                 {% for message in messages %}
@@ -745,7 +745,7 @@
             </div>
         {% endif %}
 
-        <!-- Cabeçalho da Página -->
+
         <div class="page-header">
             <div>
                 <h1>Regras Financeiras</h1>
@@ -753,11 +753,11 @@
             </div>
         </div>
 
-        <!-- Layout em 2 Colunas -->
+
         <div class="regras-grid">
-            <!-- Coluna Esquerda: Formulário Principal em Card Branco -->
+
             <div class="card-form">
-                <!-- Caixa de aviso lilás claro no topo -->
+
                 <div class="aviso-regras">
                     <div class="aviso-titulo">
                         <i data-lucide="shield-alert" style="width: 18px; height: 18px;"></i>
@@ -776,9 +776,9 @@
                         </div>
                     {% endif %}
 
-                    <!-- Grid de inputs com sufixo embutido e texto explicativo -->
+
                     <div class="grid-inputs-2x2">
-                        <!-- Campo 1: Dias de tolerância -->
+
                         <div class="campo-regra">
                             <label for="{{ form.dias_tolerancia.id_for_label }}">Dias de tolerância</label>
                             <div class="input-suffix-wrapper">
@@ -791,7 +791,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- Campo 2: Juros por dia de atraso (%) -->
+
                         <div class="campo-regra">
                             <label for="{{ form.juros_diario.id_for_label }}">Juros por dia de atraso (%)</label>
                             <div class="input-suffix-wrapper">
@@ -804,7 +804,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- Campo 3: Multa por atraso (%) -->
+
                         <div class="campo-regra">
                             <label for="{{ form.multa_atraso.id_for_label }}">Multa por atraso (%)</label>
                             <div class="input-suffix-wrapper">
@@ -817,7 +817,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- Campo 4: Dias de atraso que bloqueiam o acesso -->
+
                         <div class="campo-regra">
                             <label for="{{ form.dias_bloqueio.id_for_label }}">Dias de atraso que bloqueiam o acesso</label>
                             <div class="input-suffix-wrapper">
@@ -830,7 +830,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- Campo 5: Limite anual de dias de trancamento -->
+
                         <div class="campo-regra">
                             <label for="{{ form.limite_dias_trancamento_ano.id_for_label }}">Limite anual de dias de trancamento</label>
                             <div class="input-suffix-wrapper">
@@ -844,7 +844,7 @@
                         </div>
                     </div>
 
-                    <!-- Rodapé do Card com Botão Salvar e Link Descartar -->
+
                     <div class="card-form-footer">
                         <button type="submit" class="btn-salvar-regras">Salvar regras</button>
                         <a href="{% url 'regras_financeiras' %}" class="link-descartar">Descartar alterações</a>
@@ -852,9 +852,9 @@
                 </form>
             </div>
 
-            <!-- Coluna Direita (2 Cards Empilhados) -->
+
             <div class="coluna-direita">
-                <!-- Card 1: Destaque em Gradiente Roxo/Rosa (Simulação de Atraso) -->
+
                 <div class="card-simulacao">
                     <div class="card-simulacao-header">
                         <h3>
@@ -884,12 +884,12 @@
                     </div>
                 </div>
 
-                <!-- Card 2: Branco (Linha do Tempo do Atraso) -->
+
                 <div class="card-timeline">
                     <h3>Linha do tempo do atraso</h3>
 
                     <div class="stepper-vertical">
-                        <!-- Step 1: Vencimento -->
+
                         <div class="step-item">
                             <div class="step-indicator-wrapper">
                                 <div class="step-circle purple">1</div>
@@ -901,7 +901,7 @@
                             </div>
                         </div>
 
-                        <!-- Step 2: Tolerância -->
+
                         <div class="step-item">
                             <div class="step-indicator-wrapper">
                                 <div class="step-circle pink">2</div>
@@ -913,7 +913,7 @@
                             </div>
                         </div>
 
-                        <!-- Step 3: Bloqueio -->
+
                         <div class="step-item">
                             <div class="step-indicator-wrapper">
                                 <div class="step-circle danger">3</div>
@@ -928,7 +928,7 @@
             </div>
         </div>
 
-        <!-- Seção Histórico de Alterações -->
+
         <div class="card-historico">
             <h3>Histórico de alterações</h3>
             <div class="table-responsive">
@@ -965,10 +965,7 @@
     </main>
 
     <script>
-        // Inicialização de ícones Lucide
         lucide.createIcons();
-
-        // Data atual padronizada com os outros painéis (Recepção / Admin / Professor)
         const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
         const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
@@ -976,8 +973,6 @@
         if (elData) {
             elData.innerText = dataCapitalizada;
         }
-
-        // Simulação Dinâmica de Atraso e Atualização da Linha do Tempo
         (function() {
             const inputTolerancia = document.getElementById('id_dias_tolerancia');
             const inputJuros = document.getElementById('id_juros_diario');
@@ -999,12 +994,8 @@
                 const jurosDiario = parseFloat(inputJuros.value.toString().replace(',', '.')) || 0;
                 const multaPct = parseFloat(inputMulta.value.toString().replace(',', '.')) || 0;
                 const bloq = parseInt(inputBloqueio.value, 10) || 0;
-
-                // Atualizar labels da linha do tempo
                 if (labelTolerancia) labelTolerancia.textContent = tol;
                 if (labelBloqueio) labelBloqueio.textContent = bloq;
-
-                // Cálculo da simulação com atraso de 10 dias sobre R$ 120,00
                 const valorBase = 120.00;
                 const diasAtraso = 10;
 
@@ -1014,7 +1005,6 @@
 
                 if (diasAtraso > tol) {
                     multa = valorBase * (multaPct / 100);
-                    // Regra de juros: dias excedentes de atraso (diasAtraso - tol)
                     diasCobrados = diasAtraso - tol;
                     juros = valorBase * (jurosDiario / 100) * diasCobrados;
                 }
@@ -1033,8 +1023,6 @@
             inputJuros.addEventListener('input', atualizarSimulacao);
             inputMulta.addEventListener('input', atualizarSimulacao);
             inputBloqueio.addEventListener('input', atualizarSimulacao);
-
-            // Chamada inicial
             atualizarSimulacao();
         })();
     </script>

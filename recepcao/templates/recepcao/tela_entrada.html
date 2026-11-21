@@ -90,7 +90,7 @@
             box-shadow: 0 6px 12px rgba(124, 58, 237, 0.35);
         }
 
-        /* Alertas estilizados mantendo a identidade visual */
+
         .alert {
             padding: 16px;
             border-radius: 8px;
@@ -247,14 +247,14 @@
         <h1>SheFit</h1>
         <p class="subtitle">Recepção - Controle de Entrada</p>
 
-        <!-- Mensagens (resultado do registro de entrada) -->
+
         {% for message in messages %}
             <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
                 {{ message }}
             </div>
         {% endfor %}
 
-        <!-- Formulário de Pesquisa (só consulta: não registra entrada) -->
+
         <form method="GET" action="" autocomplete="off">
             <label for="q">Identificar Aluno (CPF ou Nome):</label>
             <div class="search-box">
@@ -287,7 +287,7 @@
             </div>
         {% endif %}
 
-        <!-- Resultado da validação de acesso -->
+
         {% if resultado %}
             {% if resultado.sucesso %}
                 {% if resultado.status == 'liberado_com_aviso' %}
@@ -311,7 +311,7 @@
                     </div>
                 {% endif %}
 
-                <!-- A entrada só é gravada aqui (POST), nunca ao buscar ou recarregar -->
+
                 <form method="post" action="{% url 'tela_entrada_recepcao' %}" class="form-registrar">
                     {% csrf_token %}
                     <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">
@@ -343,7 +343,7 @@
                     </div>
                 {% endif %}
 
-                <!-- Liberação excepcional (T10): só aparece quando o acesso está bloqueado -->
+
                 <form method="post" action="{% url 'liberar_excepcional_recepcao' %}" class="form-liberar">
                     {% csrf_token %}
                     <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">

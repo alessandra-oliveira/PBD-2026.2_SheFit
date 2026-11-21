@@ -14,8 +14,8 @@ class Plano(models.Model):
 
     nome = models.CharField(max_length=100, verbose_name="Nome do Plano")
     descricao = models.TextField(
-        blank=True, 
-        null=True, 
+        blank=True,
+        null=True,
         verbose_name="Descrição do Plano",
         help_text="Resumo ou condições gerais do plano."
     )
@@ -24,31 +24,31 @@ class Plano(models.Model):
         help_text="Ex: Musculação, Dança, Pilates"
     )
     periodicidade = models.CharField(
-        max_length=20, 
-        choices=PERIODICIDADE_CHOICES, 
+        max_length=20,
+        choices=PERIODICIDADE_CHOICES,
         default='mensal',
         verbose_name="Periodicidade"
     )
     valor = models.DecimalField(
-        max_digits=8, 
-        decimal_places=2, 
+        max_digits=8,
+        decimal_places=2,
         validators=[MinValueValidator(Decimal('0.00'))],
         verbose_name="Valor da Mensalidade (R$)"
     )
     fidelidade_meses = models.PositiveIntegerField(
-        default=0, 
+        default=0,
         verbose_name="Período de Fidelidade (meses)",
         help_text="0 se não houver fidelidade"
     )
     multa_cancelamento = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
+        max_digits=5,
+        decimal_places=2,
         default=Decimal('0.00'),
         verbose_name="Multa por Cancelamento Antecipado (%)"
     )
     taxa_adesao = models.DecimalField(
-        max_digits=8, 
-        decimal_places=2, 
+        max_digits=8,
+        decimal_places=2,
         default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0.00'))],
         verbose_name="Taxa de Adesão (R$)"
@@ -65,7 +65,7 @@ class Plano(models.Model):
                   "Desmarcado: a recepção confirma cada renovação.",
     )
     ativo = models.BooleanField(
-        default=True, 
+        default=True,
         verbose_name="Plano Ativo?",
         help_text="Desmarque para ocultar este plano de novas matrículas."
     )
@@ -139,7 +139,7 @@ class RegraFinanceira(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        self.pk = 1 
+        self.pk = 1
         super().save(*args, **kwargs)
 
     @classmethod
@@ -226,7 +226,7 @@ class Cobranca(models.Model):
     TIPO_CHOICES = [
         ('adesao', 'Taxa de Adesão'),
         ('mensalidade', 'Mensalidade'),
-        ('multa_cancelamento', 'Multa de Cancelamento'),   
+        ('multa_cancelamento', 'Multa de Cancelamento'),
     ]
 
     matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='cobrancas', verbose_name="Matrícula")
@@ -235,7 +235,7 @@ class Cobranca(models.Model):
     vencimento = models.DateField(verbose_name="Data de Vencimento")
     competencia = models.CharField(max_length=7, null=True, blank=True, verbose_name="Competência (AAAA-MM)")
     paga = models.BooleanField(default=False, verbose_name="Paga?")
-    cancelada = models.BooleanField(                          # novo
+    cancelada = models.BooleanField(
         default=False, verbose_name="Cancelada?",
         help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
                   "A linha continua existindo, mas não é mais devida.",
@@ -255,7 +255,7 @@ class Cobranca(models.Model):
         verbose_name_plural = "Cobranças"
         constraints = [
             models.UniqueConstraint(
-                fields=['matricula', 'competencia'], 
+                fields=['matricula', 'competencia'],
                 name='uq_matricula_competencia_mensalidade',
                 condition=models.Q(tipo='mensalidade')
             )
@@ -416,7 +416,7 @@ class Renovacao(models.Model):
     no `fim` do último ciclo. (matrícula, ciclo) é único: é a trava que impede
     gerar dois ciclos iguais mesmo se a renovação rodar duas vezes ao mesmo tempo.
     """
-    
+
     matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='renovacoes')
     ciclo = models.PositiveIntegerField(verbose_name="Ciclo")
     inicio = models.DateField(verbose_name="Início do ciclo")

@@ -7,8 +7,8 @@ from accounts.models import Perfil
 from .models import Aluno, Anamnese
 from financeiro.models import Matricula
 from django.contrib.auth.models import User
-from django.db import transaction   
-from accounts.models import Perfil    
+from django.db import transaction
+from accounts.models import Perfil
 
 
 class AlunoForm(forms.ModelForm):
@@ -82,7 +82,7 @@ class AlunoForm(forms.ModelForm):
         if self.editando:
             return super().save(commit=commit)
 
-        # Cadastro novo: o aluno nasce inativo até a anamnese ser autorizada.
+
         usuario = User.objects.create_user(
             username=self.cleaned_data['username'],
             password=self.cleaned_data['password'],
@@ -108,17 +108,17 @@ class AnamneseForm(forms.ModelForm):
         ]
         widgets = {
             'restricoes_medicas': forms.Textarea(attrs={
-                'rows': 3, 
+                'rows': 3,
                 'class': 'form-control',
                 'placeholder': 'Ex: Problemas cardíacos, dores na coluna, restrições articulares...'
             }),
             'historico_lesoes': forms.Textarea(attrs={
-                'rows': 3, 
+                'rows': 3,
                 'class': 'form-control',
                 'placeholder': 'Ex: Rompimento de ligamento, cirurgias prévias...'
             }),
             'condicoes_cronicas': forms.Textarea(attrs={
-                'rows': 3, 
+                'rows': 3,
                 'class': 'form-control',
                 'placeholder': 'Ex: Hipertensão, asma, diabetes...'
             }),

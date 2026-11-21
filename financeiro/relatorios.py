@@ -38,7 +38,7 @@ def relatorio_inadimplencia(inicio, fim):
         suspensa=False,
     ).select_related('matricula__aluno', 'matricula__plano').order_by('vencimento', 'id')
 
-    # O período determina quais vencimentos entram; o fim determina o atraso.
+
     for cobranca in cobrancas:
         dias_atraso = (fim - cobranca.vencimento).days
         faixa = _faixa_atraso(dias_atraso)

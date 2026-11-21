@@ -10,7 +10,7 @@ from .forms import AvaliacaoCorrecaoForm, AvaliacaoFisicaForm, testes_formset
 from .models import AvaliacaoFisica
 from .servicos import CAMPOS_COMPARAVEIS, comparar_avaliacoes
 
-# Campos copiados da avaliação original para pré-preencher uma correção.
+
 _CAMPOS_COPIADOS = [attr for attr, _, _ in CAMPOS_COMPARAVEIS if attr != 'imc'] + [
     'data_avaliacao', 'observacoes',
 ]
@@ -26,9 +26,9 @@ def _historico(aluno):
     )
 
 
-# ---------------------------------------------------------------------------
-# Professor
-# ---------------------------------------------------------------------------
+
+
+
 
 @perfil_requerido('professor')
 def listar_alunos(request):
@@ -116,7 +116,7 @@ def corrigir_avaliacao(request, avaliacao_id):
                     formset.instance = avaliacao
                     formset.save()
             except IntegrityError:
-                # Duas pessoas corrigindo a mesma avaliação ao mesmo tempo.
+
                 messages.error(
                     request,
                     'Esta avaliação acabou de ser corrigida por outra pessoa.',
@@ -161,9 +161,9 @@ def comparar_avaliacoes_aluno(request, aluno_id):
     )
 
 
-# ---------------------------------------------------------------------------
-# Aluno (só enxerga as PRÓPRIAS avaliações)
-# ---------------------------------------------------------------------------
+
+
+
 
 @perfil_requerido('aluno')
 def minha_evolucao(request):
@@ -188,9 +188,9 @@ def minha_comparacao(request):
     )
 
 
-# ---------------------------------------------------------------------------
-# Comparação (compartilhada por professor e aluno)
-# ---------------------------------------------------------------------------
+
+
+
 
 def _comparar(request, aluno, *, eh_professor, url_comparar, url_voltar):
     avaliacoes = _historico(aluno)
@@ -201,11 +201,11 @@ def _comparar(request, aluno, *, eh_professor, url_comparar, url_voltar):
     escolhida_a = escolhida_b = None
 
     if parametro_a is None and parametro_b is None:
-        # Sem escolha: sugere as duas avaliações vigentes mais recentes.
+
         if len(vigentes) >= 2:
             escolhida_a, escolhida_b = vigentes[1], vigentes[0]
     else:
-        # IDs de outro aluno (ou inexistentes) simplesmente não casam em `por_id`.
+
         escolhida_a = por_id.get(_inteiro(parametro_a))
         escolhida_b = por_id.get(_inteiro(parametro_b))
         if escolhida_a is None or escolhida_b is None:

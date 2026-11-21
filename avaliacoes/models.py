@@ -92,7 +92,7 @@ class AvaliacaoFisica(_Imutavel):
         verbose_name='Percentual de gordura (%)',
     )
 
-    # Medidas corporais (cm)
+
     torax_cm = models.DecimalField(
         max_digits=5, decimal_places=1, null=True, blank=True,
         validators=[MinValueValidator(Decimal('1')), MaxValueValidator(Decimal('300'))],
@@ -126,7 +126,7 @@ class AvaliacaoFisica(_Imutavel):
 
     observacoes = models.TextField(blank=True, verbose_name='Observações')
 
-    # Correção: esta avaliação substitui (sem apagar) a avaliação `corrige`.
+
     corrige = models.ForeignKey(
         'self',
         null=True,
@@ -142,9 +142,9 @@ class AvaliacaoFisica(_Imutavel):
         verbose_name = 'Avaliação física'
         verbose_name_plural = 'Avaliações físicas'
         constraints = [
-            # Uma avaliação só pode ser corrigida uma vez; novas correções
-            # apontam para a correção mais recente, formando uma cadeia
-            # (sem bifurcar o histórico).
+
+
+
             models.UniqueConstraint(
                 fields=['corrige'],
                 condition=models.Q(corrige__isnull=False),
@@ -152,7 +152,7 @@ class AvaliacaoFisica(_Imutavel):
             ),
         ]
 
-    # --- Campos calculados --------------------------------------------------
+
 
     @property
     def imc(self):
@@ -180,7 +180,7 @@ class AvaliacaoFisica(_Imutavel):
     def vigente(self):
         return self.substituida_por is None
 
-    # --- Regras -------------------------------------------------------------
+
 
     def clean(self):
         erros = {}

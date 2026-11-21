@@ -20,8 +20,8 @@ from financeiro.servicos import (
     saldo_cobranca,
     simular_pagamento,
     total_estornado,
-    renovacoes_a_vencer,                            
-    renovar_matricula as efetuar_renovacao, 
+    renovacoes_a_vencer,
+    renovar_matricula as efetuar_renovacao,
 )
 
 from .forms import CancelamentoForm, EstornoForm, LiberacaoExcepcionalForm, PagamentoForm
@@ -391,7 +391,7 @@ def cancelar_matricula(request, matricula_id):
                 )
             except ValidationError as erro:
                 if erro.code == 'multa_divergente':
-                    # Nada foi gravado: mostra de novo com o valor atual.
+
                     messages.warning(request, erro.messages[0])
                     motivo_digitado = enviado.cleaned_data['motivo']
                 else:
@@ -458,7 +458,7 @@ def confirmar_renovacao(request, matricula_id):
             messages.info(request, f"A matrícula de {matricula.aluno.nome} já foi renovada. Nada foi duplicado.")
         else:
             messages.info(request, f"A matrícula de {matricula.aluno.nome} ainda não está no período de renovação.")
-    return redirect('listar_renovacoes')    
+    return redirect('listar_renovacoes')
 def _data_ou_none(texto):
     try:
         return date.fromisoformat(texto)
