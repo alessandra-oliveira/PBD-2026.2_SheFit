@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel da Recepção - SheFit</title>
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -35,7 +35,7 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Lateral Fixa */
+
         .sidebar {
             width: var(--sidebar-width);
             background: var(--sidebar-gradient);
@@ -121,7 +121,7 @@
             background: #fef2f2;
         }
 
-        /* Área Central de Conteúdo */
+
         .main-content {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -131,7 +131,7 @@
             gap: 24px;
         }
 
-        /* Topbar com Perfil e Data */
+
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -175,7 +175,7 @@
             color: var(--text-muted);
         }
 
-        /* Cabeçalho da Página */
+
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -245,7 +245,7 @@
             box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
         }
 
-        /* Alerta de Inadimplência */
+
         .alert-card {
             border-radius: 12px;
             padding: 14px 20px;
@@ -277,7 +277,7 @@
             text-decoration: none;
         }
 
-        /* Cards Base */
+
         .card {
             background: white;
             border-radius: 16px;
@@ -286,7 +286,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
         }
 
-        /* Linha 1: Métricas */
+
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -322,7 +322,7 @@
             font-weight: 500;
         }
 
-        /* Linha 2: Atividade & Distribuição */
+
         .content-grid-top {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -357,7 +357,7 @@
             margin-bottom: 20px;
         }
 
-        /* Barras Mensais */
+
         .bar-chart-container {
             display: flex;
             justify-content: space-around;
@@ -409,7 +409,7 @@
             text-transform: capitalize;
         }
 
-        /* Donut & Planos */
+
         .donut-container {
             display: flex;
             flex-direction: column;
@@ -481,7 +481,7 @@
             margin-top: 14px;
         }
 
-        /* Linha 3: Populares & Agenda */
+
         .content-grid-bottom {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -616,7 +616,7 @@
             border: 1px dashed #cbd5e1;
         }
 
-        /* Seção Tabela Geral de Alunas */
+
         .card-tabela {
             background: white;
             border-radius: 16px;
@@ -732,7 +732,7 @@
             color: #94a3b8;
         }
 
-        /* Mensagens (sucesso / erro) */
+
         .msg {
             padding: 12px 16px;
             border-radius: 8px;
@@ -753,7 +753,7 @@
 </head>
 
 <body>
-    <!-- Sidebar Navegação Lateral -->
+
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">
@@ -792,9 +792,9 @@
         </div>
     </aside>
 
-    <!-- Conteúdo Principal -->
+
     <main class="main-content">
-        <!-- Topbar com Data e Operador -->
+
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -810,7 +810,7 @@
             </div>
         </header>
 
-        <!-- Cabeçalho do Painel com os Dois Botões Essenciais -->
+
         <div class="page-header">
             <div>
                 <h1>Visão Geral do Painel</h1>
@@ -836,11 +836,11 @@
                 <a href="{% url 'listar_turmas' %}" class="btn-secondary">
                     Ver Turmas
                 </a>
-                <!-- Fluxo: 1) Novo Cadastro -> 2) Anamnese -> 3) Nova Matrícula -->
+
                 <a href="{% url 'cadastrar_aluno' %}" class="btn-secondary">
                     + Novo Cadastro
                 </a>
-                <!-- Matrícula financeira com cobranças automáticas (T06) -->
+
                 <a href="{% url 'criar_matricula' %}" class="btn-primary">
                     + Nova Matrícula
                 </a>
@@ -850,11 +850,11 @@
                 <a href="{% url 'buscar_matricula_cancelamento' %}" class="btn-secondary">
                     Cancelar Matrícula
                 </a>
-                
+
             </div>
         </div>
 
-        <!-- Banner de Inadimplência do Dia -->
+
         {% if inadimplentes_hoje %}
         <div class="alert-card">
             <div class="alert-left">
@@ -864,7 +864,7 @@
             <a href="{% url 'tela_entrada_recepcao' %}" class="btn-retry">Verificar Entrada</a>
         </div>
         {% endif %}
-        <!-- Renovações por confirmação vencendo (T18) -->
+
         {% if renovacoes_vencendo %}
         <div class="alert-card">
             <div class="alert-left">
@@ -878,7 +878,7 @@
         </div>
         {% endif %}
 
-        <!-- Linha 1: Métricas Principais -->
+
         <section class="stats-grid">
             <div class="card">
                 <div class="stat-card-header">
@@ -905,7 +905,7 @@
             </div>
         </section>
 
-        <!-- Linha 2: Atividade de Estudantes e Distribuição de Planos -->
+
         <section class="content-grid-top">
             <div class="card">
                 <div class="card-header-flex">
@@ -964,7 +964,7 @@
             </div>
         </section>
 
-        <!-- Linha 3: Aulas Populares e Agenda Semanal -->
+
         <section class="content-grid-bottom">
             <div class="card">
                 <div class="card-header-flex">

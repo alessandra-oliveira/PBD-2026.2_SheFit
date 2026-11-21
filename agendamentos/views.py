@@ -61,13 +61,13 @@ def minhas_aulas(request):
         for ag in sorted(meus_ativos.values(), key=lambda a: (
             ORDEM_DOS_DIAS.get(a.turma.dia_semana, 99), a.turma.horario))
     ]
-   
-    # a posição na fila também vai para a tabela de turmas; e o resumo do topo conta cada coisa
+
+
     posicoes = {item['turma'].id: item['posicao'] for item in minhas_reservas}
     for item in disponiveis:
         item['posicao'] = posicoes.get(item['turma'].id)
     total_reservadas = sum(1 for item in minhas_reservas if item['agendamento'].status == Status.RESERVADO)
-   
+
     return render(request, 'agendamentos/minhas_aulas.html', {
         'aluno': aluno,
         'matricula': matricula,

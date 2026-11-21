@@ -100,7 +100,7 @@
             margin-bottom: 20px;
             text-align: left;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -137,18 +137,18 @@
 <body>
     <div class="container-financeiro">
         <a href="{% url 'painel_aluno' %}" class="topo-voltar">← Voltar para o painel</a>
-        
+
         <h2>Minha Situação Financeira</h2>
 
         {% if not matricula %}
             <div class="alerta-aviso">Você não possui matrículas ativas no momento.</div>
         {% else %}
-            <!-- SITUAÇÃO DA MATRÍCULA -->
+
             <div class="secao-card">
                 <h3>Status da Matrícula</h3>
                 <p class="info-linha">
-                    Situação atual: 
-                    <span class="badge 
+                    Situação atual:
+                    <span class="badge
                         {% if matricula.situacao == 'ativa' %}badge-ativa
                         {% elif matricula.situacao == 'inadimplente' %}badge-inadimplente
                         {% else %}badge-bloqueada{% endif %}">
@@ -160,7 +160,7 @@
                 <p class="info-linha"><strong>Forma de Pagamento:</strong> {{ matricula.get_forma_pagamento_display }}</p>
             </div>
 
-            <!-- ALERTA DE BLOQUEIO NA CATRACA -->
+
             {% if dias_para_bloqueio is not None %}
                 <div class="{% if dias_para_bloqueio > 0 %}alerta-aviso{% else %}alerta-perigo{% endif %}">
                     <strong>⚠️ Atenção com o Acesso à Catraca!</strong><br>
@@ -172,7 +172,7 @@
                 </div>
             {% endif %}
 
-            <!-- COBRANÇAS EM ABERTO -->
+
             <div class="secao-card">
                 <h3>Cobranças em Aberto</h3>
                 {% if cobrancas_aberto %}
@@ -207,7 +207,7 @@
                 {% endif %}
             </div>
 
-            <!-- HISTÓRICO DE PAGAMENTOS -->
+
             <div class="secao-card">
                 <h3>Histórico de Pagamentos</h3>
                 {% if historico_pagamentos %}

@@ -15,7 +15,6 @@ def perfil_requerido(*tipos_permitidos):
         @login_required(login_url='entrar')
         def wrapper(request, *args, **kwargs):
 
-            # Superusuários têm acesso direto a rotas administrativas
             if request.user.is_superuser and 'admin' in tipos_permitidos:
                 return view_func(request, *args, **kwargs)
 

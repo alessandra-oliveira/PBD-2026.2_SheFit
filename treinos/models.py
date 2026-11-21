@@ -69,9 +69,9 @@ class ExercicioTreino(models.Model):
         return self.nome
 
 
-# ---------------------------------------------------------------------------
-# T14: registro de execução do treino (imutável)
-# ---------------------------------------------------------------------------
+
+
+
 
 class RegistroImutavelError(Exception):
     """Execuções registradas não podem ser alteradas nem apagadas."""
@@ -160,9 +160,9 @@ class ItemExecucao(RegistroImutavel):
         return self.nome
 
 
-# ---------------------------------------------------------------------------
-# T21: evolução de carga (model da main, mantido como está)
-# ---------------------------------------------------------------------------
+
+
+
 
 class ExecucaoExercicio(models.Model):
     """O que a aluna realmente fez num exercício (≠ `carga_sugerida`, que é a prescrição)."""

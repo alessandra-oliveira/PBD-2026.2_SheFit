@@ -8,11 +8,11 @@ from alunos.models import Aluno
 from financeiro.servicos import avaliar_situacao_financeira_aluno
 from .models import Frequencia
 
-# Quantas alunas a busca por nome mostra de uma vez.
+
 LIMITE_RESULTADOS_BUSCA = 10
 
-# Duas entradas da mesma aluna dentro desta janela contam como a mesma
-# (protege contra clique duplo / reenvio). Ajuste se a regra da academia mudar.
+
+
 JANELA_ENTRADA_DUPLICADA = timedelta(minutes=10)
 
 STATUS_LIBERADOS = ('liberado', 'liberado_com_aviso')
@@ -75,7 +75,7 @@ def registrar_entrada(aluno):
         return resultado
 
     with transaction.atomic():
-        # Trava a linha da aluna: dois cliques simultâneos entram um de cada vez.
+
         Aluno.objects.select_for_update().get(pk=aluno.pk)
 
         recente = Frequencia.objects.filter(
@@ -107,7 +107,7 @@ def liberar_excepcionalmente(aluno, motivo, usuario):
     """
     motivo = (motivo or '').strip()
 
-    # Reavalia no momento (não confia no que a tela mostrou antes).
+
     resultado = avaliar_acesso(aluno)
     resultado.update(registrada=False, duplicada=False, frequencia=None, erro=None)
 
@@ -124,7 +124,7 @@ def liberar_excepcionalmente(aluno, motivo, usuario):
         return resultado
 
     with transaction.atomic():
-        # Mesma trava do registrar_entrada: cliques simultâneos entram um por vez.
+
         Aluno.objects.select_for_update().get(pk=aluno.pk)
 
         recente = Frequencia.objects.filter(

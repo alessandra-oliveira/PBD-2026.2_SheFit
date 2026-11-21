@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ficha de Anamnese e Saúde - SheFit</title>
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -35,7 +35,7 @@
             position: relative;
         }
 
-        /* Topo do Modal */
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -90,7 +90,7 @@
             color: #0f172a;
         }
 
-        /* Barra de Progresso Dupla (Passo 1 e Passo 2 completos) */
+
         .progress-bar-container {
             width: 100%;
             height: 6px;
@@ -113,7 +113,7 @@
             background: linear-gradient(90deg, #ec4899, #d946ef);
         }
 
-        /* Faixa/Badge do Estudante */
+
         .student-pill {
             background: #f5f3ff;
             color: #6d28d9;
@@ -125,7 +125,7 @@
             margin-bottom: 24px;
         }
 
-        /* Mensagens */
+
         .msg-erro {
             color: #dc2626;
             font-size: 0.82rem;
@@ -178,7 +178,7 @@
             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
         }
 
-        /* Caixa de Termo / Autorização */
+
         .term-box {
             background: #fffbeb;
             border: 1px solid #fef3c7;
@@ -211,7 +211,7 @@
             color: #78350f;
         }
 
-        /* Rodapé com Botões */
+
         .modal-footer {
             margin-top: 32px;
             display: flex;
@@ -278,7 +278,7 @@
 
 <body>
     <div class="modal-card">
-        <!-- Topo com Logo e Fechar -->
+
         <div class="modal-header">
             <div class="header-brand">
                 <div class="brand-icon">
@@ -294,13 +294,13 @@
             </a>
         </div>
 
-        <!-- Barra de Progresso Dupla (Passo 2 ativo) -->
+
         <div class="progress-bar-container">
             <div class="progress-step step-1"></div>
             <div class="progress-step step-2"></div>
         </div>
 
-        <!-- Faixa de identificação da aluna -->
+
         <div class="student-pill">
             Estudante: {{ aluno.nome }}
         </div>
@@ -314,7 +314,7 @@
         <form method="post" autocomplete="off">
             {% csrf_token %}
 
-            <!-- Restrições Médicas -->
+
             <div class="form-group">
                 <label for="{{ form.restricoes_medicas.id_for_label }}" class="field-title">Restrições médicas</label>
                 <textarea name="{{ form.restricoes_medicas.name }}" id="{{ form.restricoes_medicas.id_for_label }}"
@@ -324,7 +324,7 @@
                 {% endif %}
             </div>
 
-            <!-- Histórico de Lesões -->
+
             <div class="form-group">
                 <label for="{{ form.historico_lesoes.id_for_label }}" class="field-title">Histórico de lesões</label>
                 <textarea name="{{ form.historico_lesoes.name }}" id="{{ form.historico_lesoes.id_for_label }}"
@@ -334,7 +334,7 @@
                 {% endif %}
             </div>
 
-            <!-- Condições Crônicas -->
+
             <div class="form-group">
                 <label for="{{ form.condicoes_cronicas.id_for_label }}" class="field-title">Condições crônicas</label>
                 <textarea name="{{ form.condicoes_cronicas.name }}" id="{{ form.condicoes_cronicas.id_for_label }}"
@@ -344,7 +344,7 @@
                 {% endif %}
             </div>
 
-            <!-- Termo de Autorização -->
+
             <div class="term-box">
                 <input type="checkbox" name="{{ form.autorizacao_atividade_fisica.name }}" id="{{ form.autorizacao_atividade_fisica.id_for_label }}"
                     {% if form.autorizacao_atividade_fisica.value %}checked{% endif %}>
@@ -356,7 +356,7 @@
                 <span class="msg-erro" style="display: block; margin-top: 6px;">{{ form.autorizacao_atividade_fisica.errors.0 }}</span>
             {% endif %}
 
-            <!-- Botões de Ação -->
+
             <div class="modal-footer">
                 <a href="{% url 'gestao_estudantes' %}" class="btn-voltar">Voltar</a>
                 <button type="submit" class="btn-salvar">Salvar alterações</button>

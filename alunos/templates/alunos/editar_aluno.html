@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Estudante - SheFit</title>
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -35,7 +35,7 @@
             position: relative;
         }
 
-        /* Topo do Modal */
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -90,7 +90,7 @@
             color: #0f172a;
         }
 
-        /* Faixa/Badge do Estudante */
+
         .student-pill {
             background: #f5f3ff;
             color: #6d28d9;
@@ -102,7 +102,7 @@
             margin-bottom: 24px;
         }
 
-        /* Títulos de Seção */
+
         .section-title {
             font-size: 1.05rem;
             font-weight: 700;
@@ -114,7 +114,7 @@
             margin-top: 0;
         }
 
-        /* Formulário e Grid */
+
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -172,7 +172,7 @@
             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
         }
 
-        /* Upload de Foto */
+
         .file-upload-box {
             border: 1px dashed #cbd5e1;
             border-radius: 10px;
@@ -216,7 +216,7 @@
             text-decoration: underline;
         }
 
-        /* Mensagens de Sucesso / Erro */
+
         .msg-erro {
             color: #dc2626;
             font-size: 0.8rem;
@@ -233,7 +233,7 @@
             font-weight: 500;
         }
 
-        /* Rodapé com Botões */
+
         .modal-footer {
             margin-top: 32px;
             display: flex;
@@ -308,7 +308,7 @@
 
 <body>
     <div class="modal-card">
-        <!-- Cabeçalho -->
+
         <div class="modal-header">
             <div class="header-brand">
                 <div class="brand-icon">
@@ -324,7 +324,7 @@
             </a>
         </div>
 
-        <!-- Identificação da Estudante -->
+
         <div class="student-pill">
             Editando cadastro de: {{ aluno.nome }}
         </div>
@@ -338,7 +338,7 @@
         <form method="post" enctype="multipart/form-data" autocomplete="off">
             {% csrf_token %}
 
-            <!-- Seção 1: Dados Pessoais -->
+
             <h3 class="section-title">Dados pessoais</h3>
             <div class="form-grid">
                 <div class="form-group col-full">
@@ -395,7 +395,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Foto da Estudante -->
+
                 <div class="form-group col-full">
                     <label for="{{ form.foto.id_for_label }}">Foto da estudante</label>
                     <div class="file-upload-box">
@@ -415,7 +415,7 @@
                 </div>
             </div>
 
-            <!-- Seção 2: Contato de Emergência -->
+
             <h3 class="section-title">Contato de emergência</h3>
             <div class="form-grid">
                 <div class="form-group">
@@ -437,7 +437,7 @@
                 </div>
             </div>
 
-            <!-- Rodapé / Ações -->
+
             <div class="modal-footer">
                 <a href="{% url 'gestao_estudantes' %}" class="btn-cancelar">Cancelar</a>
                 <button type="submit" class="btn-salvar">Salvar alterações</button>

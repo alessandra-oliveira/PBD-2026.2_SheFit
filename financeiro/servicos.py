@@ -355,8 +355,8 @@ def _gerar_mensalidades_do_ciclo(matricula, inicio_ciclo, meses):
     for i in range(meses):
         mes = primeiro_mes + relativedelta(months=i)
         try:
-            # Savepoint próprio: se a constraint única disparar numa corrida,
-            # só este bloco é desfeito e a transação externa continua.
+
+
             with transaction.atomic():
                 _, criada = Cobranca.objects.get_or_create(
                     matricula=matricula,
@@ -445,7 +445,7 @@ def avaliar_situacao_financeira_aluno(aluno):
             'motivo': 'Matrícula ativa e em dia.'
         }
 
-    # Bloqueada ou inadimplente: há uma cobrança vencida em aberto
+
     cobranca_mais_antiga = matricula.cobrancas.filter(
         paga=False, cancelada=False, suspensa=False, vencimento__lt=hoje,
     ).order_by('vencimento').first()
@@ -463,7 +463,7 @@ def avaliar_situacao_financeira_aluno(aluno):
             }
         }
 
-    # Inadimplente, mas ainda abaixo do limite de bloqueio
+
     dias_restantes = regras.dias_bloqueio - dias_atraso
     return {
         'status': 'liberado_com_aviso',
@@ -476,12 +476,12 @@ def avaliar_situacao_financeira_aluno(aluno):
         }
     }
 
-# ---------------------------------------------------------------------------
-# T17 - Cancelamento da matrícula com a multa certa
-# ---------------------------------------------------------------------------
 
-# A multa vira uma cobrança com vencimento. Quantos dias a aluna tem para pagar
-# a partir do cancelamento (0 = vence no próprio dia). Ajuste se a regra mudar.
+
+
+
+
+
 DIAS_PARA_PAGAR_MULTA = 0
 
 
@@ -518,7 +518,7 @@ def calcular_multa_cancelamento(matricula, hoje=None):
     if hoje >= fim:
         return base
 
-    # Matrícula que ainda nem começou: o tempo restante é a fidelidade inteira.
+
     dias_restantes = min((fim - hoje).days, dias_totais)
     valor_contrato = plano.valor * plano.fidelidade_meses
     multa = _centavos(
@@ -575,8 +575,8 @@ def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
         if not motivo:
             raise ValidationError("Informe o motivo do cancelamento.")
 
-        # Trava a matrícula: dois cancelamentos simultâneos entram um de cada
-        #  vez.
+
+
         matricula = Matricula.objects.select_for_update().select_related('plano').get(pk=matricula.pk)
         if Cancelamento.objects.filter(matricula=matricula).exists():
             raise ValidationError("Esta matrícula já está cancelada.")
@@ -598,7 +598,7 @@ def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
 
         cobranca_multa = None
         if multa > 0:
-            # Criada DEPOIS de cancelar as futuras, para não ser varrida junto.
+
             cobranca_multa = Cobranca.objects.create(
                 matricula=matricula,
                 tipo='multa_cancelamento',
@@ -616,24 +616,24 @@ def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
             'total_dividas': previsao['total_dividas'],
         }
 
-# ---------------------------------------------------------------------------
-# T18 - Renovação da matrícula no fim da vigência
-# ---------------------------------------------------------------------------
 
-# Renovação AUTOMÁTICA: roda quando a vigência chega ao fim (0 = no próprio dia).
-# Se o sistema ficar parado, a execução seguinte alcança todos os ciclos atrasados.
+
+
+
+
+
 ANTECEDENCIA_RENOVACAO_AUTOMATICA_DIAS = 0
 
-# Renovação POR CONFIRMAÇÃO: o painel avisa e a recepção pode confirmar a partir
-# de quantos dias antes do fim da vigência.
+
+
 JANELA_AVISO_RENOVACAO_DIAS = 15
 
-# Trava de segurança: ciclos atrasados que uma execução alcança por matrícula.
+
 LIMITE_CICLOS_POR_EXECUCAO = 60
 
 
 def _ultima_renovacao(matricula):
-    # .all() aproveita prefetch_related('renovacoes') quando houver.
+
     return max(matricula.renovacoes.all(), key=lambda r: r.ciclo, default=None)
 
 
@@ -641,7 +641,7 @@ def _meses_acumulados(matricula):
     ultima = _ultima_renovacao(matricula)
     if ultima is not None:
         return ultima.meses_acumulados
-    # Ciclo 1: a vigência original é a periodicidade do plano.
+
     return obter_total_meses_periodicidade(matricula.plano.periodicidade)
 
 
@@ -675,7 +675,7 @@ def renovar_matricula(matricula, hoje=None, usuario=None, automatica=False, fim_
     Matrícula cancelada não renova (ValidationError).
     """
     hoje = hoje or timezone.localdate()
-    # Trava a matrícula: duas renovações simultâneas entram uma de cada vez.
+
     matricula = Matricula.objects.select_for_update().select_related('plano').get(pk=matricula.pk)
     if Cancelamento.objects.filter(matricula=matricula).exists():
         raise ValidationError("Matrícula cancelada não pode ser renovada.")
@@ -729,7 +729,7 @@ def renovar_automaticas(hoje=None):
     )
     limite = hoje + timedelta(days=ANTECEDENCIA_RENOVACAO_AUTOMATICA_DIAS)
     for matricula in candidatas:
-        # Varredura barata: quem ainda não chegou ao fim da vigência nem é travado.
+
         if fim_vigencia(matricula) > limite:
             continue
         renovou = False
@@ -741,7 +741,7 @@ def renovar_automaticas(hoje=None):
                 renovou = True
                 resumo['ciclos'] += 1
                 resumo['cobrancas'] += r['cobrancas_criadas']
-        except Exception as erro:  # um problema não pode parar as demais
+        except Exception as erro:
             resumo['erros'].append((matricula.pk, str(erro)))
         if renovou:
             resumo['matriculas'] += 1
@@ -767,15 +767,15 @@ def renovacoes_a_vencer(hoje=None):
             itens.append({
                 'matricula': matricula,
                 'fim': fim,
-                'dias': (fim - hoje).days,   # negativo = já venceu
+                'dias': (fim - hoje).days,
                 'ciclo': ciclo_atual(matricula),
             })
     itens.sort(key=lambda i: (i['fim'], i['matricula'].pk))
     return itens
 
-# ---------------------------------------------------------------------------
-# T16 - Trancamento da matrícula
-# ---------------------------------------------------------------------------
+
+
+
 
 def _dias_no_ano(inicio, fim, ano):
     """Dias do intervalo [inicio, fim) que caem dentro do ano."""

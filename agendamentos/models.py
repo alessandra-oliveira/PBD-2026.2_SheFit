@@ -17,7 +17,7 @@ class Agendamento(models.Model):
     aluno = models.ForeignKey('alunos.Aluno', on_delete=models.PROTECT, related_name='agendamentos')
     status = models.CharField(max_length=10, choices=Status.choices)
 
-    # a ordem de entrada na fila é a ordem do id (as gravações acontecem com a turma travada)
+
     criado_em = models.DateTimeField(auto_now_add=True)
     promovido_em = models.DateTimeField(null=True, blank=True)
     cancelado_em = models.DateTimeField(null=True, blank=True)
@@ -27,7 +27,7 @@ class Agendamento(models.Model):
         verbose_name_plural = 'Agendamentos'
         ordering = ['id']
         constraints = [
-            # Garantia do banco: um aluno não pode ter dois agendamentos ATIVOS na mesma turma.
+
             models.UniqueConstraint(
                 fields=['turma', 'aluno'],
                 condition=models.Q(status__in=['reservado', 'espera']),

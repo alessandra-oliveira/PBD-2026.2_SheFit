@@ -14,7 +14,7 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-# Em segundos: depois de uma falha, só tenta de novo depois deste intervalo.
+
 ESPERA_APOS_FALHA = 300
 
 _trava = threading.Lock()
@@ -31,7 +31,7 @@ def executar_renovacao_do_dia():
     hoje = timezone.localdate()
     if _estado['dia'] == hoje or time.monotonic() < _estado['nao_antes_de']:
         return None
-    # Outra requisição já está varrendo: não precisa esperar nem repetir.
+
     if not _trava.acquire(blocking=False):
         return None
     try:

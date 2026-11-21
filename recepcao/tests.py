@@ -23,7 +23,7 @@ _seq = count(1)
 
 def criar_usuario(tipo):
     n = next(_seq)
-    usuario = User.objects.create(username=f'u{n}')  # sem senha: evita o hash lento
+    usuario = User.objects.create(username=f'u{n}')
     Perfil.objects.create(usuario=usuario, tipo=tipo)
     return usuario
 
