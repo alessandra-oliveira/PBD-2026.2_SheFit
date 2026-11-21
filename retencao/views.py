@@ -1,18 +1,19 @@
+import csv
+from urllib.parse import urlencode
+
 from django.contrib import messages
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
 from accounts.decorators import perfil_requerido
 from alunos.models import Aluno
 from avaliacoes.servicos import chave_cronologica, comparar_avaliacoes
 
+from . import relatorios
 from .servicos import (
-    PERIODOS,
-    evolucao_de_carga,
-    frequencia_no_periodo,
-    normalizar_periodo,
+    PERIODOS, evolucao_de_carga, frequencia_no_periodo, normalizar_periodo,
     presenca_em_aulas_no_periodo,
 )
-
 
 def _inteiro(valor):
     try:
@@ -32,7 +33,10 @@ def numeros_da_academia(request):
 
     periodo = normalizar_periodo(request.GET.get('periodo'))
     frequencia = frequencia_no_periodo(aluno, periodo)
+    
     presenca_aulas = presenca_em_aulas_no_periodo(aluno, periodo)
+
+    # 6. Evolução da carga por exercício
     cargas = evolucao_de_carga(aluno)
 
 
@@ -69,12 +73,132 @@ def numeros_da_academia(request):
         'periodos': [(chave, rotulo) for chave, (rotulo, _) in PERIODOS.items()],
         'periodo': periodo,
         'frequencia': frequencia,
-        'presenca_aulas': presenca_aulas,
-        'cargas': cargas,
         'avaliacoes': avaliacoes,
         'escolhida_a': escolhida_a,
         'escolhida_b': escolhida_b,
         'anterior': anterior,
         'posterior': posterior,
         'linhas': linhas,
+        'presenca_aulas': presenca_aulas,
+        'cargas': cargas,
     })
+
+def _celula(valor):
+    """Texto seguro para CSV. Nome começando com = + - @ viraria fórmula ao abrir no
+    Excel (injeção de fórmula); o apóstrofo força texto."""
+    texto = '' if valor is None else str(valor)
+    return "'" + texto if texto[:1] in ('=', '+', '-', '@', '\t', '\r') else texto
+
+def _decimal(valor):      
+    return '' if valor is None else str(valor).replace('.', ',')
+
+def _data_br(valor):
+    return valor.strftime('%d/%m/%Y') if valor else ''
+
+def _sim_nao(valor):
+    return 'Sim' if valor else 'Não'
+
+
+def _linhas_risco(dados):
+    for l in dados['risco']['linhas']:
+        yield [
+            l['aluno'].nome, l['telefone'], l['email'], l['plano'], l['situacao'],
+            l['acessos_anterior'], l['acessos_atual'],
+            _decimal(l['media_anterior']), _decimal(l['media_atual']), l['queda_texto'],
+            _data_br(l['ultimo_acesso']),
+            '' if l['dias_sem_vir'] is None else l['dias_sem_vir'],
+            _sim_nao(l['sumiu']),
+        ]
+
+def _linhas_renovacao(dados):
+    for l in dados['renovacao']['linhas']:
+        yield [
+            l['aluno'].nome, l['telefone'], l['plano'],
+            l['ciclo'], _data_br(l['fim_ciclo']), l['resultado_texto'],
+        ]
+
+def _linhas_ocupacao(dados):
+    for l in dados['ocupacao']['linhas']:
+        yield [
+            l['rotulo'], l['sala'], l['professor'], l['capacidade'],
+            l['aulas'], l['presencas'],
+            _decimal(l['media_presentes']),
+            _sim_nao(l['ativa']),
+            _decimal(l['ocupacao']),         
+        ]
+def _linhas_frequencia(dados):
+    for l in dados['frequencia']['linhas']:
+        yield [
+            l['aluno'].nome, l['plano'],
+            l['dias_de_matricula'], l['dias_com_acesso'],
+            _decimal(l['media_semanal']),
+            _data_br(l['ultimo_acesso']),
+            _sim_nao(l['entra_na_media']),
+        ]
+EXPORTACOES = {
+    'risco': ('risco-de-evasao',
+              ['Aluno', 'Telefone', 'E-mail', 'Plano', 'Situação da matrícula',
+               'Dias com acesso (período anterior)', 'Dias com acesso (período)',
+               'Média/semana (anterior)', 'Média/semana (período)', 'Queda',
+               'Último acesso', 'Dias sem vir', 'Não veio nenhuma vez?'],
+              _linhas_risco),
+                
+                'ocupacao': ('ocupacao-das-turmas',
+                 ['Turma', 'Sala', 'Professor', 'Capacidade', 'Aulas com chamada',
+                  'Presenças', 'Média de presentes', 'Turma ativa', 'Ocupação (%)'],
+                 _linhas_ocupacao),
+    
+    'renovacao': ('taxa-de-renovacao',
+                  ['Aluno', 'Telefone', 'Plano', 'Ciclo', 'Fim do ciclo', 'Resultado'],
+                  _linhas_renovacao),
+    
+    'frequencia': ('frequencia-media',
+                   ['Aluno', 'Plano', 'Dias de matrícula', 'Dias com acesso',
+                    'Média/semana', 'Último acesso', 'Entra na média'],
+                   _linhas_frequencia),
+}
+
+
+def _exportar(nome, periodo, dados):
+    arquivo, cabecalho, gerar = EXPORTACOES[nome]
+    resposta = HttpResponse(content_type='text/csv; charset=utf-8')
+    resposta['Content-Disposition'] = (
+        f'attachment; filename="{arquivo}_{periodo.inicio:%Y-%m-%d}_a_{periodo.fim:%Y-%m-%d}.csv"'
+    )
+    resposta.write('\ufeff')                          
+    escritor = csv.writer(resposta, delimiter=';')    
+    escritor.writerow(cabecalho)
+    for linha in gerar(dados):
+        escritor.writerow([_celula(c) if isinstance(c, str) else c for c in linha])
+    return resposta
+
+
+@perfil_requerido('financeiro', 'admin')
+def relatorios_retencao(request):
+    periodo, erro = relatorios.resolver_periodo(
+        request.GET.get('periodo'), request.GET.get('de'), request.GET.get('ate'),
+    )
+    exportar = request.GET.get('exportar')
+    if exportar is not None and exportar not in EXPORTACOES:
+        raise Http404('Relatório desconhecido.')
+    if erro:
+        messages.error(request, erro)
+        exportar = None  
+
+    dados = relatorios.montar_relatorios(periodo)
+    if exportar:
+        return _exportar(exportar, periodo, dados)
+
+    parametros = periodo.parametros()
+    return render(request, 'retencao/relatorios.html', {
+        'periodo': periodo,
+        'atalhos': [(chave, rotulo) for chave, (rotulo, _) in PERIODOS.items()],
+        'personalizado': periodo.chave == relatorios.PERIODO_PERSONALIZADO,
+        'dados': dados,
+        'frequencia': dados['frequencia'], 'ocupacao': dados['ocupacao'],
+        'risco': dados['risco'], 'renovacao': dados['renovacao'],
+        'exportacoes': {nome: '?' + urlencode({**parametros, 'exportar': nome}) for nome in EXPORTACOES},
+        'limite_dias': relatorios.LIMITE_PERIODO_PERSONALIZADO_DIAS,
+    })
+
+

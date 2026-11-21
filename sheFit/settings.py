@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from decouple import config, Csv
 from pathlib import Path
 import os
-
+import sys
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -55,7 +55,6 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "financeiro.middleware.RenovacaoAutomaticaMiddleware",
 ]
@@ -149,3 +148,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+RENOVACAO_AUTOMATICA_NA_REQUISICAO = 'test' not in sys.argv
