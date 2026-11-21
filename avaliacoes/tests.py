@@ -58,7 +58,7 @@ class BaseAvaliacaoTest(TestCase):
 
 class ModeloTests(BaseAvaliacaoTest):
     def test_imc_e_calculado_do_peso_e_da_altura(self):
-        # 70 / 1,70² = 24,22
+
         self.assertEqual(self.avaliacao().imc, Decimal('24.22'))
 
     def test_imc_nao_e_coluna_do_banco(self):

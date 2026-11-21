@@ -27,7 +27,7 @@ class Fabrica:
     """Monta plano, modalidades, turma e alunos prontos para agendar."""
 
     def preparar_cenario(self):
-        RegraFinanceira.obter()  # tolerância 3 dias, bloqueio a partir de 15
+        RegraFinanceira.obter()
         self.hoje = timezone.localdate()
         self.yoga = Modalidade.objects.create(nome='Yoga')
         self.natacao = Modalidade.objects.create(nome='Natação')
@@ -79,7 +79,7 @@ class Fabrica:
         return Agendamento.objects.filter(turma=turma, status=status)
 
 
-# ===================================================================== regra do plano
+
 class ModalidadeNoPlanoTests(SimpleTestCase):
     def esta(self, nome, texto):
         return modalidade_esta_no_plano(Modalidade(nome=nome), Plano(modalidades_incluidas=texto))
@@ -105,7 +105,7 @@ class ModalidadeNoPlanoTests(SimpleTestCase):
         self.assertFalse(self.esta('Yoga', ''))
 
 
-# ===================================================================== regras de negócio
+
 class AgendarEListaDeEsperaTests(Fabrica, TestCase):
     def setUp(self):
         self.preparar_cenario()
@@ -144,7 +144,7 @@ class AgendarEListaDeEsperaTests(Fabrica, TestCase):
         turma = self.nova_turma(capacidade=1)
         a, b, c, dono = (self.novo_aluno() for _ in range(4))
         agendar(dono, turma.id)
-        ag_c = agendar(c, turma.id)  # c entrou na fila primeiro
+        ag_c = agendar(c, turma.id)
         ag_a = agendar(a, turma.id)
         ag_b = agendar(b, turma.id)
         cancelar_agendamento(dono, Agendamento.objects.get(turma=turma, aluno=dono).id)
@@ -188,13 +188,13 @@ class AgendarEListaDeEsperaTests(Fabrica, TestCase):
         turma.save()
         novo = agendar(self.novo_aluno(), turma.id)
         a2.refresh_from_db()
-        self.assertEqual(a2.status, Status.RESERVADO)  # quem esperava ganha a vaga nova primeiro
+        self.assertEqual(a2.status, Status.RESERVADO)
         self.assertEqual((novo.status, novo.posicao_na_fila()), (Status.ESPERA, 1))
 
     def test_quem_ficou_sem_condicoes_e_pulado_mas_nao_perde_o_lugar(self):
         turma = self.nova_turma(capacidade=1)
         a1, a2, a3 = (agendar(self.novo_aluno(), turma.id) for _ in range(3))
-        atraso = self.atrasar(a2.aluno, 30)  # a2 foi bloqueada enquanto esperava
+        atraso = self.atrasar(a2.aluno, 30)
         cancelar_agendamento(a1.aluno, a1.id)
         for ag in (a2, a3):
             ag.refresh_from_db()
@@ -243,7 +243,7 @@ class QuemPodeAgendarTests(Fabrica, TestCase):
 
     def test_inadimplente_ainda_agenda(self):
         aluno = self.novo_aluno()
-        self.atrasar(aluno, 5)  # passou da tolerância, mas ainda não bloqueou
+        self.atrasar(aluno, 5)
         self.assertEqual(agendar(aluno, self.turma.id).status, Status.RESERVADO)
 
     def test_pagar_o_atraso_devolve_o_direito_de_agendar(self):
@@ -328,7 +328,7 @@ class TurmaComAgendamentosTests(Fabrica, TestCase):
         self.assertFalse(self.turma.tem_aluno_agendado())
         a1, a2 = (agendar(self.novo_aluno(), self.turma.id) for _ in range(2))
         self.assertTrue(self.turma.tem_aluno_agendado())
-        cancelar_agendamento(a1.aluno, a1.id)   # a2 sobe para a vaga
+        cancelar_agendamento(a1.aluno, a1.id)
         cancelar_agendamento(a2.aluno, a2.id)
         self.assertFalse(self.turma.tem_aluno_agendado())
 
@@ -340,13 +340,13 @@ class TurmaComAgendamentosTests(Fabrica, TestCase):
 
     def test_api_de_turmas_mostra_os_matriculados_reais(self):
         agendar(self.novo_aluno(), self.turma.id)
-        agendar(self.novo_aluno(), self.turma.id)  # fica na espera, não conta como vaga ocupada
+        agendar(self.novo_aluno(), self.turma.id)
         dados = self.client.get('/api/turmas/').json()
         turma = next(t for t in dados if t['id'] == self.turma.id)
         self.assertEqual((turma['capacity'], turma['enrolled']), (1, 1))
 
 
-# ===================================================================== telas do aluno
+
 class TelasDoAlunoTests(Fabrica, TestCase):
     def setUp(self):
         self.preparar_cenario()
@@ -412,7 +412,7 @@ class TelasDoAlunoTests(Fabrica, TestCase):
         self.assertEqual(ag.status, Status.RESERVADO)
 
 
-# ===================================================================== concorrência (só PostgreSQL)
+
 @skipUnlessDBFeature('has_select_for_update')
 class ConcorrenciaTests(Fabrica, TransactionTestCase):
     """Várias conexões ao mesmo tempo, de verdade. Só roda em bancos com trava de linha
@@ -441,7 +441,7 @@ class ConcorrenciaTests(Fabrica, TransactionTestCase):
             try:
                 barreira.wait(timeout=15)
                 resultados.append(tarefa())
-            except Exception as erro:  # noqa: BLE001 (queremos ver qualquer falha)
+            except Exception as erro:
                 erros.append(erro)
             finally:
                 connections.close_all()
