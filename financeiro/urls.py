@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from retencao.views import relatorios_retencao 
 
 urlpatterns = [
     path('', views.dashboard_financeiro, name='financeiro_home'),
@@ -15,4 +16,6 @@ urlpatterns = [
         views.exportar_relatorio_inadimplencia,
         name='exportar_relatorio_inadimplencia',
     ),
+    path('relatorios/retencao/', relatorios_retencao, name='relatorios_retencao'),
 ]
+
