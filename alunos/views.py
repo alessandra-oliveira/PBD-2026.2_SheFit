@@ -118,11 +118,13 @@ def minha_situacao_financeira(request):
     """
     # Isola estritamente o aluno logado para garantir segurança de dados
     aluno = getattr(request.user, 'aluno', None)
-    if not aluno:
+    if not aluno and hasattr(request.user, 'perfil'):
         try:
             aluno = request.user.perfil.aluno
         except Exception:
             aluno = None
+    if not aluno:
+        aluno = Aluno.objects.filter(perfil__usuario=request.user).first()
 
     matricula = None
     cobrancas_aberto = []

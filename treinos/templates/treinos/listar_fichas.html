@@ -141,31 +141,41 @@
         .main-wrapper {
             margin-left: var(--sidebar-width);
             flex: 1;
-            padding: 24px 36px 60px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
             min-height: 100vh;
         }
 
         /* Topbar com Perfil e Data Padronizada */
         .topbar {
+            height: 70px;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding-bottom: 8px;
+            justify-content: space-between;
+            padding: 0 36px;
+            margin: 0;
+            box-sizing: border-box;
+            width: 100%;
+            flex-shrink: 0;
         }
 
         .date-display {
             color: #475569;
             font-size: 0.95rem;
             font-weight: 500;
+            margin: 0;
+            line-height: 1;
+            display: flex;
+            align-items: center;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 12px;
+            margin: 0;
         }
 
         .avatar {
@@ -179,17 +189,40 @@
             align-items: center;
             justify-content: center;
             font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin: 0;
         }
 
         .user-info .name {
             font-size: 0.95rem;
             font-weight: 700;
             color: #1e293b;
+            line-height: 1.2;
+            margin: 0;
         }
 
         .user-info .role {
             font-size: 0.8rem;
             color: var(--text-muted);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 32px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 1400px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         /* Cabeçalho da Página com Botão Primário */
@@ -639,6 +672,11 @@
             }
             .main-wrapper {
                 margin-left: 0;
+            }
+            .topbar {
+                padding: 0 16px;
+            }
+            .content-area {
                 padding: 20px 16px;
             }
             .form-row-2, .form-row-3 {
@@ -705,7 +743,7 @@
     </aside>
 
     <!-- Área Principal -->
-    <main class="main-wrapper">
+    <div class="main-wrapper">
         <!-- Topbar Superior Padronizada -->
         <header class="topbar">
             <div class="date-display" id="data-atual">
@@ -716,11 +754,13 @@
                     {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
                 <div class="user-info">
-                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
                     <div class="role">Professor</div>
                 </div>
             </div>
         </header>
+
+        <main class="content-area">
 
         <!-- Mensagens do Django -->
         {% if messages %}
@@ -800,6 +840,7 @@
             </div>
         </section>
     </main>
+</div>
 
     <!-- ================= MODAL MONTAR FICHA DE TREINO ================= -->
     <div id="modalFichaOverlay" class="modal-overlay">
