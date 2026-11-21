@@ -438,7 +438,14 @@ def avaliar_situacao_financeira_aluno(aluno):
             'status': 'bloqueado',
             'motivo': f'Matrícula com status: {situacao.label.upper()}.'
         }
-
+    
+    fim = fim_vigencia(matricula)
+    if hoje >= fim:
+        return {
+            'status': 'bloqueado',
+            'motivo': f'Matrícula vencida em {fim:%d/%m/%Y}. Renove para liberar o acesso.',
+        }
+    
     if situacao == SituacaoMatricula.ATIVA:
         return {
             'status': 'liberado',

@@ -564,19 +564,18 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
 
 
 class TarefaT08ConsumoPelaRecepcaoTests(TestCase):
-    """A porta da academia (T09) tem que obedecer à situação calculada (T08).
-    Aqui "hoje" é o dia real, porque o serviço da recepção usa a data de hoje."""
-
+  
     def setUp(self):
-        RegraFinanceira.obter()  # tolerância 3, bloqueio 15
+        RegraFinanceira.obter()  
         self.hoje = timezone.localdate()
+        
         self.plano = Plano.objects.create(
-            nome='Mensal', periodicidade='mensal', valor=Decimal('100.00'), dia_vencimento=10,
+            nome='Trimestral', periodicidade='trimestral', valor=Decimal('100.00'), dia_vencimento=10,
         )
         self.aluno = criar_aluno_valido()
         self.matricula = Matricula.objects.create(
             aluno=self.aluno, plano=self.plano,
-            data_inicio=self.hoje - timedelta(days=90), forma_pagamento='pix',
+            data_inicio=self.hoje - timedelta(days=45), forma_pagamento='pix',
         )
         self._n = count(1)
 
