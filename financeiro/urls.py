@@ -10,5 +10,12 @@ urlpatterns = [
     path('planos/editar/<int:plano_id>/', views.editar_plano, name='editar_plano'),
     path('planos/alternar-status/<int:plano_id>/', views.alternar_status_plano, name='alternar_status_plano'),
     path('regras/', views.regras_financeiras, name='regras_financeiras'),
-    path('relatorios/', relatorios_retencao, name='relatorios_retencao'),
+    path('relatorios/', views.relatorios_financeiros, name='relatorios_financeiros'),
+    path(
+        'relatorios/inadimplencia.csv',
+        views.exportar_relatorio_inadimplencia,
+        name='exportar_relatorio_inadimplencia',
+    ),
+    path('relatorios/retencao/', relatorios_retencao, name='relatorios_retencao'),
 ]
+

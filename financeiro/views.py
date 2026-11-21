@@ -1,14 +1,23 @@
 from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from accounts.decorators import perfil_requerido
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca, Pagamento
-from .forms import PlanoForm, RegraFinanceiraForm
+from .models import (
+    Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca,
+    Pagamento, Trancamento,
+)
+from .forms import PlanoForm, RegraFinanceiraForm, RelatorioPeriodoForm
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+from financeiro.servicos import trancar_matricula, dias_trancados
+from .forms import TrancamentoForm
+from .relatorios import relatorio_inadimplencia, relatorio_receita
 
 
 def obter_metricas_dashboard():
@@ -175,6 +184,48 @@ def dashboard_financeiro(request):
     return render(request, 'financeiro/dashboard.html', contexto)
 
 
+def _periodo_relatorio(request):
+    form = RelatorioPeriodoForm(request.GET or None)
+    if form.is_valid():
+        return form, form.cleaned_data['inicio'], form.cleaned_data['fim']
+    hoje = timezone.localdate()
+    return form, hoje.replace(day=1), hoje
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def relatorios_financeiros(request):
+    form, inicio, fim = _periodo_relatorio(request)
+    return render(request, 'financeiro/relatorios.html', {
+        'form': form,
+        'inicio': inicio,
+        'fim': fim,
+        'faixas': relatorio_inadimplencia(inicio, fim),
+        'receita': relatorio_receita(inicio, fim),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def exportar_relatorio_inadimplencia(request):
+    form, inicio, fim = _periodo_relatorio(request)
+    resposta = HttpResponse(content_type='text/csv; charset=utf-8')
+    resposta['Content-Disposition'] = 'attachment; filename="inadimplencia.csv"'
+    resposta.write('\ufeff')
+    escritor = csv.writer(resposta, delimiter=';')
+    escritor.writerow(['Faixa', 'Aluna', 'Vencimento', 'Valor', 'Dias de atraso'])
+    for faixa in relatorio_inadimplencia(inicio, fim):
+        for item in faixa['itens']:
+            escritor.writerow([
+                faixa['nome'],
+                item['aluna'],
+                item['cobranca'].vencimento.strftime('%d/%m/%Y'),
+                item['valor'],
+                item['dias_atraso'],
+            ])
+    return resposta
+
+
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
 def listar_planos(request):
@@ -294,4 +345,83 @@ def regras_financeiras(request):
         'form': form,
         'regras': regras,
         'historico': historico,
+    })
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def trancar_matricula_view(request, matricula_id):
+    matricula = get_object_or_404(
+        Matricula.objects.select_related('aluno', 'plano'), pk=matricula_id,
+    )
+    form = TrancamentoForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        dados = form.cleaned_data
+        try:
+            resultado = trancar_matricula(
+                matricula, dados['data_inicio'], dados['data_fim'],
+                motivo=dados['motivo'], usuario=request.user,
+            )
+        except ValidationError as erro:
+            for mensagem in erro.messages:
+                form.add_error(None, mensagem)
+        else:
+            messages.success(
+                request,
+                f"Matrícula trancada por {resultado['trancamento'].dias} dia(s). "
+                f"{resultado['cobrancas_suspensas']} cobrança(s) suspensa(s) "
+                f"e vigência prorrogada.",
+            )
+            return redirect('historico_trancamentos', matricula_id=matricula.pk)
+
+    return render(request, 'recepcao/trancar_matricula.html', {
+        'matricula': matricula, 'form': form,
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def historico_trancamentos(request, matricula_id):
+    matricula = get_object_or_404(
+        Matricula.objects.select_related('aluno', 'plano'), pk=matricula_id,
+    )
+    hoje = timezone.localdate()
+    itens = []
+    for t in matricula.trancamentos.prefetch_related('cobrancas_suspensas'):
+        if t.data_fim and t.data_fim <= hoje:
+            estado = 'Encerrado'
+        elif t.data_inicio > hoje:
+            estado = 'Agendado'
+        else:
+            estado = 'Em curso'
+        itens.append({'t': t, 'estado': estado, 'suspensas': t.cobrancas_suspensas.count()})
+
+    return render(request, 'recepcao/historico_trancamentos.html', {
+        'matricula': matricula, 'itens': itens, 'total_dias': dias_trancados(matricula),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def historico_geral_trancamentos(request):
+    hoje = timezone.localdate()
+    itens = []
+    trancamentos = Trancamento.objects.select_related(
+        'matricula__aluno', 'matricula__plano',
+    ).prefetch_related('cobrancas_suspensas').order_by('-data_inicio', '-id')
+    for trancamento in trancamentos:
+        if trancamento.data_fim and trancamento.data_fim <= hoje:
+            estado = 'Encerrado'
+        elif trancamento.data_inicio > hoje:
+            estado = 'Agendado'
+        else:
+            estado = 'Em curso'
+        itens.append({
+            't': trancamento,
+            'estado': estado,
+            'suspensas': trancamento.cobrancas_suspensas.count(),
+        })
+
+    return render(request, 'recepcao/historico_geral_trancamentos.html', {
+        'itens': itens,
     })

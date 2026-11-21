@@ -105,6 +105,12 @@ class RegraFinanceira(models.Model):
         help_text="A partir de quantos dias de atraso a entrada do aluno é bloqueada.",
         validators=[MaxValueValidator(365)],
     )
+    limite_dias_trancamento_ano = models.PositiveIntegerField(
+        default=90,
+        verbose_name="Limite de dias de trancamento por ano",
+        help_text="Máximo de dias que uma matrícula pode ficar trancada em um ano.",
+        validators=[MaxValueValidator(365)],
+    )
     atualizado_em = models.DateTimeField(auto_now=True)
     atualizado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -119,6 +125,7 @@ class RegraFinanceira(models.Model):
         'juros_diario': Decimal('0.033'),
         'multa_atraso': Decimal('2.00'),
         'dias_bloqueio': 15,
+        'limite_dias_trancamento_ano': 90,
     }
 
     class Meta:
@@ -147,6 +154,7 @@ class HistoricoRegraFinanceira(models.Model):
         ('juros_diario', 'Juros por dia de atraso (%)'),
         ('multa_atraso', 'Multa por atraso (%)'),
         ('dias_bloqueio', 'Dias de atraso que bloqueiam o acesso'),
+        ('limite_dias_trancamento_ano', 'Limite de dias de trancamento por ano')
     ]
 
     campo = models.CharField(max_length=30, choices=CAMPOS)
@@ -231,6 +239,15 @@ class Cobranca(models.Model):
         default=False, verbose_name="Cancelada?",
         help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
                   "A linha continua existindo, mas não é mais devida.",
+    )
+    suspensa = models.BooleanField(
+        default=False, verbose_name="Suspensa?",
+        help_text="Cobrança dentro de um período de trancamento (T16). "
+                  "A linha continua existindo, mas não é devida enquanto suspensa.",
+    )
+    trancamento = models.ForeignKey(
+        'Trancamento', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='cobrancas_suspensas',
     )
     ultima_sequencia_evento = models.PositiveBigIntegerField(default=0, editable=False)
     class Meta:
@@ -344,26 +361,39 @@ class Estorno(models.Model):
 
 class Trancamento(models.Model):
     """Um período em que a matrícula fica trancada.
-    Em curso = começou (data_inicio <= hoje) e não terminou (data_fim vazia ou >= hoje)."""
+    Em curso = começou (data_inicio <= hoje) e ainda não chegou o retorno
+    (data_fim vazia ou > hoje). No dia da data_fim a matrícula já volta."""
     matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE, related_name='trancamentos')
     data_inicio = models.DateField(verbose_name="Início do trancamento")
-    data_fim = models.DateField(null=True, blank=True, verbose_name="Fim do trancamento",
-                                help_text="Deixe em branco se ainda não há data para voltar.")
+    data_fim = models.DateField(null=True, blank=True, verbose_name="Data de retorno",
+                                help_text="Dia em que a matrícula volta a ficar ativa.")
+    motivo = models.TextField(blank=True, verbose_name="Motivo")
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='+',
+    )
+    registrado_por_nome = models.CharField(max_length=150, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Trancamento"
         verbose_name_plural = "Trancamentos"
+        ordering = ['-data_inicio']
+
+    @property
+    def dias(self):
+        if not self.data_fim:
+            return 0
+        return (self.data_fim - self.data_inicio).days
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        if self.data_fim and self.data_inicio and self.data_fim < self.data_inicio:
-            raise ValidationError({'data_fim': 'O fim não pode ser antes do início.'})
+        if self.data_fim and self.data_inicio and self.data_fim <= self.data_inicio:
+            raise ValidationError({'data_fim': 'O retorno deve ser depois do início.'})
 
     def __str__(self):
         fim = self.data_fim or 'sem data de retorno'
         return f"Trancamento #{self.matricula_id}: {self.data_inicio} até {fim}"
-
 
 class Cancelamento(models.Model):
     """Registro de que a matrícula foi cancelada. Existir = cancelada."""
@@ -378,18 +408,7 @@ class Cancelamento(models.Model):
     def __str__(self):
         return f"Cancelamento da matrícula #{self.matricula_id} em {self.data}"
 
-    TIPO_CHOICES = [
-        ('adesao', 'Taxa de Adesão'),
-        ('mensalidade', 'Mensalidade'),
-        ('multa_cancelamento', 'Multa de Cancelamento'),   # novo
-    ]
-    ...
-    paga = models.BooleanField(default=False, verbose_name="Paga?")
-    cancelada = models.BooleanField(                         # novo
-        default=False, verbose_name="Cancelada?",
-        help_text="Cobrança futura anulada pelo cancelamento da matrícula (T17). "
-                  "A linha continua existindo, mas não é mais devida.",
-    )
+
 
 class Renovacao(models.Model):
     """Um ciclo de vigência depois do primeiro (T18). O ciclo 1 é a própria matrícula.

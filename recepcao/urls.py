@@ -23,4 +23,8 @@ urlpatterns = [
 
     path('renovacoes/', views.listar_renovacoes, name='listar_renovacoes'),
     path('renovacoes/<int:matricula_id>/confirmar/', views.confirmar_renovacao, name='confirmar_renovacao'),
+
+    path('matriculas/<int:matricula_id>/trancar/', views.trancar_matricula_view, name='trancar_matricula'),
+    path('matriculas/<int:matricula_id>/trancamentos/', views.historico_trancamentos, name='historico_trancamentos'),
+    path('trancamentos/', views.historico_geral_trancamentos, name='historico_geral_trancamentos'),
 ]
