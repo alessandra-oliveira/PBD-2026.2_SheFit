@@ -27,6 +27,7 @@ from .servicos import (
     realizar_matricula, gerar_cobrancas, calcular_situacao, avaliar_situacao_financeira_aluno,
     saldo_cobranca, registrar_pagamento, registrar_estorno, total_estornado,
 )
+from .relatorios import relatorio_inadimplencia, relatorio_receita
 
 
 def criar_usuario(username, tipo):
@@ -67,6 +68,77 @@ DADOS_VALIDOS = {
     'dias_bloqueio': '20',
     'limite_dias_trancamento_ano': '90',
 }
+
+
+class RelatoriosFinanceirosTests(TestCase):
+    def setUp(self):
+        self.financeiro = criar_usuario('fin_relatorios', Perfil.FINANCEIRO)
+        self.aluno = criar_aluno_valido()
+        self.plano = Plano.objects.create(
+            nome='Plano Relatórios',
+            modalidades_incluidas='Musculação',
+            periodicidade='mensal',
+            valor=Decimal('100.00'),
+            dia_vencimento=10,
+        )
+        self.matricula = Matricula.objects.create(
+            aluno=self.aluno,
+            plano=self.plano,
+            data_inicio=date(2026, 1, 1),
+            forma_pagamento='pix',
+        )
+
+    def cobranca(self, vencimento, valor='100.00', tipo='adesao', **kwargs):
+        return Cobranca.objects.create(
+            matricula=self.matricula,
+            tipo=tipo,
+            valor=Decimal(valor),
+            vencimento=vencimento,
+            **kwargs,
+        )
+
+    def test_inadimplencia_distribui_faixas_e_itens(self):
+        self.cobranca(date(2026, 1, 30))
+        self.cobranca(date(2026, 1, 15), valor='80.00')
+        self.cobranca(date(2025, 11, 1), valor='70.00')
+
+        faixas = relatorio_inadimplencia(date(2025, 10, 1), date(2026, 1, 31))
+
+        por_nome = {faixa['nome']: faixa for faixa in faixas}
+        self.assertEqual(por_nome['1 a 15 dias']['quantidade'], 1)
+        self.assertEqual(por_nome['16 a 30 dias']['quantidade'], 1)
+        self.assertEqual(por_nome['Mais de 60 dias']['quantidade'], 1)
+        self.assertEqual(por_nome['16 a 30 dias']['total'], Decimal('82.02'))
+
+    def test_receita_exclui_cobranca_suspensa_e_soma_pagamento(self):
+        prevista = self.cobranca(date(2026, 1, 10), valor='100.00')
+        self.cobranca(date(2026, 1, 11), valor='50.00', suspensa=True)
+        registrar_pagamento(
+            prevista, Decimal('30.00'), 'pix', date(2026, 1, 20), usuario=self.financeiro,
+        )
+
+        receita = relatorio_receita(date(2026, 1, 1), date(2026, 1, 31))
+
+        self.assertEqual(receita['prevista'], Decimal('100.00'))
+        self.assertEqual(receita['realizada'], Decimal('30.00'))
+        self.assertEqual(receita['diferenca'], Decimal('70.00'))
+
+    def test_tela_e_exportacao_respeitam_perfil_e_periodo(self):
+        self.client.force_login(self.financeiro)
+        url = reverse('relatorios_financeiros')
+        resposta = self.client.get(url, {'inicio': '2026-01-01', 'fim': '2026-01-31'})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'Inadimplência por faixa de atraso')
+        exportacao = self.client.get(
+            reverse('exportar_relatorio_inadimplencia'),
+            {'inicio': '2026-01-01', 'fim': '2026-01-31'},
+        )
+        self.assertEqual(exportacao.status_code, 200)
+        self.assertIn('text/csv', exportacao['Content-Type'])
+
+        self.client.logout()
+        self.assertEqual(self.client.get(url).status_code, 302)
 
 
 class RegrasFinanceirasTests(TestCase):

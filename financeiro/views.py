@@ -1,7 +1,8 @@
 from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -11,11 +12,12 @@ from .models import (
     Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca,
     Pagamento, Trancamento,
 )
-from .forms import PlanoForm, RegraFinanceiraForm
+from .forms import PlanoForm, RegraFinanceiraForm, RelatorioPeriodoForm
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from financeiro.servicos import trancar_matricula, dias_trancados
 from .forms import TrancamentoForm
+from .relatorios import relatorio_inadimplencia, relatorio_receita
 
 
 def obter_metricas_dashboard():
@@ -180,6 +182,48 @@ def dashboard_financeiro(request):
     """
     contexto = obter_metricas_dashboard()
     return render(request, 'financeiro/dashboard.html', contexto)
+
+
+def _periodo_relatorio(request):
+    form = RelatorioPeriodoForm(request.GET or None)
+    if form.is_valid():
+        return form, form.cleaned_data['inicio'], form.cleaned_data['fim']
+    hoje = timezone.localdate()
+    return form, hoje.replace(day=1), hoje
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def relatorios_financeiros(request):
+    form, inicio, fim = _periodo_relatorio(request)
+    return render(request, 'financeiro/relatorios.html', {
+        'form': form,
+        'inicio': inicio,
+        'fim': fim,
+        'faixas': relatorio_inadimplencia(inicio, fim),
+        'receita': relatorio_receita(inicio, fim),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def exportar_relatorio_inadimplencia(request):
+    form, inicio, fim = _periodo_relatorio(request)
+    resposta = HttpResponse(content_type='text/csv; charset=utf-8')
+    resposta['Content-Disposition'] = 'attachment; filename="inadimplencia.csv"'
+    resposta.write('\ufeff')
+    escritor = csv.writer(resposta, delimiter=';')
+    escritor.writerow(['Faixa', 'Aluna', 'Vencimento', 'Valor', 'Dias de atraso'])
+    for faixa in relatorio_inadimplencia(inicio, fim):
+        for item in faixa['itens']:
+            escritor.writerow([
+                faixa['nome'],
+                item['aluna'],
+                item['cobranca'].vencimento.strftime('%d/%m/%Y'),
+                item['valor'],
+                item['dias_atraso'],
+            ])
+    return resposta
 
 
 @login_required(login_url='entrar')

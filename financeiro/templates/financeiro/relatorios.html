@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Relatórios financeiros - SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
+        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+        main { max-width: 1200px; margin: 32px auto; padding: 0 18px; }
+        .card { margin-bottom: 18px; padding: 22px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
+        h1, h2 { margin-top: 0; }
+        form { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+        label { display: block; margin-bottom: 5px; font-weight: 700; }
+        input { padding: 9px; border: 1px solid #cbd5e1; border-radius: 7px; }
+        button, .button { padding: 10px 14px; color: white; background: #7c3aed; border: 0; border-radius: 8px; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .secondary { background: #475569; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .faixa { padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9px; }
+        .valor { font-size: 1.3rem; font-weight: 700; }
+        table { width: 100%; margin-top: 14px; border-collapse: collapse; }
+        th, td { padding: 9px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { color: #64748b; font-size: .85rem; }
+        .error { color: #b91c1c; }
+        @media (max-width: 800px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <header><h1>SheFit · Relatórios Financeiros</h1></header>
+    <main>
+        <section class="card">
+            <h1>Relatórios financeiros</h1>
+            <form method="get">
+                <div><label for="{{ form.inicio.id_for_label }}">Data inicial</label>{{ form.inicio }}</div>
+                <div><label for="{{ form.fim.id_for_label }}">Data final</label>{{ form.fim }}</div>
+                <button type="submit">Aplicar filtro</button>
+                <a class="button secondary" href="{% url 'exportar_relatorio_inadimplencia' %}?inicio={{ inicio|date:'Y-m-d' }}&fim={{ fim|date:'Y-m-d' }}">Exportar inadimplência</a>
+                <a class="button secondary" href="{% url 'painel_financeiro' %}">Voltar ao painel</a>
+            </form>
+            {% for error in form.non_field_errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </section>
+
+        <section class="card">
+            <h2>Inadimplência por faixa de atraso</h2>
+            <div class="grid">
+            {% for faixa in faixas %}
+                <div class="faixa">
+                    <strong>{{ faixa.nome }}</strong>
+                    <div class="valor">R$ {{ faixa.total|floatformat:2 }}</div>
+                    <div>{{ faixa.quantidade }} cobrança(s)</div>
+                </div>
+            {% endfor %}
+            </div>
+            {% for faixa in faixas %}
+                {% if faixa.itens %}
+                    <h3>{{ faixa.nome }}</h3>
+                    <table>
+                        <thead><tr><th>Aluna</th><th>Vencimento</th><th>Valor</th><th>Dias de atraso</th></tr></thead>
+                        <tbody>
+                        {% for item in faixa.itens %}
+                            <tr>
+                                <td>{{ item.aluna }}</td>
+                                <td>{{ item.cobranca.vencimento|date:"d/m/Y" }}</td>
+                                <td>R$ {{ item.valor|floatformat:2 }}</td>
+                                <td>{{ item.dias_atraso }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            {% endfor %}
+        </section>
+
+        <section class="card">
+            <h2>Receita prevista contra realizada</h2>
+            <table>
+                <thead><tr><th>Período</th><th>Prevista</th><th>Realizada</th><th>Diferença</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>{{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}</td>
+                        <td>R$ {{ receita.prevista|floatformat:2 }}</td>
+                        <td>R$ {{ receita.realizada|floatformat:2 }}</td>
+                        <td>R$ {{ receita.diferenca|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>

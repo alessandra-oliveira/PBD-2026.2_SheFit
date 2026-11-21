@@ -2,6 +2,7 @@ from decimal import Decimal
 from django import forms
 from django.db import transaction
 from django.utils import timezone
+from datetime import date
 from .models import (
     Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula,
 )
@@ -113,3 +114,36 @@ class TrancamentoForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
     )
+
+
+class RelatorioPeriodoForm(forms.Form):
+    inicio = forms.DateField(
+        label='Data inicial',
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(
+            format='%Y-%m-%d',
+            attrs={'type': 'date', 'class': 'form-control'},
+        ),
+    )
+    fim = forms.DateField(
+        label='Data final',
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(
+            format='%Y-%m-%d',
+            attrs={'type': 'date', 'class': 'form-control'},
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        hoje = timezone.localdate()
+        self.fields['inicio'].initial = hoje.replace(day=1)
+        self.fields['fim'].initial = hoje
+
+    def clean(self):
+        dados = super().clean()
+        inicio = dados.get('inicio')
+        fim = dados.get('fim')
+        if inicio and fim and inicio > fim:
+            raise forms.ValidationError('A data inicial não pode ser posterior à data final.')
+        return dados
