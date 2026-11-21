@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-# (atributo, rótulo, unidade) — tudo que é comparável numa avaliação.
-# `imc` é propriedade calculada; os demais são campos.
+
+
 CAMPOS_COMPARAVEIS = [
     ('peso_kg', 'Peso', 'kg'),
     ('altura_cm', 'Altura', 'cm'),
@@ -69,7 +69,7 @@ def comparar_avaliacoes(a, b):
         for attr, rotulo, unidade in CAMPOS_COMPARAVEIS
     ]
 
-    # Testes físicos: casados pelo nome (sem diferenciar maiúsculas/espaços).
+
     testes_ant = {t.nome.strip().casefold(): t for t in anterior.testes.all()}
     testes_pos = {t.nome.strip().casefold(): t for t in posterior.testes.all()}
     for chave in list(testes_ant) + [c for c in testes_pos if c not in testes_ant]:

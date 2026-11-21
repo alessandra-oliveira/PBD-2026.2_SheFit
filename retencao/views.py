@@ -30,7 +30,7 @@ def numeros_da_academia(request):
     """
     aluno = get_object_or_404(Aluno, perfil=request.user.perfil)
 
-    # 1. Frequência por período
+
     periodo = normalizar_periodo(request.GET.get('periodo'))
     frequencia = frequencia_no_periodo(aluno, periodo)
     
@@ -39,7 +39,7 @@ def numeros_da_academia(request):
     # 6. Evolução da carga por exercício
     cargas = evolucao_de_carga(aluno)
 
-    # 3. Série histórica completa (inclui as corrigidas, marcadas), da mais antiga à mais nova
+
     avaliacoes = sorted(
         aluno.avaliacoes_fisicas.select_related('corrige').prefetch_related('testes', 'correcoes'),
         key=chave_cronologica,
@@ -47,7 +47,7 @@ def numeros_da_academia(request):
     por_id = {a.pk: a for a in avaliacoes}
     vigentes = [a for a in avaliacoes if a.vigente]
 
-    # 4. Comparação entre duas avaliações escolhidas
+
     parametro_a, parametro_b = request.GET.get('a'), request.GET.get('b')
     escolhida_a = escolhida_b = None
     if parametro_a is None and parametro_b is None:

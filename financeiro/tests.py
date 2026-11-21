@@ -40,7 +40,7 @@ _sequencia = count(1)
 
 
 def criar_anamnese(aluno, autorizada=True):
-    # Se o Anamnese tiver outros campos obrigatórios, acrescente-os aqui.
+
     return Anamnese.objects.create(
         aluno=aluno, autorizacao_atividade_fisica=autorizada,
     )
@@ -264,7 +264,7 @@ class ServicosRegrasTests(TestCase):
 
     def test_mudar_regra_vale_para_o_calculo_novo_e_nao_para_o_resultado_ja_gravado(self):
         from .servicos import calcular_encargos
-        antigo = calcular_encargos('100.00', 10)  # o que a T07 gravaria no pagamento
+        antigo = calcular_encargos('100.00', 10)
         regras = RegraFinanceira.obter()
         regras.multa_atraso = Decimal('5.00')
         regras.save()
@@ -334,7 +334,7 @@ class TarefaT06MatriculaServicosTests(TestCase):
         aluno = criar_aluno_valido(com_anamnese=False)
         with self.assertRaises(ValidationError):
             realizar_matricula(aluno, self.plano, self.data_inicio, 'pix')
-        self.assertEqual(Matricula.objects.count(), 0)  # nada foi gravado
+        self.assertEqual(Matricula.objects.count(), 0)
 
     def test_bloqueio_aluno_sem_autorizacao_na_anamnese(self):
         aluno = criar_aluno_valido(autorizada=False)
@@ -354,7 +354,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
     Regras padrão: tolerância 3 dias, bloqueio a partir de 15 dias."""
 
     def setUp(self):
-        RegraFinanceira.obter()  # cria as regras padrão (3 / 15)
+        RegraFinanceira.obter()
         self.hoje = date(2027, 3, 20)
         self.plano = Plano.objects.create(
             nome='Mensal', periodicidade='mensal', valor=Decimal('100.00'), dia_vencimento=10,
@@ -365,7 +365,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         )
         self._n = count(1)
 
-    # ---- apoio -------------------------------------------------------
+
     def cobranca(self, dias_de_atraso, paga=False):
         """Cria uma mensalidade que venceu há `dias_de_atraso` dias (negativo = vence no futuro)."""
         return Cobranca.objects.create(
@@ -377,7 +377,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
     def situacao(self, hoje=None):
         return calcular_situacao(self.matricula, hoje=hoje or self.hoje)
 
-    # ---- ativa -------------------------------------------------------
+
     def test_sem_nenhuma_cobranca_esta_ativa(self):
         self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
 
@@ -397,7 +397,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         self.cobranca(3)
         self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
 
-    # ---- inadimplente ------------------------------------------------
+
     def test_um_dia_alem_da_tolerancia_fica_inadimplente(self):
         self.cobranca(4)
         self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
@@ -406,7 +406,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         self.cobranca(14)
         self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
 
-    # ---- bloqueada ---------------------------------------------------
+
     def test_no_limite_de_bloqueio_fica_bloqueada(self):
         self.cobranca(15)
         self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
@@ -421,13 +421,13 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
 
     def test_passar_dos_dias_leva_de_ativa_a_inadimplente_e_a_bloqueada(self):
-        self.cobranca(0)  # vence hoje
+        self.cobranca(0)
         self.assertEqual(self.situacao(self.hoje), SituacaoMatricula.ATIVA)
         self.assertEqual(self.situacao(self.hoje + timedelta(days=3)), SituacaoMatricula.ATIVA)
         self.assertEqual(self.situacao(self.hoje + timedelta(days=4)), SituacaoMatricula.INADIMPLENTE)
         self.assertEqual(self.situacao(self.hoje + timedelta(days=15)), SituacaoMatricula.BLOQUEADA)
 
-    # ---- trancada ----------------------------------------------------
+
     def test_trancamento_em_curso_fica_trancada(self):
         Trancamento.objects.create(
             matricula=self.matricula,
@@ -472,7 +472,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         with self.assertRaises(ValidationError):
             t.full_clean()
 
-    # ---- cancelada ---------------------------------------------------
+
     def test_cancelamento_registrado_fica_cancelada(self):
         Cancelamento.objects.create(matricula=self.matricula, data=self.hoje)
         self.assertEqual(self.situacao(), SituacaoMatricula.CANCELADA)
@@ -483,7 +483,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         Cancelamento.objects.create(matricula=self.matricula, data=self.hoje)
         self.assertEqual(self.situacao(), SituacaoMatricula.CANCELADA)
 
-    # ---- pagamento devolve a ativa ----------------------------------
+
     def test_pagamento_devolve_inadimplente_a_ativa(self):
         c = self.cobranca(8)
         self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
@@ -504,7 +504,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         self.assertEqual(self.situacao(), SituacaoMatricula.BLOQUEADA)
         antiga.paga = True
         antiga.save()
-        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)  # sobrou a de 8 dias
+        self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
         recente.paga = True
         recente.save()
         self.assertEqual(self.situacao(), SituacaoMatricula.ATIVA)
@@ -515,7 +515,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         self.assertEqual(self.situacao(), SituacaoMatricula.TRANCADA)
         c.paga = True
         c.save()
-        # quitar a pendência não encerra o trancamento: só ele o encerra
+
         self.assertEqual(self.situacao(), SituacaoMatricula.TRANCADA)
 
     def test_pagar_nao_reativa_matricula_cancelada(self):
@@ -525,7 +525,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         c.save()
         self.assertEqual(self.situacao(), SituacaoMatricula.CANCELADA)
 
-    # ---- regras mudam, situação acompanha ---------------------------
+
     def test_mudar_a_tolerancia_muda_a_situacao_sem_editar_a_matricula(self):
         self.cobranca(5)
         self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
@@ -542,7 +542,7 @@ class TarefaT08SituacaoMatriculaTests(TestCase):
         regras.save()
         self.assertEqual(self.situacao(), SituacaoMatricula.INADIMPLENTE)
 
-    # ---- ninguém edita a situação -----------------------------------
+
     def test_situacao_nao_pode_ser_atribuida(self):
         with self.assertRaises(AttributeError):
             self.matricula.situacao = 'ativa'
@@ -662,7 +662,7 @@ class TarefaT06IdempotenciaTests(TestCase):
         )
 
     def test_rodar_o_servico_de_novo_nao_aumenta_a_quantidade(self):
-        # 1 adesão + 3 mensalidades
+
         antes = self.matricula.cobrancas.count()
         self.assertEqual(antes, 4)
 
@@ -720,7 +720,7 @@ class VencimentoDaPrimeiraMensalidadeTests(TestCase):
         )
 
     def test_entrada_depois_do_dia_de_vencimento_nao_nasce_vencida(self):
-        # Início no dia 20 com vencimento dia 10: não pode vencer no passado.
+
         matricula = realizar_matricula(self.aluno, self.plano, date(2027, 2, 20), 'pix')
         primeira = matricula.cobrancas.get(tipo='mensalidade')
         self.assertEqual(primeira.competencia, '2027-02')
@@ -902,9 +902,9 @@ class TarefaT07RegistroPagamentoTests(TestCase):
         self.cobranca.refresh_from_db()
         self.assertFalse(self.cobranca.paga)
 
-    
+
     def test_estorno_integral_permite_pagar_novamente(self):
-        # 1. Registra o pagamento integral da cobrança.
+
         pagamento = registrar_pagamento(
             self.cobranca,
             Decimal('102.33'),
@@ -944,7 +944,7 @@ class TarefaT07RegistroPagamentoTests(TestCase):
             Decimal('0.00'),
         )
 
-        # 2. Estorna integralmente o pagamento.
+
         registrar_estorno(
             pagamento,
             Decimal('102.33'),
@@ -959,7 +959,7 @@ class TarefaT07RegistroPagamentoTests(TestCase):
             Decimal('102.33'),
         )
 
-        # 3. Registra novamente o pagamento.
+
         novo_pagamento = registrar_pagamento(
             self.cobranca,
             Decimal('102.33'),
@@ -975,7 +975,7 @@ class TarefaT07RegistroPagamentoTests(TestCase):
             Decimal('0.00'),
         )
 
-        # O pagamento original e o novo continuam no histórico.
+
         self.assertTrue(
             Pagamento.objects.filter(pk=pagamento.pk).exists()
         )
@@ -1400,7 +1400,7 @@ class TarefaT17CancelamentoTests(TestCase):
     def setUp(self):
         RegraFinanceira.obter()
         self.inicio = date(2027, 1, 1)
-        self.hoje = date(2027, 4, 1)   # faltam 91 de 181 dias
+        self.hoje = date(2027, 4, 1)
         self.plano = Plano.objects.create(
             nome='Semestral fiel', periodicidade='semestral', valor=Decimal('100.00'),
             dia_vencimento=10, fidelidade_meses=6, multa_cancelamento=Decimal('10.00'),
@@ -1415,10 +1415,10 @@ class TarefaT17CancelamentoTests(TestCase):
     def competencia(self, mes):
         return self.matricula.cobrancas.get(competencia=f'2027-{mes:02d}')
 
-    # ---- cálculo da multa -------------------------------------------
+
     def test_multa_e_proporcional_ao_tempo_restante(self):
         from .servicos import calcular_multa_cancelamento
-        # 600 (contrato) x 10% x 91/181 = 30,17
+
         r = calcular_multa_cancelamento(self.matricula, self.hoje)
         self.assertTrue(r['em_fidelidade'])
         self.assertEqual((r['dias_restantes'], r['dias_totais']), (91, 181))
@@ -1449,7 +1449,7 @@ class TarefaT17CancelamentoTests(TestCase):
         self.assertIsNone(resultado['cobranca_multa'])
         self.assertFalse(self.matricula.cobrancas.filter(tipo='multa_cancelamento').exists())
 
-    # ---- o cancelamento ---------------------------------------------
+
     def test_cancelamento_registra_data_e_motivo(self):
         self.cancelar(motivo='  Mudou de cidade  ')
         c = Cancelamento.objects.get(matricula=self.matricula)
@@ -1494,7 +1494,7 @@ class TarefaT17CancelamentoTests(TestCase):
 
     def test_futuras_nao_vencidas_sao_canceladas(self):
         r = self.cancelar()
-        for mes in (4, 5, 6):   # 10/04, 10/05, 10/06: ainda não venceram
+        for mes in (4, 5, 6):
             c = self.competencia(mes)
             self.assertTrue(c.cancelada, mes)
             self.assertFalse(c.paga)
@@ -1502,7 +1502,7 @@ class TarefaT17CancelamentoTests(TestCase):
 
     def test_vencidas_e_nao_pagas_continuam_como_divida(self):
         r = self.cancelar()
-        for mes in (1, 2, 3):   # venceram antes de 01/04
+        for mes in (1, 2, 3):
             c = self.competencia(mes)
             self.assertFalse(c.cancelada, mes)
             self.assertFalse(c.paga, mes)
@@ -1511,7 +1511,7 @@ class TarefaT17CancelamentoTests(TestCase):
         self.assertGreaterEqual(r['total_dividas'], Decimal('300.00'))
 
     def test_cobranca_que_vence_no_dia_do_cancelamento_e_futura(self):
-        # "Vencida" é vencimento ANTES de hoje, como no resto do sistema.
+
         r = self.cancelar(hoje=date(2027, 4, 10))
         self.assertTrue(self.competencia(4).cancelada)
         self.assertFalse(self.competencia(3).cancelada)
@@ -1526,7 +1526,7 @@ class TarefaT17CancelamentoTests(TestCase):
         self.assertFalse(c.cancelada)
 
     def test_futura_com_pagamento_e_cancelada_mas_sinalizada(self):
-        # Pagamento antecipado de uma mensalidade que vence no futuro.
+
         hoje_real = timezone.localdate()
         matricula = realizar_matricula(
             criar_aluno_valido(), self.plano, hoje_real, 'pix',
@@ -1538,7 +1538,7 @@ class TarefaT17CancelamentoTests(TestCase):
         futura.refresh_from_db()
         self.assertTrue(futura.cancelada)
         self.assertIn(futura, r['canceladas_com_pagamento'])
-        self.assertEqual(futura.pagamentos.count(), 1)   # o pagamento não some
+        self.assertEqual(futura.pagamentos.count(), 1)
 
     def test_nenhuma_cobranca_nova_depois_do_cancelamento(self):
         self.cancelar()
@@ -1554,7 +1554,7 @@ class TarefaT17CancelamentoTests(TestCase):
     def test_cobranca_cancelada_nao_vira_atraso_depois(self):
         from .servicos import calcular_situacao
         self.cancelar()
-        # Muito depois: a cobrança cancelada não pode voltar como atrasada.
+
         atrasos = self.matricula.cobrancas.filter(paga=False, cancelada=False, vencimento__lt=date(2028, 1, 1))
         self.assertNotIn(self.competencia(6), atrasos)
         self.assertEqual(calcular_situacao(self.matricula, hoje=date(2028, 1, 1)), SituacaoMatricula.CANCELADA)
@@ -1568,7 +1568,7 @@ class TarefaT17CancelamentoTests(TestCase):
         self.assertFalse(Cancelamento.objects.exists())
         self.assertFalse(self.matricula.cobrancas.filter(cancelada=True).exists())
 
-    # ---- o valor mostrado é o valor cobrado --------------------------
+
     def test_valor_mostrado_igual_ao_calculado_confirma(self):
         r = self.cancelar(multa_esperada=Decimal('30.17'))
         self.assertEqual(r['cobranca_multa'].valor, Decimal('30.17'))
@@ -1600,7 +1600,7 @@ class TarefaT17TelaRecepcaoTests(TestCase):
         self.url = reverse('cancelar_matricula', args=[self.matricula.pk])
 
     def test_get_mostra_a_multa_e_nao_grava(self):
-        # Matrícula iniciada hoje: fidelidade inteira pela frente = 1200 x 20% = 240,00
+
         r = self.client.get(self.url)
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, '240,00')
@@ -1630,15 +1630,15 @@ class TarefaT17TelaRecepcaoTests(TestCase):
         r = self.client.post(self.url, {'motivo': 'Mudou', 'multa_exibida': '10.00'})
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, 'multa mudou')
-        self.assertContains(r, 'Mudou')           # o motivo digitado não se perde
-        self.assertContains(r, '240,00')           # mostra o valor atual
+        self.assertContains(r, 'Mudou')
+        self.assertContains(r, '240,00')
         self.assertFalse(Cancelamento.objects.exists())
 
     def test_matricula_cancelada_mostra_resumo_e_nao_cancela_de_novo(self):
         self.client.post(self.url, {'motivo': 'x', 'multa_exibida': '240.00'})
         r = self.client.get(self.url)
         self.assertContains(r, 'Matrícula cancelada')
-        self.assertContains(r, 'Registrar pagamento')   # a multa está em aberto
+        self.assertContains(r, 'Registrar pagamento')
         r = self.client.post(self.url, {'motivo': 'y', 'multa_exibida': '0'}, follow=True)
         self.assertContains(r, 'já está cancelada')
         self.assertEqual(Cobranca.objects.filter(tipo='multa_cancelamento').count(), 1)
@@ -1663,7 +1663,7 @@ class TarefaT17TelaRecepcaoTests(TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertFalse(Cancelamento.objects.exists())
         self.assertEqual(Client().get(self.url).status_code, 302)
-    
+
 class TarefaT18RenovacaoTests(TestCase):
     """Renovação no fim da vigência.
 
@@ -1689,13 +1689,13 @@ class TarefaT18RenovacaoTests(TestCase):
         m = matricula or self.matricula
         return list(m.cobrancas.filter(tipo='mensalidade').order_by('competencia'))
 
-    # ---- o plano define o tipo ---------------------------------------
+
     def test_plano_define_se_a_renovacao_e_automatica(self):
         self.assertTrue(self.plano.renovacao_automatica)
         manual = Plano.objects.create(nome='Manual', periodicidade='mensal', valor=Decimal('50.00'))
-        self.assertFalse(manual.renovacao_automatica)   # padrão: com confirmação
+        self.assertFalse(manual.renovacao_automatica)
 
-    # ---- ciclo seguinte, mesmas regras ------------------------------
+
     def test_renovacao_gera_as_cobrancas_do_ciclo_seguinte(self):
         r = self.renovar(automatica=True)
         self.assertTrue(r['renovada'])
@@ -1747,7 +1747,7 @@ class TarefaT18RenovacaoTests(TestCase):
             fins.append(fim_vigencia(m))
         self.assertEqual(fins, [date(2027, 3, 31), date(2027, 4, 30), date(2027, 5, 31)])
 
-    # ---- automática: sem ninguém clicar -------------------------------
+
     def test_automatica_acontece_sem_ninguem_clicar(self):
         from .servicos import renovar_automaticas
         resumo = renovar_automaticas(self.fim1)
@@ -1764,7 +1764,7 @@ class TarefaT18RenovacaoTests(TestCase):
 
     def test_automatica_alcanca_ciclos_atrasados_sem_deixar_dia_de_fora(self):
         from .servicos import renovar_automaticas, fim_vigencia
-        resumo = renovar_automaticas(date(2028, 2, 1))   # sistema ficou parado
+        resumo = renovar_automaticas(date(2028, 2, 1))
         self.assertEqual(resumo['ciclos'], 2)
         self.assertEqual(
             [(r.inicio, r.fim) for r in self.matricula.renovacoes.all()],
@@ -1789,7 +1789,7 @@ class TarefaT18RenovacaoTests(TestCase):
         self.assertIn('1 ciclo(s) gerado(s)', saida.getvalue())
         self.assertEqual(self.matricula.renovacoes.count(), 1)
 
-    # ---- rodar duas vezes não gera dois ciclos -------------------------
+
     def test_rodar_a_renovacao_duas_vezes_nao_gera_dois_ciclos(self):
         from .servicos import renovar_automaticas
         renovar_automaticas(self.fim1)
@@ -1816,7 +1816,7 @@ class TarefaT18RenovacaoTests(TestCase):
                 fim=date(2028, 1, 1), meses_acumulados=12,
             )
 
-    # ---- renovar não apaga nem altera dívida --------------------------
+
     def test_renovar_nao_apaga_nem_altera_divida_pendente(self):
         antes = {
             c.pk: (c.valor, c.vencimento, c.competencia, c.tipo, c.paga, c.cancelada)
@@ -1825,7 +1825,7 @@ class TarefaT18RenovacaoTests(TestCase):
         saldos_antes = {
             c.pk: saldo_cobranca(c, self.fim1) for c in self.matricula.cobrancas.all()
         }
-        self.assertTrue(all(v > 0 for v in saldos_antes.values()))   # tudo em aberto
+        self.assertTrue(all(v > 0 for v in saldos_antes.values()))
         self.renovar(automatica=True)
         for c in Cobranca.objects.filter(pk__in=antes):
             self.assertEqual(
@@ -1835,10 +1835,10 @@ class TarefaT18RenovacaoTests(TestCase):
 
     def test_aluno_renova_devendo_e_continua_devendo(self):
         antes = calcular_situacao(self.matricula, hoje=self.fim1)
-        self.assertEqual(antes, SituacaoMatricula.BLOQUEADA)   # jan-jun em atraso
+        self.assertEqual(antes, SituacaoMatricula.BLOQUEADA)
         self.renovar(automatica=True)
         self.assertEqual(calcular_situacao(self.matricula, hoje=self.fim1), SituacaoMatricula.BLOQUEADA)
-        # a mensalidade mais antiga em aberto continua sendo a de janeiro
+
         self.assertEqual(
             self.matricula.cobrancas.filter(tipo='mensalidade', paga=False, vencimento__lt=self.fim1)
             .order_by('vencimento').first().competencia, '2027-01',
@@ -1853,7 +1853,7 @@ class TarefaT18RenovacaoTests(TestCase):
         self.assertTrue(c1.paga)
         self.assertFalse(self.matricula.cobrancas.get(competencia='2027-02').paga)
 
-    # ---- cancelada não renova -----------------------------------------
+
     def test_matricula_cancelada_nao_renova(self):
         from .servicos import renovar_automaticas
         Cancelamento.objects.create(matricula=self.matricula, data=self.fim1)
@@ -1868,7 +1868,7 @@ class TarefaT18RenovacaoTests(TestCase):
         self.renovar(automatica=True)
         cancelar_matricula(self.matricula, 'Desistiu', hoje=date(2027, 9, 1))
         self.assertTrue(self.matricula.cobrancas.get(competencia='2027-10').cancelada)
-        self.assertFalse(self.matricula.cobrancas.get(competencia='2027-08').cancelada)  # vencida
+        self.assertFalse(self.matricula.cobrancas.get(competencia='2027-08').cancelada)
 
 
 class TarefaT18ConfirmacaoDaRecepcaoTests(TestCase):
@@ -1897,7 +1897,7 @@ class TarefaT18ConfirmacaoDaRecepcaoTests(TestCase):
         vencida = self.matricula_com_fim_em(-3)
         longe = self.matricula_com_fim_em(60)
         ids = [i['matricula'].pk for i in renovacoes_a_vencer(self.hoje)]
-        self.assertEqual(ids, [vencida.pk, vencendo.pk])    # mais urgente primeiro
+        self.assertEqual(ids, [vencida.pk, vencendo.pk])
         self.assertNotIn(longe.pk, ids)
 
     def test_painel_nao_lista_plano_automatico_nem_cancelada(self):
@@ -1937,7 +1937,7 @@ class TarefaT18ConfirmacaoDaRecepcaoTests(TestCase):
         m = self.matricula_com_fim_em(0)
         renovar_automaticas(self.hoje)
         self.assertFalse(m.renovacoes.exists())
-        self.client.get(reverse('listar_renovacoes'))      # só olhar não renova
+        self.client.get(reverse('listar_renovacoes'))
         self.assertFalse(m.renovacoes.exists())
 
     def test_confirmar_renova_e_registra_quem_confirmou(self):
@@ -1957,7 +1957,7 @@ class TarefaT18ConfirmacaoDaRecepcaoTests(TestCase):
 
     def test_clique_duplo_nao_gera_dois_ciclos(self):
         from .servicos import fim_vigencia
-        m = self.matricula_com_fim_em(-40)       # vencida há mais de um ciclo
+        m = self.matricula_com_fim_em(-40)
         fim = fim_vigencia(m)
         url = reverse('confirmar_renovacao', args=[m.pk])
         self.client.post(url, {'fim_vigencia': fim.isoformat()})
@@ -1984,7 +1984,7 @@ class TarefaT18ConfirmacaoDaRecepcaoTests(TestCase):
         m = self.matricula_com_fim_em(5)
         from .servicos import fim_vigencia
         devidas = list(m.cobrancas.filter(vencimento__lt=self.hoje, paga=False).values_list('pk', 'valor'))
-        self.assertTrue(devidas)    # a matrícula nasceu há ~3 meses sem pagar
+        self.assertTrue(devidas)
         self.client.post(
             reverse('confirmar_renovacao', args=[m.pk]), {'fim_vigencia': fim_vigencia(m).isoformat()},
         )
@@ -2039,7 +2039,7 @@ class TarefaT18RenovacaoSemCliqueTests(TestCase):
             nome='Trimestral auto', periodicidade='trimestral', valor=Decimal('90.00'),
             dia_vencimento=10, renovacao_automatica=True,
         )
-        inicio = self.hoje - relativedelta(months=3)    # vigência que terminou hoje
+        inicio = self.hoje - relativedelta(months=3)
         self.matricula = realizar_matricula(criar_aluno_valido(), self.plano, inicio, 'pix')
         self.client = Client()
         self.client.force_login(criar_usuario('rec_sem_clique', 'recepcao'))
@@ -2047,7 +2047,7 @@ class TarefaT18RenovacaoSemCliqueTests(TestCase):
     def test_esta_ligado_no_projeto_e_desligado_so_nos_testes(self):
         from django.conf import settings
         self.assertIn('financeiro.middleware.RenovacaoAutomaticaMiddleware', settings.MIDDLEWARE)
-        self.assertFalse(settings.RENOVACAO_AUTOMATICA_NA_REQUISICAO)   # estamos em `manage.py test`
+        self.assertFalse(settings.RENOVACAO_AUTOMATICA_NA_REQUISICAO)
 
     def test_desligado_nao_renova(self):
         self.client.get(reverse('painel_recepcao'))
@@ -2072,9 +2072,9 @@ class TarefaT18RenovacaoSemCliqueTests(TestCase):
         from . import middleware
         with self.settings(RENOVACAO_AUTOMATICA_NA_REQUISICAO=True):
             self.client.get(reverse('painel_recepcao'))
-            middleware._estado['dia'] = self.hoje - timedelta(days=1)   # "virou o dia"
+            middleware._estado['dia'] = self.hoje - timedelta(days=1)
             self.client.get(reverse('painel_recepcao'))
-        self.assertEqual(self.matricula.renovacoes.count(), 1)   # nada a fazer, nada duplicado
+        self.assertEqual(self.matricula.renovacoes.count(), 1)
 
     def test_nao_renova_plano_com_confirmacao(self):
         manual = Plano.objects.create(
@@ -2095,7 +2095,7 @@ class TarefaT18RenovacaoSemCliqueTests(TestCase):
                 self.assertLogs('financeiro.middleware', level='ERROR'):
             r = self.client.get(reverse('painel_recepcao'))
         self.assertEqual(r.status_code, 200)
-        self.assertGreater(middleware._estado['nao_antes_de'], 0)   # espera antes de tentar de novo
+        self.assertGreater(middleware._estado['nao_antes_de'], 0)
 
     def test_varredura_nao_trava_quem_ainda_nao_venceu(self):
         from unittest import mock
@@ -2142,7 +2142,7 @@ class TarefaT16TrancamentoTests(TestCase):
             **kw,
         )
 
-    # 1. registro com início e retorno
+
     def test_registra_inicio_e_retorno(self):
         t = self.trancar(1, 31, motivo='Viagem')['trancamento']
         self.assertEqual(t.dias, 30)
@@ -2154,7 +2154,7 @@ class TarefaT16TrancamentoTests(TestCase):
             self.trancar(10, 10)
         self.assertEqual(Trancamento.objects.count(), 0)
 
-    # 2. cobranças do período suspensas
+
     def test_cobrancas_do_periodo_ficam_suspensas(self):
         dentro = self.cobranca_em(10)
         fora = self.cobranca_em(90)
@@ -2174,21 +2174,21 @@ class TarefaT16TrancamentoTests(TestCase):
         paga.refresh_from_db()
         self.assertFalse(paga.suspensa)
 
-    # 3. vigência prorrogada
+
     def test_vigencia_prorrogada_pelos_dias_trancados(self):
         from .servicos import fim_vigencia
         antes = fim_vigencia(self.matricula)
         self.trancar(1, 21)
         self.assertEqual(fim_vigencia(self.matricula), antes + timedelta(days=20))
 
-    # 4. acesso bloqueado
+
     def test_acesso_bloqueado_durante_o_trancamento(self):
         self.trancar(0, 10)
         r = avaliar_situacao_financeira_aluno(self.aluno)
         self.assertEqual(r['status'], 'bloqueado')
         self.assertIn('TRANCADA', r['motivo'])
 
-    # 5. limite anual
+
     def test_excesso_do_limite_e_recusado_com_motivo(self):
         regras = RegraFinanceira.obter()
         regras.limite_dias_trancamento_ano = 30
@@ -2203,9 +2203,9 @@ class TarefaT16TrancamentoTests(TestCase):
         regras.limite_dias_trancamento_ano = 40
         regras.save()
         base = date(self.hoje.year + 1, 1, 1)
-        self.trancar(1, 31, base=base)    # 30 dias
+        self.trancar(1, 31, base=base)
         with self.assertRaises(ValidationError):
-            self.trancar(40, 55, base=base)  # +15 > 40
+            self.trancar(40, 55, base=base)
         self.assertEqual(Trancamento.objects.count(), 1)
 
     def test_nao_aceita_periodos_sobrepostos(self):
@@ -2213,7 +2213,7 @@ class TarefaT16TrancamentoTests(TestCase):
         with self.assertRaises(ValidationError):
             self.trancar(10, 30)
 
-    # 6. trancada no período e volta a ativa
+
     def test_trancada_no_periodo_e_ativa_no_retorno(self):
         self.trancar(0, 10)
         self.assertEqual(
@@ -2231,7 +2231,7 @@ class TarefaT16TrancamentoTests(TestCase):
         depois = self.hoje + timedelta(days=60)
         self.assertEqual(calcular_situacao(self.matricula, hoje=depois), SituacaoMatricula.ATIVA)
 
-    # 7. histórico
+
     def test_historico_guarda_quem_registrou(self):
         usuario = criar_usuario('rec_t16', Perfil.RECEPCAO)
         self.trancar(1, 11, usuario=usuario, motivo='Lesão')

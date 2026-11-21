@@ -1,12 +1,3 @@
-"""Regras do agendamento de aulas (T11).
-
-O ponto crítico é a ÚLTIMA VAGA. Conferir "tem vaga?" e depois gravar não
-resolve: entre uma coisa e outra, outra pessoa pode gravar. Por isso toda
-operação que mexe em vagas começa travando a linha da turma no banco
-(SELECT ... FOR UPDATE). Quem chega depois espera o primeiro terminar e só
-então conta as vagas, já com o resultado dele. Quem trava é o PostgreSQL,
-não o Python.
-"""
 import re
 import unicodedata
 
@@ -21,7 +12,7 @@ from .models import Agendamento
 
 Status = Agendamento.Status
 
-# Inadimplente ainda agenda (a recepção também deixa entrar, com aviso — T09).
+
 SITUACOES_QUE_PODEM_AGENDAR = (SituacaoMatricula.ATIVA, SituacaoMatricula.INADIMPLENTE)
 
 MENSAGEM_POR_SITUACAO = {
@@ -38,7 +29,7 @@ class AgendamentoNegado(Exception):
     """Uma regra de negócio impediu a operação. A mensagem pode ser mostrada ao aluno."""
 
 
-# ---------------------------------------------------------------- plano x modalidade
+
 def _normalizar(texto):
     sem_acento = unicodedata.normalize('NFKD', texto or '').encode('ascii', 'ignore').decode()
     return re.sub(r'\s+', ' ', sem_acento.casefold()).strip()
@@ -59,7 +50,7 @@ def modalidade_esta_no_plano(modalidade, plano):
     return re.search(rf'(?<![a-z0-9]){re.escape(nome)}(?![a-z0-9])', texto) is not None
 
 
-# ---------------------------------------------------------------- quem pode agendar
+
 def matricula_do_aluno(aluno):
     """A matrícula mais recente, a mesma escolha que a recepção (T09) faz."""
     return (Matricula.objects.select_related('plano')
@@ -93,7 +84,7 @@ def motivo_para_negar(aluno, turma, checar_duplicidade=True):
         return 'Você já está nesta turma (com vaga reservada ou na lista de espera).'
     return None
 
-# ---------------------------------------------------------------- vagas e fila
+
 def _travar_turma(turma_id):
     """Trava só a linha da turma (of=('self',)) até o fim da transação atual."""
     try:
@@ -132,7 +123,7 @@ def _preencher_vagas(turma):
     return promovidos
 
 
-# ---------------------------------------------------------------- operações
+
 @transaction.atomic
 def agendar(aluno, turma_id):
     """Reserva a vaga se houver; senão põe o aluno no fim da lista de espera."""
@@ -142,8 +133,8 @@ def agendar(aluno, turma_id):
     if motivo:
         raise AgendamentoNegado(motivo)
 
-    # Antes de aceitar gente nova, a fila anda: assim ninguém fura a ordem
-    # de entrada, nem quando a capacidade da turma foi aumentada.
+
+
     _preencher_vagas(turma)
 
     status = Status.RESERVADO if _vagas_livres(turma) > 0 else Status.ESPERA
@@ -164,7 +155,7 @@ def cancelar_agendamento(aluno, agendamento_id):
         raise AgendamentoNegado('Agendamento não encontrado.')
 
     turma = _travar_turma(turma_id)
-    agendamento = Agendamento.objects.get(pk=agendamento_id)  # relido já com a turma travada
+    agendamento = Agendamento.objects.get(pk=agendamento_id)
     if agendamento.status == Status.CANCELADO:
         raise AgendamentoNegado('Este agendamento já foi cancelado.')
 

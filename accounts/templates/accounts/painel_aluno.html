@@ -58,7 +58,7 @@
             line-height: 1.5;
             margin-bottom: 28px;
         }
-        
+
         .botao-menu {
             display: block;
             width: 100%;
@@ -79,7 +79,7 @@
         .btn-aulas { background: #ede9fe; color: #6d28d9; }
         .btn-evolucao { background: #fdf2f8; color: #db2777; }
         .btn-financeiro { background: #e0f2fe; color: #0284c7; }
-        
+
         .botao-sair {
             display: block;
             width: 100%;
@@ -116,7 +116,7 @@
         <div class="badge">Aluna</div>
         <h2 class="saudacao">Olá, {{ request.user.username }}!</h2>
         <p class="descricao">Bem-vinda ao seu espaço de treinos e evolução na SheFit.</p>
-        
+
         {% if aluno and not aluno.apto_para_treino %}
             <div class="alerta-aviso">
                 <strong>Aviso de Matrícula:</strong> Sua matrícula está pendente de anamnese médica. Por favor, procure a recepção para regularizar seu cadastro.
@@ -142,7 +142,7 @@
                 <div class="alerta-aviso">Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais informações.</div>
             {% endif %}
         </section>
-        
+
         <a href="{% url 'minhas_aulas' %}" class="botao-menu btn-aulas" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Minhas aulas</a>
         <a href="{% url 'minha_evolucao' %}" class="botao-menu btn-evolucao" style="background: #fdf2f8; color: #db2777; margin-bottom: 10px;">Minha evolução</a>
         <a href="{% url 'minha_situacao_financeira' %}" class="botao-menu btn-financeiro" style="margin-bottom: 10px;">Minha Situação Financeira</a>

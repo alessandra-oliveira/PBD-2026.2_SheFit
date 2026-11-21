@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Anamnese - SheFit</title>
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -35,7 +35,7 @@
             position: relative;
         }
 
-        /* Topo do Modal */
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -90,7 +90,7 @@
             color: #0f172a;
         }
 
-        /* Barra de Progresso Dupla */
+
         .progress-bar-container {
             width: 100%;
             height: 6px;
@@ -113,7 +113,7 @@
             background: linear-gradient(90deg, #ec4899, #d946ef);
         }
 
-        /* Faixa/Badge do Estudante */
+
         .student-pill {
             background: #f5f3ff;
             color: #6d28d9;
@@ -125,7 +125,7 @@
             margin-bottom: 20px;
         }
 
-        /* Badge de Situação de Aptidão */
+
         .status-badge {
             display: flex;
             align-items: center;
@@ -150,7 +150,7 @@
             border: 1px solid #fecaca;
         }
 
-        /* Mensagens */
+
         .msg-erro {
             background: #fee2e2;
             color: #991b1b;
@@ -184,7 +184,7 @@
             color: #1e293b;
         }
 
-        /* Caixas de Texto Somente Leitura */
+
         .readonly-box {
             width: 100%;
             min-height: 88px;
@@ -204,7 +204,7 @@
             font-style: italic;
         }
 
-        /* Caixa de Termo / Autorização Somente Leitura */
+
         .term-box {
             background: #fffbeb;
             border: 1px solid #fef3c7;
@@ -238,7 +238,7 @@
             color: #78350f;
         }
 
-        /* Rodapé */
+
         .modal-footer {
             margin-top: 32px;
             display: flex;
@@ -280,7 +280,7 @@
 
 <body>
     <div class="modal-card">
-        <!-- Topo com Logo e Fechar -->
+
         <div class="modal-header">
             <div class="header-brand">
                 <div class="brand-icon">
@@ -296,13 +296,13 @@
             </a>
         </div>
 
-        <!-- Barra de Progresso Dupla -->
+
         <div class="progress-bar-container">
             <div class="progress-step step-1"></div>
             <div class="progress-step step-2"></div>
         </div>
 
-        <!-- Faixa de identificação da aluna -->
+
         <div class="student-pill">
             Estudante: {{ aluno.nome }}
         </div>
@@ -316,7 +316,7 @@
         {% endif %}
 
         {% if anamnese %}
-            <!-- Badge de Status -->
+
             {% if anamnese.autorizacao_atividade_fisica %}
                 <div class="status-badge status-apto">
                     <i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i>
@@ -329,7 +329,7 @@
                 </div>
             {% endif %}
 
-            <!-- Restrições Médicas (Somente Leitura) -->
+
             <div class="form-group">
                 <label class="field-title">Restrições médicas</label>
                 <div class="readonly-box {% if not anamnese.restricoes_medicas %}empty{% endif %}">
@@ -337,7 +337,7 @@
                 </div>
             </div>
 
-            <!-- Histórico de Lesões (Somente Leitura) -->
+
             <div class="form-group">
                 <label class="field-title">Histórico de lesões</label>
                 <div class="readonly-box {% if not anamnese.historico_lesoes %}empty{% endif %}">
@@ -345,7 +345,7 @@
                 </div>
             </div>
 
-            <!-- Condições Crônicas (Somente Leitura) -->
+
             <div class="form-group">
                 <label class="field-title">Condições crônicas</label>
                 <div class="readonly-box {% if not anamnese.condicoes_cronicas %}empty{% endif %}">
@@ -353,7 +353,7 @@
                 </div>
             </div>
 
-            <!-- Termo de Autorização (Bloqueado para edição) -->
+
             <div class="term-box">
                 <input type="checkbox" disabled {% if anamnese.autorizacao_atividade_fisica %}checked{% endif %}>
                 <label>
@@ -367,7 +367,7 @@
             </div>
         {% endif %}
 
-        <!-- Rodapé / Botão Voltar -->
+
         <div class="modal-footer">
             <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
         </div>

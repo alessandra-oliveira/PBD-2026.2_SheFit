@@ -14,10 +14,10 @@ from agendamentos.models import Agendamento
 @perfil_requerido('recepcao', 'financeiro', 'professor')
 def listar_turmas(request):
     if request.user.perfil.tipo == 'professor':
-        # Professor só vê as turmas dele
+
         turmas = Turma.objects.filter(professor=request.user, ativo=True)
     else:
-        # Recepção e financeiro veem todas
+
         turmas = Turma.objects.filter(ativo=True)
 
     return render(request, 'turmas/listar_turmas.html', {'turmas': turmas})
@@ -30,7 +30,7 @@ def criar_turma(request):
         form = TurmaForm(request.POST)
         if form.is_valid():
             turma = form.save(commit=False)
-            turma.full_clean()  # roda o clean() do model também
+            turma.full_clean()
             turma.save()
             messages.success(request, 'Turma cadastrada com sucesso.')
             return redirect('listar_turmas')
@@ -63,7 +63,7 @@ def editar_turma(request, turma_id):
 @require_POST
 @perfil_requerido('recepcao', 'financeiro')
 def desativar_turma(request, turma_id):
-    # Substitui a exclusão: sempre desativa, nunca apaga de verdade.
+
     turma = get_object_or_404(Turma, id=turma_id)
     turma.ativo = False
     turma.save()
@@ -128,7 +128,7 @@ def gerenciar_frequencia(request, turma_id):
     marca presença ou falta, com suporte a correção e registro de auditoria.
     """
     turma = get_object_or_404(Turma, id=turma_id, professor=request.user)
-    
+
     data_str = request.GET.get('data', timezone.localdate().strftime('%Y-%m-%d'))
     try:
         data_chamada = datetime.strptime(data_str, '%Y-%m-%d').date()
@@ -136,9 +136,9 @@ def gerenciar_frequencia(request, turma_id):
         data_chamada = timezone.localdate()
         data_str = data_chamada.strftime('%Y-%m-%d')
 
-    # Mantém apenas select_related('aluno') para evitar erros de relacionamento profundo
+
     agendamentos = Agendamento.objects.filter(turma=turma).select_related('aluno')
-    
+
     frequencias_dict = {
         f.aluno_id: f.presente for f in Frequencia.objects.filter(turma=turma, data=data_chamada)
     }
@@ -175,9 +175,9 @@ def gerenciar_frequencia(request, turma_id):
             except Exception:
                 pass
 
-            # Define o objeto a salvar (User do Django exigido pela FK de Frequencia, ou fallback para o aluno)
+
             aluno_para_salvar = user_instancia if user_instancia else aluno_obj
-            
+
             veio = aluno_obj.id in alunos_presentes_ids or (user_instancia and user_instancia.id in alunos_presentes_ids)
 
             try:
@@ -192,7 +192,7 @@ def gerenciar_frequencia(request, turma_id):
                 )
             except Exception:
                 pass
-            
+
         messages.success(request, 'Frequência salva com sucesso.')
         return redirect(f"{request.path}?data={data_str}")
 

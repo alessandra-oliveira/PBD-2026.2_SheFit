@@ -9,7 +9,7 @@ from recepcao.models import Frequencia
 from treinos.models import ExecucaoExercicio
 from turmas.models import Frequencia as PresencaAula
 
-# chave usada na URL -> (rótulo, quantidade de dias)
+
 PERIODOS = {
     '7': ('Últimos 7 dias', 7),
     '30': ('Últimos 30 dias', 30),

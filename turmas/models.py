@@ -79,19 +79,19 @@ class Frequencia(models.Model):
     aluno = models.ForeignKey(User, on_delete=models.CASCADE, related_name='frequencias_aluno')
     data = models.DateField()
     presente = models.BooleanField(default=False)
-    
-    # Auditoria de correção exigida pela Task T12 (caso seja alterado por engano)
+
+
     atualizado_em = models.DateTimeField(auto_now=True)
     atualizado_por = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='frequencias_modificadas'
     )
 
     class Meta:
-        unique_together = ('turma', 'aluno', 'data')  # Garante um registro por aluno/turma/dia
+        unique_together = ('turma', 'aluno', 'data')
         verbose_name = 'Frequência'
         verbose_name_plural = 'Frequências'
 

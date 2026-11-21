@@ -8,8 +8,6 @@
     </div>
     <p class="discreto">O quanto você veio e o quanto mudou, {{ aluno.nome.split.0 }}.</p>
 </section>
-
-{# ---------------- Frequência ---------------- #}
 <section class="card">
     <h2>Sua frequência</h2>
     <div class="acoes" style="margin-bottom: 8px;">
@@ -26,8 +24,6 @@
         <p class="aviso-caixa">Nenhum acesso registrado neste período.</p>
     {% endif %}
 </section>
-
-{# ---------------- Aulas coletivas ---------------- #}
 <section class="card">
     <h2>Presença nas aulas coletivas</h2>
     <p class="discreto">{{ presenca_aulas.rotulo }}.</p>
@@ -49,8 +45,6 @@
         </table>
     {% endif %}
 </section>
-
-{# ---------------- Avaliações físicas ---------------- #}
 <section class="card">
     <h2>Suas avaliações físicas</h2>
     {% if not avaliacoes %}
@@ -89,8 +83,6 @@
         </p>
     {% endif %}
 </section>
-
-{# ---------------- Comparação ---------------- #}
 {% if avaliacoes %}
 <section class="card">
     <h2>Compare duas avaliações</h2>
@@ -154,7 +146,6 @@
     {% endif %}
 </section>
 {% endif %}
-{# ---------------- Evolução da carga ---------------- #}
 <section class="card">
     <h2>Evolução da carga por exercício</h2>
     {% if not cargas %}

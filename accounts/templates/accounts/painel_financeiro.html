@@ -6,11 +6,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Financeiro - SheFit</title>
-    <!-- Fonte Inter -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -42,7 +42,7 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Lateral Fixa */
+
         .sidebar {
             width: var(--sidebar-width);
             background: var(--sidebar-gradient);
@@ -158,7 +158,7 @@
             letter-spacing: 0.02em;
         }
 
-        /* Área Principal de Conteúdo */
+
         .main-content {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -169,7 +169,7 @@
             min-height: 100vh;
         }
 
-        /* Topbar Superior Padronizada com Recepção / Admin / Professor */
+
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -213,7 +213,7 @@
             color: var(--text-muted);
         }
 
-        /* Cabeçalho da Página */
+
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -234,7 +234,7 @@
             font-size: 0.95rem;
         }
 
-        /* 4 Cards de KPIs */
+
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -336,7 +336,7 @@
             color: #166534;
         }
 
-        /* Seção Central de 2 Colunas */
+
         .central-grid {
             display: grid;
             grid-template-columns: 1.65fr 1fr;
@@ -373,7 +373,7 @@
             color: var(--text-muted);
         }
 
-        /* Gráfico de Barras com Gradiente */
+
         .bar-chart-container {
             display: flex;
             align-items: flex-end;
@@ -425,7 +425,7 @@
             text-align: center;
         }
 
-        /* Card Resumo do Mês (Donut Chart) */
+
         .donut-wrapper {
             display: flex;
             flex-direction: column;
@@ -504,7 +504,7 @@
             color: var(--primary-pink);
         }
 
-        /* Seção Inferior: Tabela de Pagamentos Recentes */
+
         .card-tabela {
             background: var(--card-bg);
             border-radius: var(--card-radius);
@@ -614,7 +614,7 @@
             font-size: 0.9rem;
         }
 
-        /* Responsividade */
+
         @media (max-width: 1024px) {
             .kpi-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -627,14 +627,14 @@
 </head>
 
 <body>
-    <!-- Sidebar Navegação Lateral -->
+
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
                 <span>SheFit</span>
             </div>
-            <!-- SEM ícone de menu hambúrguer conforme especificação -->
+
         </div>
 
         <nav class="sidebar-nav">
@@ -684,9 +684,9 @@
         </div>
     </aside>
 
-    <!-- Área Principal -->
+
     <main class="main-content">
-        <!-- Topbar Padronizada com outros painéis (Recepção / Admin / Professor) -->
+
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -702,7 +702,7 @@
             </div>
         </header>
 
-        <!-- Cabeçalho da Página -->
+
         <div class="page-header">
             <div>
                 <h1>Dashboard Financeiro</h1>
@@ -710,9 +710,9 @@
             </div>
         </div>
 
-        <!-- Linha de 4 Cards de KPIs com Dados Dinâmicos do Banco -->
+
         <div class="kpi-grid">
-            <!-- KPI 1: Receita no mês -->
+
             <div class="kpi-card">
                 <div class="kpi-top">
                     <span class="kpi-title">Receita no mês</span>
@@ -730,7 +730,7 @@
                 </div>
             </div>
 
-            <!-- KPI 2: Total recebido -->
+
             <div class="kpi-card">
                 <div class="kpi-top">
                     <span class="kpi-title">Total recebido</span>
@@ -744,7 +744,7 @@
                 </div>
             </div>
 
-            <!-- KPI 3: A receber -->
+
             <div class="kpi-card">
                 <div class="kpi-top">
                     <span class="kpi-title">A receber</span>
@@ -758,7 +758,7 @@
                 </div>
             </div>
 
-            <!-- KPI 4: Assinaturas ativas -->
+
             <div class="kpi-card">
                 <div class="kpi-top">
                     <span class="kpi-title">Assinaturas ativas</span>
@@ -773,9 +773,9 @@
             </div>
         </div>
 
-        <!-- Seção Central (2 Colunas com Dados do Banco) -->
+
         <div class="central-grid">
-            <!-- Esquerda (Maior): Receita dos últimos meses -->
+
             <div class="card-grafico">
                 <div class="card-header-flex">
                     <div>
@@ -788,7 +788,7 @@
                     </span>
                 </div>
 
-                <!-- Gráfico de Colunas Verticais Dinâmico -->
+
                 <div class="bar-chart-container">
                     {% for item in evolucao_meses %}
                         <div class="bar-group">
@@ -804,7 +804,7 @@
                 </div>
             </div>
 
-            <!-- Direita (Menor): Resumo do mês -->
+
             <div class="card-grafico">
                 <div class="card-header-flex">
                     <div>
@@ -813,7 +813,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Rosca (Donut Chart) Dinâmico -->
+
                 <div class="donut-wrapper">
                     <div class="donut-chart" style="background: conic-gradient(var(--primary-purple) 0% {{ pct_meta }}%, #ede9fe {{ pct_meta }}% 100%);">
                         <div class="donut-hole">
@@ -823,7 +823,7 @@
                     </div>
                 </div>
 
-                <!-- Quadro Inferior de Metas -->
+
                 <div class="meta-quadro">
                     <div class="meta-linha">
                         <span class="label">Meta mensal:</span>
@@ -837,7 +837,7 @@
             </div>
         </div>
 
-        <!-- Seção Inferior (Tabela): Pagamentos Recentes do Banco -->
+
         <div class="card-tabela">
             <div class="card-tabela-header">
                 <div>
@@ -881,10 +881,7 @@
     </main>
 
     <script>
-        // Inicialização de ícones Lucide
         lucide.createIcons();
-
-        // Data atual padronizada com os outros painéis (Recepção / Admin / Professor)
         const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
         const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);

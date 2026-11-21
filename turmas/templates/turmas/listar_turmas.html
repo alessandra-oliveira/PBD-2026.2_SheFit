@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aulas e Modalidades - SheFit</title>
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -24,7 +24,7 @@
             overflow: hidden;
         }
 
-        /* ================= SIDEBAR PADRÃO ================= */
+
         .sidebar {
             width: 250px;
             height: 100vh;
@@ -112,7 +112,7 @@
             background: #fee2e2;
         }
 
-        /* ================= CONTEÚDO PRINCIPAL COM ROLAGEM ================= */
+
         .main-wrapper {
             flex: 1;
             display: flex;
@@ -121,7 +121,7 @@
             overflow-y: auto;
         }
 
-        /* Topbar com Perfil e Data */
+
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -172,7 +172,7 @@
             width: 100%;
         }
 
-        /* Cabeçalho da Página e Botões */
+
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -241,7 +241,7 @@
             box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
         }
 
-        /* Cards de Métricas */
+
         .stats-grid-2 {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -277,7 +277,7 @@
             color: #64748b;
         }
 
-        /* Seletor de Abas */
+
         .tabs-container {
             display: flex;
             gap: 8px;
@@ -307,7 +307,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
         }
 
-        /* Tabela de Turmas */
+
         .table-card {
             background: #ffffff;
             border-radius: 16px;
@@ -418,7 +418,7 @@
             background: #fecdd3;
         }
 
-        /* Grid de Cards de Modalidades */
+
         .modalidades-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -482,7 +482,7 @@
 </head>
 
 <body>
-    <!-- SIDEBAR PADRÃO -->
+
     <aside class="sidebar">
         <div>
             <div class="sidebar-brand">
@@ -523,11 +523,11 @@
         </div>
     </aside>
 
-    <!-- ÁREA PRINCIPAL COM ROLAGEM -->
+
     <div class="main-wrapper">
-        <!-- ÁREA DE CONTEÚDO -->
+
         <main class="content-area">
-            <!-- Topbar com Data e Operador -->
+
             <header class="topbar">
                 <div class="date-display" id="data-atual">
                     Hoje
@@ -543,7 +543,7 @@
                 </div>
             </header>
 
-            <!-- Cabeçalho da Página -->
+
             <div class="page-header">
                 <div class="header-title-box">
                     <h1>Aulas e Modalidades</h1>
@@ -564,11 +564,11 @@
                 </div>
             </div>
 
-            <!-- CARDS DE MÉTRICAS -->
+
             <section class="stats-grid-2">
                 <div class="stat-card">
                     <div class="stat-card-label">Modalidades</div>
-                    <!-- Calcula o número único de modalidades via JavaScript sem depender de variável da view -->
+
                     <div class="stat-card-number" id="card-total-modalidades">-</div>
                     <div class="stat-card-sub">Opções disponíveis</div>
                 </div>
@@ -580,13 +580,13 @@
                 </div>
             </section>
 
-            <!-- ABAS SELETORAS -->
+
             <div class="tabs-container">
                 <button type="button" class="tab-btn active" id="btn-aba-turmas" onclick="mostrarAba('turmas')">Turmas</button>
                 <button type="button" class="tab-btn" id="btn-aba-modalidades" onclick="mostrarAba('modalidades')">Modalidades</button>
             </div>
 
-            <!-- CONTEÚDO 1: TABELA DE TURMAS -->
+
             <section id="conteudo-turmas" class="table-card">
                 <div class="table-header">
                     <h2>Todas as Turmas</h2>
@@ -640,14 +640,14 @@
                 </table>
             </section>
 
-            <!-- CONTEÚDO 2: GRID DE CARDS DE MODALIDADES (Gerado dinamicamente a partir de turmas) -->
+
             <section id="conteudo-modalidades" class="modalidades-grid" style="display: none;">
-                <!-- Preenchido automaticamente pelo script sem precisar mexer na view -->
+
             </section>
         </main>
     </div>
 
-    <!-- DADOS DAS TURMAS PASSADOS PARA O JAVASCRIPT EXTRAIR AS MODALIDADES -->
+
     <script>
         lucide.createIcons();
 
@@ -658,8 +658,6 @@
         if (elData) {
             elData.innerText = dataCapitalizada;
         }
-
-        // Extrai as modalidades únicas e conta suas turmas diretamente a partir da lista enviada pelo Django
         const modalidadesMap = new Map();
 
         {% for t in turmas %}
@@ -676,14 +674,10 @@
                 modalidadesMap.get(nomeMod).totalTurmas += 1;
             })();
         {% endfor %}
-
-        // 1. Atualiza o número do cartão "Modalidades"
         const cardTotal = document.getElementById('card-total-modalidades');
         if (cardTotal) {
             cardTotal.innerText = modalidadesMap.size;
         }
-
-        // 2. Renderiza os cards das modalidades na aba
         const containerModalidades = document.getElementById('conteudo-modalidades');
         if (containerModalidades) {
             if (modalidadesMap.size === 0) {
@@ -712,8 +706,6 @@
                 containerModalidades.innerHTML = htmlCards;
             }
         }
-
-        // 3. Alternância entre as Abas
         function mostrarAba(aba) {
             const btnTurmas = document.getElementById('btn-aba-turmas');
             const btnModalidades = document.getElementById('btn-aba-modalidades');

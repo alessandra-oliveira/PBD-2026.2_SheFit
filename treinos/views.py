@@ -95,9 +95,9 @@ def ficha_ativa_aluno(request):
     return render(request, 'treinos/ficha_aluno.html', {'ficha': ficha})
 
 
-# ---------------------------------------------------------------------------
-# T21: registro de carga por exercício (view da main, mantida como está)
-# ---------------------------------------------------------------------------
+
+
+
 
 @perfil_requerido('aluno')
 @require_POST
@@ -120,9 +120,9 @@ def registrar_execucao(request, exercicio_id):
     return redirect('ficha_ativa_aluno')
 
 
-# ---------------------------------------------------------------------------
-# T14: registro do treino (imutável), aderência e progressão de carga
-# ---------------------------------------------------------------------------
+
+
+
 
 def _data_ou_none(texto):
     try:

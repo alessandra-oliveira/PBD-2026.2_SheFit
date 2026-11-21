@@ -28,13 +28,13 @@ def obter_metricas_dashboard():
     ano_atual = hoje.year
     mes_atual = hoje.month
 
-    # 1. Total recebido no mês atual
+
     total_recebido = Pagamento.objects.filter(
         data_pagamento__year=ano_atual,
         data_pagamento__month=mes_atual
     ).aggregate(total=Sum('valor_pago'))['total'] or Decimal('0.00')
 
-    # 2. A receber no mês atual (cobranças que vencem neste mês e ainda não foram pagas)
+
     a_receber = Cobranca.objects.filter(
         vencimento__year=ano_atual,
         vencimento__month=mes_atual,
@@ -47,7 +47,7 @@ def obter_metricas_dashboard():
         paga=False
     ).count()
 
-    # 3. Receita no mês (Total recebido + A receber no mês)
+
     receita_mes = total_recebido + a_receber
     if receita_mes == Decimal('0.00'):
         cobrancas_total_mes = Cobranca.objects.filter(
@@ -56,7 +56,7 @@ def obter_metricas_dashboard():
         ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
         receita_mes = cobrancas_total_mes
 
-    # Comparativo percentual com mês anterior
+
     mes_ant = mes_atual - 1 if mes_atual > 1 else 12
     ano_ant = ano_atual if mes_atual > 1 else ano_atual - 1
     receita_mes_ant = Pagamento.objects.filter(
@@ -71,7 +71,7 @@ def obter_metricas_dashboard():
 
     pct_recebido_previsto = (total_recebido / receita_mes * 100) if receita_mes > 0 else Decimal('0.0')
 
-    # 4. Assinaturas ativas
+
     matriculas = Matricula.objects.select_related('plano', 'aluno').all()
     assinaturas_ativas = sum(1 for m in matriculas if m.situacao == 'ativa')
     novos_planos_mes = Matricula.objects.filter(
@@ -79,7 +79,7 @@ def obter_metricas_dashboard():
         criado_em__month=mes_atual
     ).count()
 
-    # 5. Evolução dos últimos 6 meses para o gráfico
+
     nomes_meses_abrev = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     evolucao_meses = []
     for i in range(5, -1, -1):
@@ -106,7 +106,7 @@ def obter_metricas_dashboard():
         else:
             item['altura_pct'] = 8
 
-    # 6. Meta do mês
+
     nomes_meses_extenso = [
         'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
         'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
@@ -118,7 +118,7 @@ def obter_metricas_dashboard():
     faltam_meta = max(Decimal('0.00'), meta_mensal - total_recebido)
     pct_meta = min(100, int((total_recebido / meta_mensal * 100))) if meta_mensal > 0 else 0
 
-    # 7. Pagamentos recentes (Últimas movimentações registradas)
+
     pagamentos_qs = Pagamento.objects.select_related(
         'cobranca__matricula__aluno',
         'cobranca__matricula__plano'
@@ -305,7 +305,7 @@ def editar_plano(request, plano_id):
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
-@require_POST  # muda dados: nunca por GET (um link ou imagem em outra página dispararia)
+@require_POST
 def alternar_status_plano(request, plano_id):
     """
     Ativa/Desativa o plano rapidamente. Se desativado, some das novas matrículas.

@@ -97,7 +97,7 @@ class CadastroColaboradorForm(forms.Form):
         senha = self.cleaned_data['senha_provisoria']
         tipo = self.cleaned_data['tipo']
 
-        # Criação do usuário do Django
+
         usuario = User.objects.create_user(
             username=username,
             email=email,
@@ -106,12 +106,12 @@ class CadastroColaboradorForm(forms.Form):
             last_name=last_name,
         )
 
-        # Se for admin, concede acesso à interface administrativa do Django se aplicável
+
         if tipo == Perfil.Tipo.ADMIN:
             usuario.is_staff = True
             usuario.save(update_fields=['is_staff'])
 
-        # Criação do perfil correspondente
+
         Perfil.objects.create(
             usuario=usuario,
             tipo=tipo

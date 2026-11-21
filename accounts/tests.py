@@ -58,7 +58,7 @@ class EntrarTests(TestCase):
         inexistente = self.client.post(
             self.url, {'username': 'ninguem', 'password': 'qualquer'},
         ).context['erro']
-        self.assertEqual(errada, inexistente)  # não revela se o usuário existe
+        self.assertEqual(errada, inexistente)
 
     def test_usuario_sem_perfil_nao_entra(self):
         User.objects.create_user(username='semperfil', password='senha12345')
@@ -109,7 +109,7 @@ class PainelTests(TestCase):
                 )
 
     def test_usuario_sem_perfil_toma_403_e_nao_erro_500(self):
-        # Ex.: o superusuário do admin não tem Perfil. Antes dava AttributeError (500).
+
         self.client.force_login(User.objects.create_superuser('admin', password='senha12345'))
         for rota in ['painel', *PAINEL_DE.values()]:
             with self.subTest(rota=rota):
@@ -154,7 +154,7 @@ class AdminPerfilModelTests(TestCase):
         self.assertEqual(Perfil.Tipo.FINANCEIRO, 'financeiro')
         self.assertEqual(Perfil.Tipo.ALUNO, 'aluno')
 
-        # Compatibilidade com constantes de classe
+
         self.assertEqual(Perfil.ADMIN, 'admin')
         self.assertEqual(Perfil.RECEPCAO, 'recepcao')
         self.assertEqual(Perfil.PROFESSOR, 'professor')

@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minhas Turmas - SheFit</title>
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -35,7 +35,7 @@
             min-height: 100vh;
         }
 
-        /* ================= SIDEBAR PADRÃO ================= */
+
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -142,7 +142,7 @@
             background: #fef2f2;
         }
 
-        /* ================= ÁREA CENTRAL ================= */
+
         .main-content {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -153,7 +153,7 @@
             max-width: 1400px;
         }
 
-        /* Topbar com Perfil e Data Padronizada */
+
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -217,7 +217,7 @@
             border: 2px solid #ffffff;
         }
 
-        /* Cabeçalho da Página */
+
         .page-header {
             display: flex;
             flex-direction: column;
@@ -236,7 +236,7 @@
             font-size: 0.95rem;
         }
 
-        /* ================= 3 CARDS DE MÉTRICAS ================= */
+
         .metrics-grid-3 {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -316,7 +316,7 @@
             border-top: 1px solid #f8fafc;
         }
 
-        /* ================= AGENDA DE TURMAS ================= */
+
         .agenda-container {
             background: white;
             border-radius: 16px;
@@ -359,7 +359,7 @@
             border-radius: 8px;
         }
 
-        /* Botões de Filtro */
+
         .filter-group {
             display: flex;
             align-items: center;
@@ -391,7 +391,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
         }
 
-        /* Grade de Cards das Turmas */
+
         .turmas-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -412,7 +412,7 @@
             transition: all 0.2s ease;
         }
 
-        /* Borda superior com destaque gradiente SheFit */
+
         .turma-card::before {
             content: '';
             position: absolute;
@@ -474,7 +474,7 @@
             flex-shrink: 0;
         }
 
-        /* Área de Ocupação */
+
         .turma-ocupacao-box {
             display: flex;
             flex-direction: column;
@@ -500,7 +500,7 @@
             font-weight: 700;
         }
 
-        /* Barra de Progresso Visual da Ocupação */
+
         .progress-bar-container {
             width: 100%;
             height: 8px;
@@ -546,7 +546,7 @@
             box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
         }
 
-        /* Responsividade */
+
         @media (max-width: 960px) {
             .metrics-grid-3 {
                 grid-template-columns: 1fr;
@@ -565,7 +565,7 @@
 </head>
 
 <body>
-    <!-- ================= SIDEBAR PADRÃO ================= -->
+
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
@@ -575,7 +575,7 @@
                 </div>
             </div>
 
-            <!-- Menu com os 4 itens estruturados do professor -->
+
             <ul class="nav-list">
                 <li class="nav-item">
                     <a href="{% url 'painel_professor' %}">
@@ -620,9 +620,9 @@
         </div>
     </aside>
 
-    <!-- ================= CONTEÚDO PRINCIPAL ================= -->
+
     <main class="main-content">
-        <!-- Topbar Superior Padronizada -->
+
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -638,15 +638,15 @@
             </div>
         </header>
 
-        <!-- Cabeçalho -->
+
         <section class="page-header">
             <h1>Minhas Turmas</h1>
             <p>Consulte sua agenda, acompanhe a ocupação e registre presenças.</p>
         </section>
 
-        <!-- 3 CARDS DE MÉTRICAS -->
+
         <section class="metrics-grid-3">
-            <!-- Card 1: Turmas na semana -->
+
             <article class="metric-card">
                 <div class="metric-card-top">
                     <span class="metric-card-title">Turmas na semana</span>
@@ -663,7 +663,7 @@
                 </div>
             </article>
 
-            <!-- Card 2: Alunos matriculados -->
+
             <article class="metric-card">
                 <div class="metric-card-top">
                     <span class="metric-card-title">Alunos matriculados</span>
@@ -680,7 +680,7 @@
                 </div>
             </article>
 
-            <!-- Card 3: Ocupação média -->
+
             <article class="metric-card">
                 <div class="metric-card-top">
                     <span class="metric-card-title">Ocupação média</span>
@@ -698,7 +698,7 @@
             </article>
         </section>
 
-        <!-- AGENDA DE TURMAS -->
+
         <section class="agenda-container">
             <div class="agenda-top-bar">
                 <div class="agenda-title-box">
@@ -737,8 +737,8 @@
                             <div class="turma-ocupacao-box">
                                 <div class="ocupacao-info-row">
                                     <span>Ocupação da turma</span>
-                                    <strong class="texto-ocupacao-turma" 
-                                            data-capacidade="{{ turma.capacidade_maxima }}" 
+                                    <strong class="texto-ocupacao-turma"
+                                            data-capacidade="{{ turma.capacidade_maxima }}"
                                             data-restantes="{{ turma.vagas_restantes }}">
                                         0 / {{ turma.capacidade_maxima }} alunas
                                     </strong>
@@ -757,8 +757,8 @@
                         </article>
                     {% endfor %}
                 {% else %}
-                    <!-- Cards de demonstração da grade conforme o Figma -->
-                     
+
+
                     <article class="turma-card" data-dia="segunda">
                         <div class="turma-card-header">
                             <h3 class="turma-card-title">{{ turma.modalidade.nome }}</h3>
@@ -779,8 +779,8 @@
                         <div class="turma-ocupacao-box">
                             <div class="ocupacao-info-row">
                                 <span>Ocupação da turma</span>
-                                <strong class="texto-ocupacao-turma" 
-                                        data-capacidade="{{ turma.capacidade_maxima }}" 
+                                <strong class="texto-ocupacao-turma"
+                                        data-capacidade="{{ turma.capacidade_maxima }}"
                                         data-restantes="{{ turma.vagas_restantes }}">
                                     {{ turma.matriculados }} / {{ turma.capacidade_maxima }} alunas
                                 </strong>
@@ -809,8 +809,6 @@
 
     <script>
         lucide.createIcons();
-
-        // Formatação dinâmica da data no padrão SheFit
         const opcoesCompleta = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const dataHoje = new Date();
         const dataFormatada = dataHoje.toLocaleDateString('pt-BR', opcoesCompleta);
@@ -820,12 +818,8 @@
         if (elDataAtual) {
             elDataAtual.innerText = dataCapitalizada;
         }
-
-        // Mapeamento dos dias da semana em pt-BR
         const diasSemanaMap = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const diaAtualNome = diasSemanaMap[dataHoje.getDay()];
-
-        // Função para filtrar turmas
         function filtrarTurmas(tipo) {
             const btns = document.querySelectorAll('.filter-btn');
             btns.forEach(b => b.classList.remove('active'));
