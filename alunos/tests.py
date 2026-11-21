@@ -52,9 +52,9 @@ class CadastrarAlunoTests(BaseRecepcaoTestCase):
         resposta = self.client.post(reverse('cadastrar_aluno'), dados_aluno(
             username='outra', email='outra@exemplo.com', telefone='81977770000',
         ))
-        self.assertEqual(resposta.status_code, 200)  # reexibe o formulário com erro
+        self.assertEqual(resposta.status_code, 200)
         self.assertEqual(Aluno.objects.count(), 1)
-        self.assertEqual(User.objects.count(), users_antes)  # nenhum User órfão
+        self.assertEqual(User.objects.count(), users_antes)
 
     def test_usuario_ja_em_uso_e_rejeitado(self):
         User.objects.create_user(username='maria', password='x')
@@ -76,7 +76,7 @@ class EditarAlunoTests(BaseRecepcaoTestCase):
 
     def test_data_de_nascimento_aparece_preenchida_na_edicao(self):
         resposta = self.client.get(reverse('editar_aluno', args=[self.aluno.id]))
-        # <input type="date"> só exibe o valor em AAAA-MM-DD
+
         self.assertContains(resposta, 'value="2000-05-10"')
 
     def test_editar_mantendo_cpf_email_e_telefone_funciona(self):
@@ -119,7 +119,7 @@ class PreencherAnamneseTests(BaseRecepcaoTestCase):
         resposta = self.client.post(self.url, {
             'restricoes_medicas': 'Asma', 'historico_lesoes': '', 'condicoes_cronicas': '',
         })
-        self.assertEqual(resposta.status_code, 200)  # reexibe o formulário com erro
+        self.assertEqual(resposta.status_code, 200)
         self.assertFalse(Anamnese.objects.filter(aluno=self.aluno).exists())
         self.aluno.refresh_from_db()
         self.assertFalse(self.aluno.ativo)
@@ -129,7 +129,7 @@ class PreencherAnamneseTests(BaseRecepcaoTestCase):
             'restricoes_medicas': 'Asma', 'historico_lesoes': '', 'condicoes_cronicas': '',
             'autorizacao_atividade_fisica': 'on',
         })
-        # A recepção volta ao PRÓPRIO painel (a consulta é exclusiva do professor)
+
         self.assertRedirects(resposta, reverse('painel_recepcao'))
         self.aluno.refresh_from_db()
         self.assertTrue(self.aluno.ativo)
@@ -166,9 +166,9 @@ class ListaDeAlunosNaMatriculaTests(BaseRecepcaoTestCase):
 
     def test_so_lista_alunos_aptos_para_matricula(self):
         apta = self._aluno(1, ativo=True, anamnese=True)
-        self._aluno(2, ativo=True, anamnese=None)      # sem anamnese
-        self._aluno(3, ativo=True, anamnese=False)     # sem autorização
-        self._aluno(4, ativo=False, anamnese=True)     # desativada
+        self._aluno(2, ativo=True, anamnese=None)
+        self._aluno(3, ativo=True, anamnese=False)
+        self._aluno(4, ativo=False, anamnese=True)
 
         listados = list(MatriculaForm().fields['aluno'].queryset)
         self.assertEqual(listados, [apta])

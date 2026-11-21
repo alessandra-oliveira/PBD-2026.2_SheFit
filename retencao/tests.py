@@ -81,7 +81,7 @@ class FrequenciaServicoTests(BaseRetencaoTest):
     def test_media_semanal(self):
         for dias in (1, 2, 3, 4):
             self.entrada(self.aluna, dias_atras=dias)
-        # 4 acessos em 7 dias = 4,0/semana; em 30 dias seria 0,9
+
         self.assertEqual(frequencia_no_periodo(self.aluna, '7')['media_semanal'], Decimal('4.0'))
         self.assertEqual(frequencia_no_periodo(self.aluna, '30')['media_semanal'], Decimal('0.9'))
 
@@ -153,7 +153,7 @@ class TelaTests(BaseRetencaoTest):
         a1 = self.avaliacao(dias_atras=30, peso='72.00', cintura_cm=Decimal('80.0'))
         a2 = self.avaliacao(dias_atras=0, peso='70.00', cintura_cm=Decimal('77.0'))
         self.entrar_como('ana')
-        resposta = self.client.get(self.url, {'a': a2.pk, 'b': a1.pk})  # ordem trocada de propósito
+        resposta = self.client.get(self.url, {'a': a2.pk, 'b': a1.pk})
         linhas = {l.rotulo: l for l in resposta.context['linhas']}
         self.assertEqual(linhas['Peso'].diferenca, Decimal('-2.00'))
         self.assertEqual(linhas['Cintura'].diferenca, Decimal('-3.0'))
@@ -386,4 +386,4 @@ class RegistrarExecucaoTests(BaseRetencaoTest):
 
     def test_ficha_da_aluna_mostra_formulario_de_carga(self):
         self.entrar_como('ana')
-        self.assertContains(self.client.get(reverse('ficha_ativa_aluno')), 'Registrar carga')
+        self.assertContains(self.client.get(reverse('ficha_ativa_aluno')), 'Registrar treino')

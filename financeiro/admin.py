@@ -13,7 +13,7 @@ class PlanoAdmin(admin.ModelAdmin):
 class RegraFinanceiraAdmin(admin.ModelAdmin):
     list_display = ('dias_tolerancia', 'juros_diario', 'multa_atraso', 'dias_bloqueio', 'atualizado_por', 'atualizado_em')
 
-    # as regras são editadas pela tela do financeiro (pra gerar histórico)
+
     def has_add_permission(self, request):
         return False
 
@@ -28,7 +28,7 @@ class HistoricoRegraFinanceiraAdmin(admin.ModelAdmin):
     list_display = ('alterado_em', 'alterado_por_nome', 'campo', 'valor_anterior', 'valor_novo')
     list_filter = ('campo',)
 
-    # o histórico é só leitura
+
     def has_add_permission(self, request):
         return False
 
@@ -50,7 +50,7 @@ class CobrancaInline(admin.TabularInline):
 class MatriculaAdmin(admin.ModelAdmin):
     inlines = [CobrancaInline]
     list_display = ('id', 'aluno', 'plano', 'data_inicio', 'situacao_display')
-    # a situação é calculada: aparece aqui só para leitura, nunca como campo editável
+
     readonly_fields = ('situacao_display',)
 
     @admin.display(description='Situação')

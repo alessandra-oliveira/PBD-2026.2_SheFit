@@ -1,0 +1,408 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios de retenção - SheFit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-gradient: linear-gradient(180deg, #7c2ae8 0%, #d63384 100%);
+            --btn-gradient: linear-gradient(135deg, #7c2ae8 0%, #d63384 100%);
+            --primary-purple: #7c2ae8;
+            --primary-pink: #d63384;
+            --bg-color: #f8f7fc;
+            --card-bg: #ffffff;
+            --card-radius: 16px;
+            --card-shadow: 0 4px 20px rgba(124, 42, 232, 0.05);
+            --border-light: #f1f0f7;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --danger: #be123c;
+            --danger-bg: #fff1f2;
+        }
+
+        body { background-color: var(--bg-color); color: var(--text-dark); display: flex; min-height: 100vh; }
+
+        /* Sidebar (mesmo padrão das demais telas do financeiro) */
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-gradient); padding: 24px 16px; display: flex; flex-direction: column; color: white; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; }
+        .sidebar-header { display: flex; align-items: center; margin-bottom: 36px; padding: 0 10px; }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; font-size: 1.45rem; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
+        .sidebar-nav { flex: 1; }
+        .nav-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,.88); text-decoration: none; font-weight: 600; font-size: .95rem; transition: all .2s ease; }
+        .nav-item.active a { background: #fff; color: var(--primary-purple); box-shadow: 0 4px 14px rgba(0,0,0,.1); font-weight: 700; }
+        .nav-item a:hover:not(.active) { background: rgba(255,255,255,.16); color: #fff; }
+        .nav-item a svg { width: 20px; height: 20px; }
+        .sidebar-footer { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
+        .btn-sidebar-sair { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 16px; border-radius: 12px; color: #e11d48; background: #fff; text-decoration: none; font-weight: 700; font-size: .95rem; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+        .btn-sidebar-sair svg { width: 18px; height: 18px; }
+        .portal-label { text-align: center; font-size: .75rem; color: rgba(255,255,255,.75); font-weight: 500; }
+
+        /* Conteúdo */
+        .main-content { margin-left: var(--sidebar-width); flex: 1; min-width: 0; padding: 24px 36px 60px; display: flex; flex-direction: column; gap: 24px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; }
+        .date-display { color: #475569; font-size: .95rem; font-weight: 500; }
+        .user-profile { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 42px; height: 42px; border-radius: 50%; background: #8b5cf6; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .user-info .name { font-size: .95rem; font-weight: 700; color: #1e293b; }
+        .user-info .role { font-size: .8rem; color: var(--text-muted); }
+        .page-header h1 { font-size: 1.85rem; font-weight: 800; letter-spacing: -.5px; margin-bottom: 4px; }
+        .page-header p { color: var(--text-muted); font-size: .95rem; }
+
+        .msg { padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: .92rem; background: var(--danger-bg); color: var(--danger); }
+
+        /* Filtro de período */
+        .filtro { background: var(--card-bg); border: 1px solid var(--border-light); border-radius: var(--card-radius); box-shadow: var(--card-shadow); padding: 18px 22px; display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; }
+        .filtro .grupo { display: flex; flex-direction: column; gap: 6px; }
+        .filtro .rotulo { font-size: .78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+        .atalhos { display: flex; flex-wrap: wrap; gap: 8px; }
+        .atalho { padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #334155; font-weight: 600; font-size: .88rem; text-decoration: none; }
+        .atalho.ativo { background: var(--btn-gradient); color: #fff; border-color: transparent; }
+        .datas { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .datas input[type=date] { padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: .88rem; color: #334155; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; border: 0; background: var(--btn-gradient); color: #fff; font-weight: 700; font-size: .88rem; text-decoration: none; cursor: pointer; }
+        .btn.secundario { background: #fff; color: var(--primary-purple); border: 1px solid #ddd6fe; }
+        .btn svg { width: 16px; height: 16px; }
+        .periodo-atual { margin-left: auto; font-size: .9rem; color: var(--text-muted); text-align: right; }
+        .periodo-atual strong { display: block; color: var(--text-dark); font-size: 1rem; }
+
+        /* 4 números */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .kpi-card { background: var(--card-bg); border-radius: var(--card-radius); padding: 22px; box-shadow: var(--card-shadow); border: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; }
+        .kpi-card:hover { box-shadow: 0 8px 24px rgba(124,42,232,.1); }
+        .kpi-card.destaque { border: 2px solid #fda4af; background: linear-gradient(180deg, #fff 0%, #fff1f2 100%); }
+        .kpi-title { font-size: .88rem; font-weight: 600; color: var(--text-muted); }
+        .kpi-value { font-size: 2rem; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
+        .kpi-value small { font-size: .95rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0; }
+        .kpi-card.destaque .kpi-value { color: var(--danger); }
+        .kpi-foot { font-size: .82rem; color: var(--text-muted); }
+
+        /* Seções */
+        .secao { background: var(--card-bg); border-radius: var(--card-radius); padding: 26px; box-shadow: var(--card-shadow); border: 1px solid var(--border-light); scroll-margin-top: 16px; }
+        .secao.destaque { border: 2px solid #fda4af; }
+        .secao-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+        .secao h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+        .secao-topo p { font-size: .88rem; color: var(--text-muted); max-width: 70ch; }
+        .regra { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 12px; padding: 14px 16px; font-size: .88rem; color: #3b0764; margin-bottom: 16px; line-height: 1.55; }
+        .regra strong { color: #581c87; }
+        .regra ul { margin: 8px 0 0 18px; }
+        .resumo { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-bottom: 14px; font-size: .9rem; color: var(--text-muted); }
+        .resumo b { color: var(--text-dark); font-size: 1.05rem; }
+        .vazio { padding: 18px; border-radius: 12px; background: #f8fafc; color: var(--text-muted); font-size: .92rem; }
+
+        .rolavel { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+        th { text-align: left; font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); padding: 10px 10px; border-bottom: 2px solid var(--border-light); white-space: nowrap; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+        th.num, td.num { text-align: right; white-space: nowrap; }
+        td a { color: var(--primary-purple); font-weight: 600; text-decoration: none; }
+        td a:hover { text-decoration: underline; }
+        .nome { font-weight: 700; }
+        .sub { display: block; font-size: .78rem; color: var(--text-muted); font-weight: 500; }
+        .tel { font-weight: 800; font-size: .95rem; white-space: nowrap; }
+        .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: .74rem; font-weight: 700; white-space: nowrap; }
+        .badge.vermelho { background: #ffe4e6; color: #9f1239; }
+        .badge.amarelo { background: #fef3c7; color: #92400e; }
+        .badge.verde { background: #dcfce7; color: #166534; }
+        .badge.cinza { background: #f1f5f9; color: #475569; }
+        .barra { width: 110px; height: 8px; border-radius: 999px; background: #ede9fe; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        .barra > i { display: block; height: 100%; background: var(--btn-gradient); }
+
+        @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 800px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 18px 16px 48px; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .periodo-atual { margin-left: 0; text-align: left; }
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_financeiro' %}"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_planos' %}"><i data-lucide="layers"></i><span>Planos & Modalidades</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'regras_financeiras' %}"><i data-lucide="sliders"></i><span>Regras Financeiras</span></a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'relatorios_retencao' %}"><i data-lucide="bar-chart-3"></i><span>Relatórios</span></a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair"><i data-lucide="log-out"></i><span>Sair</span></a>
+            <div class="portal-label">Portal financeiro</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display">{% now "l, d \d\e F \d\e Y" %}</div>
+            <div class="user-profile">
+                <div class="avatar">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="role">Financeiro</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <h1>Relatórios de retenção</h1>
+            <p>Frequência, ocupação e quem está sumindo — para agir antes de a pessoa cancelar.</p>
+        </div>
+
+        {% for message in messages %}<div class="msg" role="alert">{{ message }}</div>{% endfor %}
+
+        {# ------------------------- filtro de período (vale para os quatro) ------------------------- #}
+        <section class="filtro" aria-label="Filtro de período">
+            <div class="grupo">
+                <span class="rotulo">Período</span>
+                <div class="atalhos">
+                    {% for chave, rotulo in atalhos %}
+                        <a class="atalho {% if periodo.chave == chave %}ativo{% endif %}" href="?periodo={{ chave }}">{{ rotulo }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <form class="grupo" method="get">
+                <label class="rotulo" for="de">Intervalo personalizado</label>
+                <div class="datas">
+                    <input type="hidden" name="periodo" value="personalizado">
+                    <input type="date" id="de" name="de" value="{% if personalizado %}{{ periodo.inicio|date:'Y-m-d' }}{% endif %}" required aria-label="Data inicial">
+                    <span>até</span>
+                    <input type="date" id="ate" name="ate" value="{% if personalizado %}{{ periodo.fim|date:'Y-m-d' }}{% endif %}" required aria-label="Data final">
+                    <button class="btn secundario" type="submit">Aplicar</button>
+                </div>
+            </form>
+            <div class="periodo-atual">
+                Mostrando
+                <strong>{{ periodo.texto }}</strong>
+                {{ periodo.dias }} dia{{ periodo.dias|pluralize }}
+            </div>
+        </section>
+
+        {# ------------------------------------- os quatro números ------------------------------------- #}
+        <section class="kpi-grid" aria-label="Resumo">
+            <a class="kpi-card" href="#frequencia">
+                <span class="kpi-title">Frequência média</span>
+                <span class="kpi-value">{% if frequencia.media_geral is None %}—{% else %}{{ frequencia.media_geral|floatformat:1 }} <small>dias/semana</small>{% endif %}</span>
+                <span class="kpi-foot">{{ frequencia.alunos_na_media }} aluno{{ frequencia.alunos_na_media|pluralize }} na média</span>
+            </a>
+            <a class="kpi-card" href="#ocupacao">
+                <span class="kpi-title">Ocupação das turmas (pela presença)</span>
+                <span class="kpi-value">{% if ocupacao.ocupacao_geral is None %}—{% else %}{{ ocupacao.ocupacao_geral|floatformat:1 }}<small>%</small>{% endif %}</span>
+                <span class="kpi-foot">{{ ocupacao.turmas_com_chamada }} turma{{ ocupacao.turmas_com_chamada|pluralize }} com chamada</span>
+            </a>
+            <a class="kpi-card destaque" href="#risco">
+                <span class="kpi-title">Alunos em risco de evasão</span>
+                <span class="kpi-value">{{ risco.total }} <small>aluno{{ risco.total|pluralize }}</small></span>
+                <span class="kpi-foot">{{ risco.sumiram }} não vieram nenhuma vez no período</span>
+            </a>
+            <a class="kpi-card" href="#renovacao">
+                <span class="kpi-title">Taxa de renovação</span>
+                <span class="kpi-value">{% if renovacao.taxa is None %}—{% else %}{{ renovacao.taxa|floatformat:1 }}<small>%</small>{% endif %}</span>
+                <span class="kpi-foot">{{ renovacao.renovaram }} de {{ renovacao.base }} ciclo{{ renovacao.base|pluralize }} que terminaram</span>
+            </a>
+        </section>
+
+        {# ------------------------------------------ 1. frequência ------------------------------------------ #}
+        <section class="secao" id="frequencia">
+            <div class="secao-topo">
+                <div>
+                    <h2>Frequência média dos alunos</h2>
+                    <p>Dias em que cada aluno passou pela catraca com acesso liberado, por semana de matrícula. Quem não veio nenhuma vez entra na média com zero.</p>
+                </div>
+                <a class="btn secundario" href="{{ exportacoes.frequencia }}"><i data-lucide="download"></i>Exportar CSV</a>
+            </div>
+            {% if frequencia.linhas %}
+                <div class="resumo">
+                    <span>Média geral <b>{% if frequencia.media_geral is None %}—{% else %}{{ frequencia.media_geral|floatformat:1 }} dias/semana{% endif %}</b></span>
+                    <span>Sem nenhum acesso <b>{{ frequencia.sem_nenhum_acesso }}</b></span>
+                    {% if frequencia.alunos_fora_da_media %}<span>Fora da média (matriculados há menos de 7 dias) <b>{{ frequencia.alunos_fora_da_media }}</b></span>{% endif %}
+                </div>
+                <div class="rolavel">
+                    <table>
+                        <thead><tr><th>Aluno</th><th>Plano</th><th class="num">Dias com acesso</th><th class="num">Dias de matrícula</th><th class="num">Média/semana</th><th>Último acesso</th></tr></thead>
+                        <tbody>
+                        {% for l in frequencia.linhas %}
+                            <tr>
+                                <td class="nome">{{ l.aluno.nome }}{% if not l.entra_na_media %}<span class="sub">Recém-matriculado: fora da média</span>{% endif %}</td>
+                                <td>{{ l.plano }}</td>
+                                <td class="num">{{ l.dias_com_acesso }}</td>
+                                <td class="num">{{ l.dias_de_matricula }}</td>
+                                <td class="num"><b>{{ l.media_semanal|floatformat:1 }}</b></td>
+                                <td>{% if l.ultimo_acesso %}{{ l.ultimo_acesso|date:"d/m/Y" }}{% else %}<span class="badge cinza">Nunca veio</span>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="vazio">Nenhum aluno com matrícula em vigor neste período.</div>
+            {% endif %}
+        </section>
+
+        {# ------------------------------------------- 2. ocupação ------------------------------------------- #}
+        <section class="secao" id="ocupacao">
+            <div class="secao-topo">
+                <div>
+                    <h2>Ocupação das turmas</h2>
+                    <p>Pela <strong>presença</strong> na chamada do professor, não pela reserva: presenças ÷ (capacidade × aulas com chamada). Reserva que ninguém usou é vaga vazia na sala. Aula sem chamada não entra na conta.</p>
+                </div>
+                <a class="btn secundario" href="{{ exportacoes.ocupacao }}"><i data-lucide="download"></i>Exportar CSV</a>
+            </div>
+            {% if ocupacao.linhas %}
+                <div class="resumo">
+                    <span>Ocupação geral <b>{% if ocupacao.ocupacao_geral is None %}—{% else %}{{ ocupacao.ocupacao_geral|floatformat:1 }}%{% endif %}</b></span>
+                    {% if ocupacao.turmas_sem_chamada %}<span>Turmas sem chamada no período <b>{{ ocupacao.turmas_sem_chamada }}</b></span>{% endif %}
+                </div>
+                <div class="rolavel">
+                    <table>
+                        <thead><tr><th>Turma</th><th>Professor</th><th class="num">Capacidade</th><th class="num">Aulas com chamada</th><th class="num">Presenças</th><th class="num">Média por aula</th><th>Ocupação</th></tr></thead>
+                        <tbody>
+                        {% for l in ocupacao.linhas %}
+                            <tr>
+                                <td class="nome">{{ l.rotulo }}<span class="sub">Sala {{ l.sala }}{% if not l.ativa %} · turma desativada{% endif %}</span></td>
+                                <td>{{ l.professor }}</td>
+                                <td class="num">{{ l.capacidade }}</td>
+                                <td class="num">{{ l.aulas }}</td>
+                                <td class="num">{{ l.presencas }}</td>
+                                <td class="num">{% if l.media_presentes is None %}—{% else %}{{ l.media_presentes|floatformat:1 }}{% endif %}</td>
+                                <td>
+                                    {% if l.ocupacao is None %}
+                                        <span class="badge cinza">Sem chamada no período</span>
+                                    {% else %}
+                                        <span class="barra" aria-hidden="true"><i style="width: {% if l.ocupacao > 100 %}100{% else %}{{ l.ocupacao|stringformat:'.1f' }}{% endif %}%"></i></span><b>{{ l.ocupacao|floatformat:1 }}%</b>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="vazio">Nenhuma turma ativa e nenhuma chamada registrada neste período.</div>
+            {% endif %}
+        </section>
+
+        {# --------------------------------------- 3. risco de evasão --------------------------------------- #}
+        <section class="secao destaque" id="risco">
+            <div class="secao-topo">
+                <div>
+                    <h2>Alunos em risco de evasão</h2>
+                    <p>Quem vinha e parou de vir. Quem sumiu há três semanas ainda dá para recuperar com um telefonema; depois que cancela, não.</p>
+                </div>
+                <a class="btn secundario" href="{{ exportacoes.risco }}"><i data-lucide="download"></i>Exportar CSV</a>
+            </div>
+
+            <div class="regra">
+                <strong>Como a lista é montada.</strong>
+                Compara o período escolhido ({{ periodo.texto }}) com o período anterior, do mesmo tamanho ({{ risco.anterior.texto }}).
+                Entra na lista quem:
+                <ul>
+                    <li><strong>vinha:</strong> no período anterior veio pelo menos {{ risco.minimo_semanal|floatformat:"-1" }} dia por semana (e já estava matriculado há {{ risco.minimo_dias }} dias ou mais);</li>
+                    <li><strong>parou:</strong> no período escolhido a frequência semanal caiu {{ risco.queda_minima_pct }}% ou mais em relação ao anterior — inclusive quem não veio nenhuma vez.</li>
+                </ul>
+                Ficam de fora matrículas canceladas (não há mais o que recuperar) e trancadas (é uma pausa combinada, não um sumiço).
+                Quem sumiu por completo vem primeiro, do mais tempo sem vir para o menos.
+            </div>
+
+            {% if risco.linhas %}
+                <div class="resumo">
+                    <span>Em risco <b>{{ risco.total }}</b></span>
+                    <span>Não vieram nenhuma vez no período <b>{{ risco.sumiram }}</b></span>
+                </div>
+                <div class="rolavel">
+                    <table>
+                        <thead><tr><th>Aluno</th><th>Contato</th><th class="num">Sem vir há</th><th>Último acesso</th><th class="num">Média/semana (anterior → período)</th><th class="num">Queda</th><th>Matrícula</th></tr></thead>
+                        <tbody>
+                        {% for l in risco.linhas %}
+                            <tr>
+                                <td class="nome">{{ l.aluno.nome }}<span class="sub">{{ l.plano }}</span></td>
+                                <td>
+                                    <a class="tel" href="tel:{{ l.telefone_digitos }}">{{ l.telefone }}</a>
+                                    <span class="sub"><a href="mailto:{{ l.email }}">{{ l.email }}</a></span>
+                                </td>
+                                <td class="num">{% if l.dias_sem_vir is None %}—{% else %}<b>{{ l.dias_sem_vir }} dia{{ l.dias_sem_vir|pluralize }}</b>{% endif %}</td>
+                                <td>{% if l.ultimo_acesso %}{{ l.ultimo_acesso|date:"d/m/Y" }}{% else %}—{% endif %}{% if l.sumiu %}<span class="sub"><span class="badge vermelho">Não veio no período</span></span>{% endif %}</td>
+                                <td class="num">{{ l.media_anterior|floatformat:1 }} → <b>{{ l.media_atual|floatformat:1 }}</b></td>
+                                <td class="num"><b>−{{ l.queda_texto }}</b></td>
+                                <td>
+                                    <span class="badge {% if l.situacao_codigo == 'bloqueada' %}vermelho{% elif l.situacao_codigo == 'inadimplente' %}amarelo{% else %}verde{% endif %}">{{ l.situacao }}</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="vazio">Ninguém está em risco neste período: nenhum aluno que vinha com regularidade reduziu a frequência na proporção acima.</div>
+            {% endif %}
+        </section>
+
+        {# -------------------------------------- 4. taxa de renovação -------------------------------------- #}
+        <section class="secao" id="renovacao">
+            <div class="secao-topo">
+                <div>
+                    <h2>Taxa de renovação</h2>
+                    <p>Dos ciclos de vigência que <strong>terminaram</strong> no período, quantos foram renovados. Quem venceu e ainda não renovou conta contra a taxa: é o que ela existe para mostrar.</p>
+                </div>
+                <a class="btn secundario" href="{{ exportacoes.renovacao }}"><i data-lucide="download"></i>Exportar CSV</a>
+            </div>
+            {% if renovacao.linhas %}
+                <div class="resumo">
+                    <span>Taxa <b>{{ renovacao.taxa|floatformat:1 }}%</b></span>
+                    <span>Renovaram <b>{{ renovacao.renovaram }}</b></span>
+                    <span>Cancelaram <b>{{ renovacao.cancelaram }}</b></span>
+                    <span>Ainda sem renovação <b>{{ renovacao.sem_renovacao }}</b></span>
+                </div>
+                <div class="rolavel">
+                    <table>
+                        <thead><tr><th>Aluno</th><th>Contato</th><th>Plano</th><th class="num">Ciclo</th><th>Fim do ciclo</th><th>Resultado</th></tr></thead>
+                        <tbody>
+                        {% for l in renovacao.linhas %}
+                            <tr>
+                                <td class="nome">{{ l.aluno.nome }}</td>
+                                <td class="tel">{{ l.telefone }}</td>
+                                <td>{{ l.plano }}</td>
+                                <td class="num">{{ l.ciclo }}</td>
+                                <td>{{ l.fim_ciclo|date:"d/m/Y" }}</td>
+                                <td><span class="badge {% if l.resultado == 'renovou' %}verde{% elif l.resultado == 'cancelou' %}vermelho{% else %}amarelo{% endif %}">{{ l.resultado_texto }}</span></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="vazio">Nenhum ciclo de matrícula terminou neste período, então não há taxa de renovação para calcular.</div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>if (window.lucide) { lucide.createIcons(); }</script>
+</body>
+
+</html>

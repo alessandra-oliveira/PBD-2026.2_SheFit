@@ -17,7 +17,7 @@ from accounts.forms import CadastroColaboradorForm
 from accounts.decorators import admin_requerido, perfil_requerido
 from turmas.models import Turma, Modalidade
 from financeiro.models import Plano, Matricula, Cobranca, SituacaoMatricula
-from financeiro.servicos import obter_total_meses_periodicidade
+from financeiro.servicos import obter_total_meses_periodicidade, renovacoes_a_vencer
 
 
 
@@ -34,12 +34,12 @@ def entrar(request):
 
         usuario = authenticate(username=username, password=password)
 
-        if usuario is None:  # login incorreto, com erro genérico
+        if usuario is None:
             return render(request, 'accounts/login.html', {
                 'erro': 'Usuário ou senha inválidos'
             })
 
-        if not hasattr(usuario, 'perfil'):  # logou certo mas não tem perfil
+        if not hasattr(usuario, 'perfil'):
             if usuario.is_superuser:
                 Perfil.objects.create(usuario=usuario, tipo=Perfil.Tipo.ADMIN)
             else:
@@ -47,19 +47,19 @@ def entrar(request):
                     'erro': 'Usuário sem perfil atribuído.'
                 })
 
-        autenticar_sessao(request, usuario)  # usuário loga
+        autenticar_sessao(request, usuario)
 
-        return redirect('painel')  # direciona o navegador para a url painel
+        return redirect('painel')
 
     return render(request, 'accounts/login.html')
 
 
 def sair(request):
-    encerrar_sessao(request)  # desloga o usuário
-    return redirect('entrar')  # volta para a tela de login
+    encerrar_sessao(request)
+    return redirect('entrar')
 
 
-# Redireciona cada um para o seu painel de acordo com o tipo
+
 @login_required(login_url='entrar')
 def painel(request):
     tipo = _tipo_do_usuario(request.user)
@@ -75,10 +75,10 @@ def painel(request):
     elif tipo == 'financeiro':
         return redirect('painel_financeiro')
     else:
-        raise PermissionDenied  # bloqueia se não tiver tipo válido
+        raise PermissionDenied
 
 
-# Telas de cada perfil, só entra quem tem o tipo certo
+
 @admin_requerido
 def painel_admin(request):
     """
@@ -105,17 +105,17 @@ def painel_admin(request):
     filtro_tipo = request.GET.get('filtro_tipo', '').strip()
     busca = request.GET.get('busca', '').strip()
 
-    # Base de usuários
+
     todos_usuarios = User.objects.select_related('perfil').order_by('-date_joined')
 
-    # Métricas consolidadas
+
     total_geral = todos_usuarios.count()
     total_recepcao = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.RECEPCAO).count()
     total_professores = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.PROFESSOR).count()
     total_financeiro = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.FINANCEIRO).count()
     total_admin = todos_usuarios.filter(perfil__tipo=Perfil.Tipo.ADMIN).count()
 
-    # Aplicação de filtros para a tabela
+
     usuarios_filtrados = todos_usuarios
     if filtro_tipo:
         usuarios_filtrados = usuarios_filtrados.filter(perfil__tipo=filtro_tipo)
@@ -217,17 +217,17 @@ def painel_recepcao(request):
 
     hoje = timezone.localdate()
 
-    # 1. Total de estudantes e alunas em atividade
+
     alunos = Aluno.objects.select_related('perfil').all().order_by('-id')
     total_estudantes = alunos.count()
     estudantes_ativos = alunos.filter(ativo=True).count()
     taxa_atividade = round(
         (estudantes_ativos / total_estudantes * 100), 1) if total_estudantes > 0 else 0
 
-    # 2. Total de aulas / turmas ativas
+
     total_aulas_ativas = Turma.objects.filter(ativo=True).count()
 
-    # 3. Cadastros mensais nos últimos 6 meses (com altura percentual para o gráfico de barras)
+
     meses_pt = {
         1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun',
         7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
@@ -250,7 +250,7 @@ def painel_recepcao(request):
         item['altura_pct'] = max(
             int((item['quantidade'] / max_cadastros) * 100), 8) if max_cadastros > 0 else 8
 
-    # 4. Distribuição de matrículas por plano
+
     paleta_cores = ['#7c3aed', '#ec4899', '#3b82f6',
                     '#10b981', '#f59e0b', '#06b6d4', '#8b5cf6']
     planos_db = Plano.objects.filter(ativo=True)
@@ -269,7 +269,7 @@ def painel_recepcao(request):
             'cor': paleta_cores[idx % len(paleta_cores)]
         })
 
-    # 5. Aulas populares / frequência por modalidade
+
     modalidades = Modalidade.objects.all()
     aulas_populares = []
     for mod in modalidades:
@@ -288,7 +288,7 @@ def painel_recepcao(request):
         })
     aulas_populares.sort(key=lambda x: x['turmas_count'], reverse=True)
 
-    # 6. Agenda da semana (turmas ativas ordenadas por dia e horário)
+
     dias_ordem = {'segunda': 1, 'terca': 2, 'quarta': 3,
                   'quinta': 4, 'sexta': 5, 'sabado': 6, 'domingo': 7}
     turmas_ativas = Turma.objects.filter(
@@ -317,13 +317,17 @@ def painel_recepcao(request):
         })
     agenda_semana.sort(key=lambda x: (x['ordem_dia'], x['horario']))
 
-    # 7. Inadimplência do dia (cobranças vencidas não pagas)
+
     try:
         inadimplentes_hoje = Cobranca.objects.filter(
     paga=False, cancelada=False, vencimento__lte=hoje).select_related('matricula__aluno')
 
     except Exception:
         inadimplentes_hoje = []
+   
+    # 8. Renovações por confirmação que estão vencendo (T18)
+    from financeiro.servicos import renovacoes_a_vencer
+    renovacoes_vencendo = renovacoes_a_vencer(hoje)
 
     contexto = {
         'alunos': alunos,
@@ -338,6 +342,7 @@ def painel_recepcao(request):
         'aulas_populares': aulas_populares,
         'agenda_semana': agenda_semana,
         'inadimplentes_hoje': inadimplentes_hoje,
+        'renovacoes_vencendo': renovacoes_vencendo,
     }
 
     return render(request, 'accounts/painel_recepcao.html', contexto)
@@ -383,13 +388,13 @@ def gestao_estudantes_view(request):
 
         tem_plano_expirado = False
         if matricula_recente:
-            # 1. Cobranças vencidas e não pagas
+
             cobrancas_vencidas = any(
                 not c.paga and not c.cancelada and c.vencimento and c.vencimento < hoje
                 for c in matricula_recente.cobrancas.all()
             )
 
-            # 2. Período do plano encerrado
+
             periodo_expirado = False
             if matricula_recente.plano and matricula_recente.data_inicio:
                 meses = obter_total_meses_periodicidade(
@@ -399,7 +404,7 @@ def gestao_estudantes_view(request):
                 if data_fim < hoje:
                     periodo_expirado = True
 
-            # 3. Situação da matrícula (inadimplente ou bloqueada)
+
             try:
                 situacao = matricula_recente.situacao
                 situacao_vencida = situacao in [
@@ -427,7 +432,7 @@ def gestao_estudantes_view(request):
         'estudantes_ativos': estudantes_ativos,
         'planos_expirados': planos_expirados,
         'alunos': alunos,
-        # Variáveis adicionais de compatibilidade
+
         'total_alunos': total_estudantes,
         'alunos_ativos': estudantes_ativos,
     }

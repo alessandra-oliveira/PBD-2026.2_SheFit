@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from dateutil.relativedelta import relativedelta
 from django.db import transaction, IntegrityError
@@ -46,12 +46,12 @@ def calcular_situacao(matricula, hoje=None, regras=None):
 
     trancamento_em_curso = Trancamento.objects.filter(
         matricula=matricula, data_inicio__lte=hoje,
-    ).filter(Q(data_fim__isnull=True) | Q(data_fim__gte=hoje)).exists()
+    ).filter(Q(data_fim__isnull=True) | Q(data_fim__gt=hoje)).exists()
     if trancamento_em_curso:
         return SituacaoMatricula.TRANCADA
 
     vencimento_mais_antigo = matricula.cobrancas.filter(
-        paga=False, cancelada=False, vencimento__lt=hoje,
+        paga=False, cancelada=False, suspensa=False, vencimento__lt=hoje,
     ).aggregate(mais_antigo=Min('vencimento'))['mais_antigo']
     if vencimento_mais_antigo is None:
         return SituacaoMatricula.ATIVA
@@ -355,8 +355,8 @@ def _gerar_mensalidades_do_ciclo(matricula, inicio_ciclo, meses):
     for i in range(meses):
         mes = primeiro_mes + relativedelta(months=i)
         try:
-            # Savepoint próprio: se a constraint única disparar numa corrida,
-            # só este bloco é desfeito e a transação externa continua.
+
+
             with transaction.atomic():
                 _, criada = Cobranca.objects.get_or_create(
                     matricula=matricula,
@@ -377,23 +377,11 @@ def _gerar_mensalidades_do_ciclo(matricula, inicio_ciclo, meses):
 
 @transaction.atomic
 def gerar_cobrancas(matricula):
-    """Gera as cobranças da matrícula (T06). É IDEMPOTENTE: pode rodar quantas
-    vezes quiser para a mesma matrícula, que cada cobrança existe uma única vez.
-
-        - adesão: no máximo uma por matrícula;
-        - mensalidade: uma por (matrícula, competência).
-
-    Devolve quantas cobranças foram criadas nesta execução (0 se já existiam).
-    """
+    """Gera as cobranças da matrícula (T06). IDEMPOTENTE."""
     if Cancelamento.objects.filter(matricula=matricula).exists():
         return 0
     plano = matricula.plano
     criadas = 0
-    criadas += _gerar_mensalidades_do_ciclo(
-        matricula, matricula.data_inicio,
-        obter_total_meses_periodicidade(plano.periodicidade),
-    )
-    return criadas
 
     taxa_adesao = plano.taxa_adesao
     if taxa_adesao and taxa_adesao > 0:
@@ -402,34 +390,15 @@ def gerar_cobrancas(matricula):
                 matricula=matricula,
                 tipo='adesao',
                 valor=taxa_adesao,
-                vencimento=timezone.localdate(),
+                vencimento=matricula.data_inicio,
                 competencia=None,
             )
             criadas += 1
 
-    primeiro_mes = matricula.data_inicio.replace(day=1)
-    for i in range(obter_total_meses_periodicidade(plano.periodicidade)):
-        mes = primeiro_mes + relativedelta(months=i)
-        try:
-            # Savepoint próprio: se a constraint única disparar numa corrida,
-            # só este bloco é desfeito e a transação externa continua.
-            with transaction.atomic():
-                _, criada = Cobranca.objects.get_or_create(
-                    matricula=matricula,
-                    tipo='mensalidade',
-                    competencia=mes.strftime('%Y-%m'),
-                    defaults={
-                        'valor': plano.valor,
-                        'vencimento': _vencimento_da_competencia(
-                            mes, plano.dia_vencimento, matricula.data_inicio,
-                        ),
-                    },
-                )
-        except IntegrityError:
-            criada = False
-        if criada:
-            criadas += 1
-
+    criadas += _gerar_mensalidades_do_ciclo(
+        matricula, matricula.data_inicio,
+        obter_total_meses_periodicidade(plano.periodicidade),
+    )
     return criadas
 
 
@@ -445,6 +414,8 @@ def realizar_matricula(aluno, plano, data_inicio, forma_pagamento):
     )
     gerar_cobrancas(matricula)
     return matricula
+
+
 def avaliar_situacao_financeira_aluno(aluno):
     """
     Avalia a entrada do aluno a partir da SITUAÇÃO calculada da matrícula
@@ -467,16 +438,23 @@ def avaliar_situacao_financeira_aluno(aluno):
             'status': 'bloqueado',
             'motivo': f'Matrícula com status: {situacao.label.upper()}.'
         }
-
+    
+    fim = fim_vigencia(matricula)
+    if hoje >= fim:
+        return {
+            'status': 'bloqueado',
+            'motivo': f'Matrícula vencida em {fim:%d/%m/%Y}. Renove para liberar o acesso.',
+        }
+    
     if situacao == SituacaoMatricula.ATIVA:
         return {
             'status': 'liberado',
             'motivo': 'Matrícula ativa e em dia.'
         }
 
-    # Bloqueada ou inadimplente: há uma cobrança vencida em aberto
+
     cobranca_mais_antiga = matricula.cobrancas.filter(
-        paga=False, cancelada=False, vencimento__lt=hoje,
+        paga=False, cancelada=False, suspensa=False, vencimento__lt=hoje,
     ).order_by('vencimento').first()
     dias_atraso = (hoje - cobranca_mais_antiga.vencimento).days
     valor_pendente = saldo_cobranca(cobranca_mais_antiga, hoje)
@@ -492,7 +470,7 @@ def avaliar_situacao_financeira_aluno(aluno):
             }
         }
 
-    # Inadimplente, mas ainda abaixo do limite de bloqueio
+
     dias_restantes = regras.dias_bloqueio - dias_atraso
     return {
         'status': 'liberado_com_aviso',
@@ -505,12 +483,12 @@ def avaliar_situacao_financeira_aluno(aluno):
         }
     }
 
-# ---------------------------------------------------------------------------
-# T17 - Cancelamento da matrícula com a multa certa
-# ---------------------------------------------------------------------------
 
-# A multa vira uma cobrança com vencimento. Quantos dias a aluna tem para pagar
-# a partir do cancelamento (0 = vence no próprio dia). Ajuste se a regra mudar.
+
+
+
+
+
 DIAS_PARA_PAGAR_MULTA = 0
 
 
@@ -547,7 +525,7 @@ def calcular_multa_cancelamento(matricula, hoje=None):
     if hoje >= fim:
         return base
 
-    # Matrícula que ainda nem começou: o tempo restante é a fidelidade inteira.
+
     dias_restantes = min((fim - hoje).days, dias_totais)
     valor_contrato = plano.valor * plano.fidelidade_meses
     multa = _centavos(
@@ -572,7 +550,7 @@ def previsao_cancelamento(matricula, hoje=None):
     "Vencida" segue o resto do sistema: vencimento anterior a hoje.
     """
     hoje = hoje or timezone.localdate()
-    abertas = matricula.cobrancas.filter(paga=False, cancelada=False).order_by('vencimento', 'id')
+    abertas = matricula.cobrancas.filter(paga=False, cancelada=False, suspensa=False).order_by('vencimento', 'id')
     a_cancelar = [c for c in abertas if c.vencimento >= hoje]
     dividas = [
         {'cobranca': c, 'saldo': saldo_cobranca(c, hoje)}
@@ -604,8 +582,8 @@ def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
         if not motivo:
             raise ValidationError("Informe o motivo do cancelamento.")
 
-        # Trava a matrícula: dois cancelamentos simultâneos entram um de cada
-        #  vez.
+
+
         matricula = Matricula.objects.select_for_update().select_related('plano').get(pk=matricula.pk)
         if Cancelamento.objects.filter(matricula=matricula).exists():
             raise ValidationError("Esta matrícula já está cancelada.")
@@ -627,7 +605,7 @@ def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
 
         cobranca_multa = None
         if multa > 0:
-            # Criada DEPOIS de cancelar as futuras, para não ser varrida junto.
+
             cobranca_multa = Cobranca.objects.create(
                 matricula=matricula,
                 tipo='multa_cancelamento',
@@ -645,24 +623,24 @@ def cancelar_matricula(matricula, motivo, hoje=None, multa_esperada=None):
             'total_dividas': previsao['total_dividas'],
         }
 
-# ---------------------------------------------------------------------------
-# T18 - Renovação da matrícula no fim da vigência
-# ---------------------------------------------------------------------------
 
-# Renovação AUTOMÁTICA: roda quando a vigência chega ao fim (0 = no próprio dia).
-# Se o sistema ficar parado, a execução seguinte alcança todos os ciclos atrasados.
+
+
+
+
+
 ANTECEDENCIA_RENOVACAO_AUTOMATICA_DIAS = 0
 
-# Renovação POR CONFIRMAÇÃO: o painel avisa e a recepção pode confirmar a partir
-# de quantos dias antes do fim da vigência.
+
+
 JANELA_AVISO_RENOVACAO_DIAS = 15
 
-# Trava de segurança: ciclos atrasados que uma execução alcança por matrícula.
+
 LIMITE_CICLOS_POR_EXECUCAO = 60
 
 
 def _ultima_renovacao(matricula):
-    # .all() aproveita prefetch_related('renovacoes') quando houver.
+
     return max(matricula.renovacoes.all(), key=lambda r: r.ciclo, default=None)
 
 
@@ -670,7 +648,7 @@ def _meses_acumulados(matricula):
     ultima = _ultima_renovacao(matricula)
     if ultima is not None:
         return ultima.meses_acumulados
-    # Ciclo 1: a vigência original é a periodicidade do plano.
+
     return obter_total_meses_periodicidade(matricula.plano.periodicidade)
 
 
@@ -678,11 +656,15 @@ def ciclo_atual(matricula):
     ultima = _ultima_renovacao(matricula)
     return ultima.ciclo if ultima is not None else 1
 
+def dias_trancados(matricula):
+    return sum(
+        t.dias for t in matricula.trancamentos.exclude(data_fim__isnull=True)
+    )
 
 def fim_vigencia(matricula):
-    """Dia em que termina a vigência atual (e começa o ciclo seguinte)."""
-    return matricula.data_inicio + relativedelta(months=_meses_acumulados(matricula))
-
+    """Fim da vigência atual, prorrogado pelos dias trancados."""
+    base = matricula.data_inicio + relativedelta(months=_meses_acumulados(matricula))
+    return base + timedelta(days=dias_trancados(matricula))
 
 @transaction.atomic
 def renovar_matricula(matricula, hoje=None, usuario=None, automatica=False, fim_esperado=None):
@@ -700,7 +682,7 @@ def renovar_matricula(matricula, hoje=None, usuario=None, automatica=False, fim_
     Matrícula cancelada não renova (ValidationError).
     """
     hoje = hoje or timezone.localdate()
-    # Trava a matrícula: duas renovações simultâneas entram uma de cada vez.
+
     matricula = Matricula.objects.select_for_update().select_related('plano').get(pk=matricula.pk)
     if Cancelamento.objects.filter(matricula=matricula).exists():
         raise ValidationError("Matrícula cancelada não pode ser renovada.")
@@ -754,7 +736,7 @@ def renovar_automaticas(hoje=None):
     )
     limite = hoje + timedelta(days=ANTECEDENCIA_RENOVACAO_AUTOMATICA_DIAS)
     for matricula in candidatas:
-        # Varredura barata: quem ainda não chegou ao fim da vigência nem é travado.
+
         if fim_vigencia(matricula) > limite:
             continue
         renovou = False
@@ -766,7 +748,7 @@ def renovar_automaticas(hoje=None):
                 renovou = True
                 resumo['ciclos'] += 1
                 resumo['cobrancas'] += r['cobrancas_criadas']
-        except Exception as erro:  # um problema não pode parar as demais
+        except Exception as erro:
             resumo['erros'].append((matricula.pk, str(erro)))
         if renovou:
             resumo['matriculas'] += 1
@@ -792,8 +774,74 @@ def renovacoes_a_vencer(hoje=None):
             itens.append({
                 'matricula': matricula,
                 'fim': fim,
-                'dias': (fim - hoje).days,   # negativo = já venceu
+                'dias': (fim - hoje).days,
                 'ciclo': ciclo_atual(matricula),
             })
     itens.sort(key=lambda i: (i['fim'], i['matricula'].pk))
     return itens
+
+
+
+
+
+def _dias_no_ano(inicio, fim, ano):
+    """Dias do intervalo [inicio, fim) que caem dentro do ano."""
+    ini = max(inicio, date(ano, 1, 1))
+    f = min(fim, date(ano + 1, 1, 1))
+    return max((f - ini).days, 0)
+
+
+@transaction.atomic
+def trancar_matricula(matricula, data_inicio, data_fim, motivo='',
+                      usuario=None, hoje=None, regras=None):
+    hoje = hoje or timezone.localdate()
+    regras = regras or RegraFinanceira.obter()
+
+    if not data_inicio or not data_fim:
+        raise ValidationError('Informe a data de início e a data de retorno.')
+    if data_fim <= data_inicio:
+        raise ValidationError('A data de retorno deve ser depois do início.')
+    if data_inicio < hoje:
+        raise ValidationError('O início do trancamento não pode estar no passado.')
+
+    matricula = Matricula.objects.select_for_update().get(pk=matricula.pk)
+    if Cancelamento.objects.filter(matricula=matricula).exists():
+        raise ValidationError('Matrícula cancelada não pode ser trancada.')
+
+    existentes = list(matricula.trancamentos.exclude(data_fim__isnull=True))
+
+    for t in existentes:
+        if data_inicio < t.data_fim and t.data_inicio < data_fim:
+            raise ValidationError(
+                f'Já existe trancamento de {t.data_inicio:%d/%m/%Y} '
+                f'a {t.data_fim:%d/%m/%Y} que coincide com esse período.'
+            )
+
+    limite = regras.limite_dias_trancamento_ano
+    for ano in range(data_inicio.year, data_fim.year + 1):
+        novos = _dias_no_ano(data_inicio, data_fim, ano)
+        if novos == 0:
+            continue
+        usados = sum(_dias_no_ano(t.data_inicio, t.data_fim, ano) for t in existentes)
+        if usados + novos > limite:
+            restante = max(limite - usados, 0)
+            raise ValidationError(
+                f'Limite de {limite} dias de trancamento por ano excedido '
+                f'em {ano}: já usados {usados}, pedidos {novos}, restam {restante}.'
+            )
+
+    trancamento = Trancamento.objects.create(
+        matricula=matricula,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        motivo=motivo,
+        registrado_por=usuario,
+        registrado_por_nome=usuario.get_username() if usuario else '',
+    )
+
+    suspensas = matricula.cobrancas.filter(
+        paga=False, cancelada=False, suspensa=False,
+        vencimento__gte=data_inicio, vencimento__lt=data_fim,
+    ).update(suspensa=True, trancamento=trancamento)
+
+    return {'trancamento': trancamento, 'cobrancas_suspensas': suspensas}

@@ -16,7 +16,7 @@ def cadastrar_aluno(request):
     if request.method == 'POST':
         form = AlunoForm(request.POST, request.FILES)
         if form.is_valid():
-            # Cria Usuário + Perfil + Aluno (inativo até uma anamnese autorizada)
+
             aluno = form.save()
 
             messages.info(
@@ -45,8 +45,8 @@ def preencher_anamnese(request, aluno_id):
                 aluno.ativo = True
                 aluno.save()
                 messages.success(request, f'Anamnese e autorização confirmadas! {aluno.nome} já pode ser matriculada.')
-                # Volta ao painel da recepção. (A tela de consulta é só do
-                # professor: redirecionar para lá daria "sem permissão".)
+
+
                 return redirect('painel_recepcao')
             else:
                 aluno.ativo = False
@@ -116,7 +116,7 @@ def minha_situacao_financeira(request):
     Exibe status, cobranças em aberto, dias para bloqueio, vigência e histórico.
     Somente leitura (nenhuma edição permitida).
     """
-    # Isola estritamente o aluno logado para garantir segurança de dados
+
     aluno = getattr(request.user, 'aluno', None)
     if not aluno and hasattr(request.user, 'perfil'):
         try:
@@ -135,22 +135,22 @@ def minha_situacao_financeira(request):
     hoje = date.today()
 
     if aluno:
-        # Pega a matrícula mais recente do aluno
+
         matricula = Matricula.objects.filter(aluno=aluno).select_related('plano').order_by('-id').first()
 
         if matricula:
-            # Busca cobranças não pagas
+
             cobrancas_aberto = Cobranca.objects.filter(matricula=matricula, paga=False).order_by('vencimento')
             total_aberto = sum(c.valor for c in cobrancas_aberto)
 
-            # Calcula os dias para bloqueio se houver atraso
+
             cobrancas_vencidas = [c for c in cobrancas_aberto if c.vencimento < hoje]
             if cobrancas_vencidas:
                 cobranca_mais_antiga = min(cobrancas_vencidas, key=lambda x: x.vencimento)
                 dias_atraso = (hoje - cobranca_mais_antiga.vencimento).days
                 dias_para_bloqueio = regra.dias_bloqueio - dias_atraso
 
-            # Histórico de pagamentos do aluno
+
             historico_pagamentos = Pagamento.objects.filter(
                 cobranca__matricula=matricula
             ).select_related('cobranca').order_by('-data_pagamento')

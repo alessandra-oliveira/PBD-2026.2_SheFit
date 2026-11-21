@@ -10,7 +10,7 @@ class Perfil(models.Model):
         FINANCEIRO = 'financeiro', 'Financeiro'
         ALUNO = 'aluno', 'Aluno'
 
-    # Constantes mantidas para retrocompatibilidade em todo o projeto
+
     ADMIN = Tipo.ADMIN
     RECEPCAO = Tipo.RECEPCAO
     FINANCEIRO = Tipo.FINANCEIRO
@@ -19,10 +19,10 @@ class Perfil(models.Model):
 
     OPCOES_PERFIL = Tipo.choices
 
-    # Conecta perfil ao user
+
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
 
-    # Guarda qual é o perfil
+
     tipo = models.CharField(max_length=20, choices=Tipo.choices)
 
     class Meta:

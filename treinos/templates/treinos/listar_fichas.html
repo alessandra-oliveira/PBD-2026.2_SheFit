@@ -6,11 +6,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consultar Fichas e Histórico - SheFit</title>
-    <!-- Fonte Inter -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -39,7 +39,7 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Lateral Padrão */
+
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -137,7 +137,7 @@
             transform: translateY(-1px);
         }
 
-        /* Área Principal de Conteúdo */
+
         .main-wrapper {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -146,7 +146,7 @@
             min-height: 100vh;
         }
 
-        /* Topbar com Perfil e Data Padronizada */
+
         .topbar {
             height: 70px;
             background: #ffffff;
@@ -225,7 +225,7 @@
             box-sizing: border-box;
         }
 
-        /* Cabeçalho da Página com Botão Primário */
+
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -268,7 +268,7 @@
             transform: translateY(-1px);
         }
 
-        /* Mensagens de Alerta */
+
         .messages-container {
             display: flex;
             flex-direction: column;
@@ -303,7 +303,7 @@
             border: 1px solid #fecaca;
         }
 
-        /* Card da Tabela de Fichas */
+
         .card-table {
             background: #ffffff;
             border-radius: 16px;
@@ -438,7 +438,7 @@
             font-size: 0.95rem;
         }
 
-        /* ================= MODAL MONTAR FICHA DE TREINO ================= */
+
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -577,7 +577,7 @@
             gap: 10px;
         }
 
-        /* Seção de Exercícios */
+
         .exercicios-section-header {
             display: flex;
             justify-content: space-between;
@@ -687,7 +687,7 @@
 </head>
 
 <body>
-    <!-- Sidebar Navegação Lateral -->
+
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
@@ -697,7 +697,7 @@
                 </div>
             </div>
 
-            <!-- Menu com os 5 itens estruturados do professor -->
+
             <ul class="nav-list">
                 <li class="nav-item">
                     <a href="{% url 'painel_professor' %}">
@@ -774,7 +774,7 @@
             </div>
         {% endif %}
 
-        <!-- Cabeçalho com Botão Primário + Montar ficha de treino -->
+
         <div class="page-header">
             <div class="page-header-text">
                 <h1>Consultar Fichas e Histórico</h1>
@@ -786,7 +786,7 @@
             </button>
         </div>
 
-        <!-- Tabela de Fichas de Treino -->
+
         <section class="card-table">
             <div class="table-header-bar">
                 <div class="search-box">
@@ -842,20 +842,20 @@
     </main>
 </div>
 
-    <!-- ================= MODAL MONTAR FICHA DE TREINO ================= -->
+
     <div id="modalFichaOverlay" class="modal-overlay">
         <div class="modal-card">
-            <!-- Cabeçalho Limpo -->
+
             <div class="modal-header">
                 <h3 class="modal-header-title">Montar Ficha de Treino</h3>
                 <button type="button" class="btn-modal-fechar" onclick="fecharModalFicha()" title="Fechar">✕</button>
             </div>
 
-            <!-- Formulário com action original para criar_ficha -->
+
             <form method="POST" action="{% url 'criar_ficha' %}" id="formFichaTreino">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <!-- Seleção de Aluno -->
+
                     <div class="form-group">
                         <label for="id_aluno">Aluno(a) *</label>
                         <select name="aluno" id="id_aluno" class="form-control" required>
@@ -870,27 +870,27 @@
                         </select>
                     </div>
 
-                    <!-- Data Prevista para Revisão -->
+
                     <div class="form-group">
                         <label for="id_data_revisao">Data prevista para revisão *</label>
                         <input type="date" name="data_revisao" id="id_data_revisao" class="form-control" required>
                     </div>
 
-                    <!-- Seção de Exercícios com Formset -->
+
                     <div class="exercicios-section-header">
                         <h4>Exercícios da Ficha</h4>
                         <button type="button" class="btn-add-item" onclick="adicionarExercicio()">+ Adicionar exercício</button>
                     </div>
 
-                    <!-- Management form do formset ExercicioTreinoFormSet -->
+
                     <input type="hidden" name="exercicios-TOTAL_FORMS" id="id_exercicios-TOTAL_FORMS" value="1">
                     <input type="hidden" name="exercicios-INITIAL_FORMS" id="id_exercicios-INITIAL_FORMS" value="0">
                     <input type="hidden" name="exercicios-MIN_NUM_FORMS" id="id_exercicios-MIN_NUM_FORMS" value="0">
                     <input type="hidden" name="exercicios-MAX_NUM_FORMS" id="id_exercicios-MAX_NUM_FORMS" value="1000">
 
-                    <!-- Container com os Exercícios -->
+
                     <div id="exerciciosContainer" style="display: flex; flex-direction: column; gap: 12px;">
-                        <!-- Exercício Inicial 0 -->
+
                         <div class="exercicio-card" id="exercicio-0">
                             <div class="form-group">
                                 <label>Nome do exercício *</label>
@@ -918,7 +918,7 @@
                     </div>
                 </div>
 
-                <!-- Rodapé de Botões Alinhados à Direita (100% visíveis) -->
+
                 <div class="modal-footer">
                     <button type="button" class="btn-modal-cancelar" onclick="fecharModalFicha()">Cancelar</button>
                     <button type="submit" class="btn-modal-salvar">Salvar ficha</button>
@@ -927,7 +927,7 @@
         </div>
     </div>
 
-    <!-- Template oculto para clonar novos exercícios dinamicamente -->
+
     <template id="exercicioTemplate">
         <div class="exercicio-card" id="exercicio-__prefix__" style="margin-top: 4px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -961,8 +961,6 @@
 
     <script>
         lucide.createIcons();
-
-        // Data atual padronizada
         const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
         const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
@@ -970,8 +968,6 @@
         if (elData) {
             elData.innerText = dataCapitalizada;
         }
-
-        // Filtro em tempo real na tabela
         function filtrarTabela() {
             const input = document.getElementById('filtroFichas');
             const termo = input.value.toLowerCase();
@@ -984,8 +980,6 @@
                 }
             });
         }
-
-        // Funções do Modal Montar Ficha
         const modalOverlay = document.getElementById('modalFichaOverlay');
         const formFicha = document.getElementById('formFichaTreino');
 
@@ -1008,8 +1002,6 @@
                 fecharModalFicha();
             }
         });
-
-        // Adicionar Exercício Dinâmico no Formset
         function adicionarExercicio() {
             const totalFormsEl = document.getElementById('id_exercicios-TOTAL_FORMS');
             const currentTotal = parseInt(totalFormsEl.value, 10);

@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Professor - SheFit</title>
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -36,7 +36,7 @@
             overflow: hidden;
         }
 
-        /* ================= SIDEBAR PADRÃO ================= */
+
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -140,7 +140,7 @@
             background: #fee2e2;
         }
 
-        /* ================= ÁREA DE CONTEÚDO ================= */
+
         .main-wrapper {
             flex: 1;
             display: flex;
@@ -149,7 +149,7 @@
             overflow-y: auto;
         }
 
-        /* Topbar com Perfil e Data */
+
         .topbar {
             height: 70px;
             background: #ffffff;
@@ -217,7 +217,7 @@
             margin: 0;
         }
 
-        /* Conteúdo Principal */
+
         .content-area {
             padding: 32px 36px 60px;
             max-width: 1400px;
@@ -227,7 +227,7 @@
             gap: 28px;
         }
 
-        /* Boas-vindas */
+
         .page-header h1 {
             font-size: 1.85rem;
             font-weight: 800;
@@ -241,7 +241,7 @@
             font-size: 0.95rem;
         }
 
-        /* Seção 1: Cards de Métricas */
+
         .stats-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -307,7 +307,7 @@
             color: var(--text-muted);
         }
 
-        /* Seção 2: Agenda de Hoje */
+
         .agenda-card {
             background: #ffffff;
             border-radius: 16px;
@@ -445,7 +445,7 @@
 </head>
 
 <body>
-    <!-- SIDEBAR FIXA -->
+
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
@@ -455,7 +455,7 @@
                 </div>
             </div>
 
-            <!-- Menu com os 4 itens estruturados do professor -->
+
             <ul class="nav-list">
                 <li class="nav-item active">
                     <a href="{% url 'painel_professor' %}">
@@ -500,9 +500,9 @@
         </div>
     </aside>
 
-    <!-- ÁREA PRINCIPAL -->
+
     <div class="main-wrapper">
-        <!-- TOPBAR PADRONIZADA COM OUTROS PAINÉIS (RECEPÇÃO / FINANCEIRO / ADMIN) -->
+
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -518,7 +518,7 @@
             </div>
         </header>
 
-        <!-- CONTEÚDO PRINCIPAL -->
+
         <main class="content-area">
             {% if fichas_revisao_pendente %}
                 <section style="background: #ffffff; border-radius: 16px; border: 1px solid #fed7aa; padding: 20px 24px; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.05); display: flex; flex-direction: column; gap: 12px;">
@@ -540,15 +540,15 @@
                 </section>
             {% endif %}
 
-            <!-- Boas-vindas -->
+
             <div class="page-header">
                 <h1>Olá, {{ request.user.first_name|default:request.user.username }}!</h1>
                 <p>Acompanhe sua agenda, suas turmas e a evolução dos estudantes.</p>
             </div>
 
-            <!-- SEÇÃO 1: CARDS DE MÉTRICAS -->
+
             <section class="stats-grid-2">
-                <!-- Card 1: Turmas hoje -->
+
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-label">Turmas hoje</span>
@@ -560,7 +560,7 @@
                     <div class="stat-card-sub" id="sub-turmas-hoje">Nenhuma aula agendada</div>
                 </div>
 
-                <!-- Card 2: Meus estudantes -->
+
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-label">Meus estudantes</span>
@@ -572,7 +572,7 @@
                 </div>
             </section>
 
-            <!-- SEÇÃO 2: AGENDA DE HOJE -->
+
             <section class="agenda-card">
                 <div class="agenda-header">
                     <div class="agenda-title-box">
@@ -583,7 +583,7 @@
                 </div>
 
                 {% now 'w' as dia_num %}
-                <!-- Lista de cards das turmas de hoje -->
+
                 <div class="agenda-list" id="agenda-hoje-list">
                     {% for turma in turmas_hoje|default:request.user.turmas_lecionadas.all %}
                         {% if turma.ativo %}
@@ -614,8 +614,6 @@
 
     <script>
         lucide.createIcons();
-
-        // Data atual padronizada com os outros painéis (Recepção / Financeiro / Admin)
         const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
         const dataFormatada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
@@ -625,8 +623,6 @@
 
         const elDataAgenda = document.getElementById('data-agenda-sub');
         if (elDataAgenda) elDataAgenda.innerText = dataFormatada;
-
-        // Atualização reativa de turmas de hoje e próxima aula
         const rows = document.querySelectorAll('.agenda-item-row');
         const emptyState = document.getElementById('agenda-empty-state');
         const numTurmas = document.getElementById('num-turmas-hoje');

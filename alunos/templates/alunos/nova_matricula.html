@@ -98,8 +98,8 @@
             font-size: 0.95rem;
         }
 
-        /* Estilização nativa dos campos do Django para ficarem bonitos */
-        .form-group select, 
+
+        .form-group select,
         .form-group input {
             width: 100%;
             padding: 10px 14px;
@@ -112,7 +112,7 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .form-group select:focus, 
+        .form-group select:focus,
         .form-group input:focus {
             border-color: #7c3aed;
             box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
@@ -201,7 +201,7 @@
                 <h2>Cadastrar Nova Matrícula</h2>
             </div>
             <div class="card-body">
-                
+
                 {% if messages %}
                     {% for message in messages %}
                         <div class="alert alert-{{ message.tags }}">
@@ -212,7 +212,7 @@
 
                 <form method="post" novalidate>
                     {% csrf_token %}
-                    
+
                     {% for field in form %}
                         <div class="form-group">
                             <label for="{{ field.id_for_label }}">{{ field.label }}</label>

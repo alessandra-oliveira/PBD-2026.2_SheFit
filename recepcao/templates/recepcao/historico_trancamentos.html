@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Histórico de trancamentos - Recepção SheFit</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
+        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+        main { max-width: 1100px; margin: 32px auto; padding: 0 18px; }
+        .card { margin-bottom: 18px; padding: 22px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
+        h1 { margin: 0; font-size: 1.45rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+        th { color: #64748b; font-size: .85rem; }
+        .button { display: inline-block; margin-top: 16px; padding: 11px 15px; border-radius: 8px; background: #7c3aed; color: white; font-weight: 700; text-decoration: none; }
+        .msg-sucesso { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
+        .muted { color: #64748b; }
+    </style>
+</head>
+<body>
+    <header><h1>SheFit · Recepção</h1></header>
+    <main>
+        <section class="card">
+            <h1>Histórico de trancamentos</h1>
+            <p class="muted">{{ matricula.aluno }} — total trancado: <strong>{{ total_dias }} dia(s)</strong></p>
+
+            {% for message in messages %}<div class="msg-sucesso">{{ message }}</div>{% endfor %}
+
+            {% if itens %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Início</th><th>Retorno</th><th>Dias</th><th>Situação</th>
+                            <th>Cobranças suspensas</th><th>Motivo</th><th>Registrado por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for i in itens %}
+                        <tr>
+                            <td>{{ i.t.data_inicio|date:"d/m/Y" }}</td>
+                            <td>{{ i.t.data_fim|date:"d/m/Y" }}</td>
+                            <td>{{ i.t.dias }}</td>
+                            <td>{{ i.estado }}</td>
+                            <td>{{ i.suspensas }}</td>
+                            <td>{{ i.t.motivo|default:"—" }}</td>
+                            <td>{{ i.t.registrado_por_nome|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Nenhum trancamento registrado.</p>
+            {% endif %}
+
+            <a class="button" href="{% url 'trancar_matricula' matricula.pk %}">Novo trancamento</a>
+        </section>
+    </main>
+</body>
+</html>

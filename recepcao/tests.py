@@ -23,7 +23,7 @@ _seq = count(1)
 
 def criar_usuario(tipo):
     n = next(_seq)
-    usuario = User.objects.create(username=f'u{n}')  # sem senha: evita o hash lento
+    usuario = User.objects.create(username=f'u{n}')
     Perfil.objects.create(usuario=usuario, tipo=tipo)
     return usuario
 
@@ -450,3 +450,50 @@ class HistoricoLiberacoesViewTests(TestCase):
     def test_perfil_aluna_nao_acessa(self):
         self.client.force_login(criar_usuario(Perfil.ALUNO))
         self.assertEqual(self.client.get(self.url).status_code, 302)
+
+class MatriculaVencidaTests(TestCase):
+    """T18: vigência encerrada e não renovada bloqueia a entrada."""
+
+    def aluna_com_inicio(self, meses_atras, automatica=False):
+        from dateutil.relativedelta import relativedelta
+        aluna = criar_aluna('Ana Vigencia', com_matricula=False)
+        plano = Plano.objects.create(
+            nome=f'Tri{next(_seq)}', periodicidade='trimestral', valor=Decimal('90.00'),
+            taxa_adesao=Decimal('0.00'), dia_vencimento=10, renovacao_automatica=automatica,
+        )
+        inicio = timezone.localdate() - relativedelta(months=meses_atras)
+        matricula = realizar_matricula(aluna, plano, inicio, 'pix')
+        Cobranca.objects.filter(matricula=matricula).update(paga=True)
+        return aluna, matricula
+
+    def test_vigencia_encerrada_sem_renovar_bloqueia_mesmo_pago(self):
+        aluna, _ = self.aluna_com_inicio(5)
+        r = avaliar_acesso(aluna)
+        self.assertFalse(r['sucesso'])
+        self.assertEqual(r['status'], 'bloqueado')
+        self.assertIn('vencida', r['mensagem'])
+
+    def test_no_proprio_dia_do_fim_ja_esta_vencida(self):
+        aluna, _ = self.aluna_com_inicio(3)
+        self.assertEqual(avaliar_acesso(aluna)['status'], 'bloqueado')
+
+    def test_um_dia_antes_do_fim_continua_liberada(self):
+        from dateutil.relativedelta import relativedelta
+        aluna, matricula = self.aluna_com_inicio(0)
+        matricula.data_inicio = timezone.localdate() - relativedelta(months=3) + timedelta(days=1)
+        matricula.save()
+        self.assertEqual(avaliar_acesso(aluna)['status'], 'liberado')
+
+    def test_entrada_vencida_nao_gera_frequencia(self):
+        aluna, _ = self.aluna_com_inicio(5)
+        r = registrar_entrada(aluna)
+        self.assertFalse(r['registrada'])
+        self.assertFalse(Frequencia.objects.filter(aluno=aluna).exists())
+
+    def test_renovada_volta_a_ser_liberada(self):
+        from financeiro.servicos import renovar_matricula
+        aluna, matricula = self.aluna_com_inicio(3)
+        self.assertEqual(avaliar_acesso(aluna)['status'], 'bloqueado')
+        renovar_matricula(matricula, hoje=timezone.localdate())
+        Cobranca.objects.filter(matricula=matricula).update(paga=True)
+        self.assertEqual(avaliar_acesso(aluna)['status'], 'liberado')

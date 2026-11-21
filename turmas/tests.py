@@ -14,7 +14,7 @@ _seq = count(1)
 
 def criar_usuario(tipo):
     n = next(_seq)
-    usuario = User.objects.create(username=f'{tipo}{n}')  # sem senha: evita o hash lento
+    usuario = User.objects.create(username=f'{tipo}{n}')
     Perfil.objects.create(usuario=usuario, tipo=tipo)
     return usuario
 
@@ -40,7 +40,7 @@ def dados_turma(professor, modalidade, **extra):
 
 class ModeloTurmaTests(TestCase):
     def test_professor_aponta_para_a_classe_user(self):
-        # Bug antigo: ForeignKey(User(), ...) passava uma INSTÂNCIA em vez da classe.
+
         self.assertIs(Turma._meta.get_field('professor').related_model, User)
 
     def test_capacidade_zero_ou_negativa_e_invalida(self):
@@ -50,7 +50,7 @@ class ModeloTurmaTests(TestCase):
                 turma.clean()
 
     def test_capacidade_positiva_e_valida(self):
-        Turma(capacidade_maxima=1).clean()  # não levanta
+        Turma(capacidade_maxima=1).clean()
 
     def test_str_mostra_modalidade_e_dia(self):
         turma = criar_turma(criar_usuario(Perfil.PROFESSOR))

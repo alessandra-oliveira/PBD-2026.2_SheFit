@@ -1,14 +1,23 @@
 from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from accounts.decorators import perfil_requerido
-from .models import Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca, Pagamento
-from .forms import PlanoForm, RegraFinanceiraForm
+from .models import (
+    Plano, RegraFinanceira, HistoricoRegraFinanceira, Matricula, Cobranca,
+    Pagamento, Trancamento,
+)
+from .forms import PlanoForm, RegraFinanceiraForm, RelatorioPeriodoForm
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+from financeiro.servicos import trancar_matricula, dias_trancados
+from .forms import TrancamentoForm
+from .relatorios import relatorio_inadimplencia, relatorio_receita
 
 
 def obter_metricas_dashboard():
@@ -19,13 +28,13 @@ def obter_metricas_dashboard():
     ano_atual = hoje.year
     mes_atual = hoje.month
 
-    # 1. Total recebido no mês atual
+
     total_recebido = Pagamento.objects.filter(
         data_pagamento__year=ano_atual,
         data_pagamento__month=mes_atual
     ).aggregate(total=Sum('valor_pago'))['total'] or Decimal('0.00')
 
-    # 2. A receber no mês atual (cobranças que vencem neste mês e ainda não foram pagas)
+
     a_receber = Cobranca.objects.filter(
         vencimento__year=ano_atual,
         vencimento__month=mes_atual,
@@ -38,7 +47,7 @@ def obter_metricas_dashboard():
         paga=False
     ).count()
 
-    # 3. Receita no mês (Total recebido + A receber no mês)
+
     receita_mes = total_recebido + a_receber
     if receita_mes == Decimal('0.00'):
         cobrancas_total_mes = Cobranca.objects.filter(
@@ -47,7 +56,7 @@ def obter_metricas_dashboard():
         ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
         receita_mes = cobrancas_total_mes
 
-    # Comparativo percentual com mês anterior
+
     mes_ant = mes_atual - 1 if mes_atual > 1 else 12
     ano_ant = ano_atual if mes_atual > 1 else ano_atual - 1
     receita_mes_ant = Pagamento.objects.filter(
@@ -62,7 +71,7 @@ def obter_metricas_dashboard():
 
     pct_recebido_previsto = (total_recebido / receita_mes * 100) if receita_mes > 0 else Decimal('0.0')
 
-    # 4. Assinaturas ativas
+
     matriculas = Matricula.objects.select_related('plano', 'aluno').all()
     assinaturas_ativas = sum(1 for m in matriculas if m.situacao == 'ativa')
     novos_planos_mes = Matricula.objects.filter(
@@ -70,7 +79,7 @@ def obter_metricas_dashboard():
         criado_em__month=mes_atual
     ).count()
 
-    # 5. Evolução dos últimos 6 meses para o gráfico
+
     nomes_meses_abrev = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     evolucao_meses = []
     for i in range(5, -1, -1):
@@ -97,7 +106,7 @@ def obter_metricas_dashboard():
         else:
             item['altura_pct'] = 8
 
-    # 6. Meta do mês
+
     nomes_meses_extenso = [
         'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
         'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
@@ -109,7 +118,7 @@ def obter_metricas_dashboard():
     faltam_meta = max(Decimal('0.00'), meta_mensal - total_recebido)
     pct_meta = min(100, int((total_recebido / meta_mensal * 100))) if meta_mensal > 0 else 0
 
-    # 7. Pagamentos recentes (Últimas movimentações registradas)
+
     pagamentos_qs = Pagamento.objects.select_related(
         'cobranca__matricula__aluno',
         'cobranca__matricula__plano'
@@ -173,6 +182,48 @@ def dashboard_financeiro(request):
     """
     contexto = obter_metricas_dashboard()
     return render(request, 'financeiro/dashboard.html', contexto)
+
+
+def _periodo_relatorio(request):
+    form = RelatorioPeriodoForm(request.GET or None)
+    if form.is_valid():
+        return form, form.cleaned_data['inicio'], form.cleaned_data['fim']
+    hoje = timezone.localdate()
+    return form, hoje.replace(day=1), hoje
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def relatorios_financeiros(request):
+    form, inicio, fim = _periodo_relatorio(request)
+    return render(request, 'financeiro/relatorios.html', {
+        'form': form,
+        'inicio': inicio,
+        'fim': fim,
+        'faixas': relatorio_inadimplencia(inicio, fim),
+        'receita': relatorio_receita(inicio, fim),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def exportar_relatorio_inadimplencia(request):
+    form, inicio, fim = _periodo_relatorio(request)
+    resposta = HttpResponse(content_type='text/csv; charset=utf-8')
+    resposta['Content-Disposition'] = 'attachment; filename="inadimplencia.csv"'
+    resposta.write('\ufeff')
+    escritor = csv.writer(resposta, delimiter=';')
+    escritor.writerow(['Faixa', 'Aluna', 'Vencimento', 'Valor', 'Dias de atraso'])
+    for faixa in relatorio_inadimplencia(inicio, fim):
+        for item in faixa['itens']:
+            escritor.writerow([
+                faixa['nome'],
+                item['aluna'],
+                item['cobranca'].vencimento.strftime('%d/%m/%Y'),
+                item['valor'],
+                item['dias_atraso'],
+            ])
+    return resposta
 
 
 @login_required(login_url='entrar')
@@ -254,7 +305,7 @@ def editar_plano(request, plano_id):
 
 @login_required(login_url='entrar')
 @perfil_requerido('financeiro')
-@require_POST  # muda dados: nunca por GET (um link ou imagem em outra página dispararia)
+@require_POST
 def alternar_status_plano(request, plano_id):
     """
     Ativa/Desativa o plano rapidamente. Se desativado, some das novas matrículas.
@@ -294,4 +345,83 @@ def regras_financeiras(request):
         'form': form,
         'regras': regras,
         'historico': historico,
+    })
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def trancar_matricula_view(request, matricula_id):
+    matricula = get_object_or_404(
+        Matricula.objects.select_related('aluno', 'plano'), pk=matricula_id,
+    )
+    form = TrancamentoForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        dados = form.cleaned_data
+        try:
+            resultado = trancar_matricula(
+                matricula, dados['data_inicio'], dados['data_fim'],
+                motivo=dados['motivo'], usuario=request.user,
+            )
+        except ValidationError as erro:
+            for mensagem in erro.messages:
+                form.add_error(None, mensagem)
+        else:
+            messages.success(
+                request,
+                f"Matrícula trancada por {resultado['trancamento'].dias} dia(s). "
+                f"{resultado['cobrancas_suspensas']} cobrança(s) suspensa(s) "
+                f"e vigência prorrogada.",
+            )
+            return redirect('historico_trancamentos', matricula_id=matricula.pk)
+
+    return render(request, 'recepcao/trancar_matricula.html', {
+        'matricula': matricula, 'form': form,
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def historico_trancamentos(request, matricula_id):
+    matricula = get_object_or_404(
+        Matricula.objects.select_related('aluno', 'plano'), pk=matricula_id,
+    )
+    hoje = timezone.localdate()
+    itens = []
+    for t in matricula.trancamentos.prefetch_related('cobrancas_suspensas'):
+        if t.data_fim and t.data_fim <= hoje:
+            estado = 'Encerrado'
+        elif t.data_inicio > hoje:
+            estado = 'Agendado'
+        else:
+            estado = 'Em curso'
+        itens.append({'t': t, 'estado': estado, 'suspensas': t.cobrancas_suspensas.count()})
+
+    return render(request, 'recepcao/historico_trancamentos.html', {
+        'matricula': matricula, 'itens': itens, 'total_dias': dias_trancados(matricula),
+    })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('recepcao')
+def historico_geral_trancamentos(request):
+    hoje = timezone.localdate()
+    itens = []
+    trancamentos = Trancamento.objects.select_related(
+        'matricula__aluno', 'matricula__plano',
+    ).prefetch_related('cobrancas_suspensas').order_by('-data_inicio', '-id')
+    for trancamento in trancamentos:
+        if trancamento.data_fim and trancamento.data_fim <= hoje:
+            estado = 'Encerrado'
+        elif trancamento.data_inicio > hoje:
+            estado = 'Agendado'
+        else:
+            estado = 'Em curso'
+        itens.append({
+            't': trancamento,
+            'estado': estado,
+            'suspensas': trancamento.cobrancas_suspensas.count(),
+        })
+
+    return render(request, 'recepcao/historico_geral_trancamentos.html', {
+        'itens': itens,
     })

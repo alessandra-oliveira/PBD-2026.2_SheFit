@@ -6,11 +6,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planos & Modalidades - SheFit</title>
-    <!-- Fonte Inter -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Ícones Lucide -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -43,7 +43,7 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Lateral Fixa */
+
         .sidebar {
             width: var(--sidebar-width);
             background: var(--sidebar-gradient);
@@ -159,7 +159,7 @@
             letter-spacing: 0.02em;
         }
 
-        /* Área Principal de Conteúdo */
+
         .main-content {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -170,7 +170,7 @@
             min-height: 100vh;
         }
 
-        /* Topbar Superior Padronizada com Recepção / Admin / Professor */
+
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -214,7 +214,7 @@
             color: var(--text-muted);
         }
 
-        /* Mensagens de Alerta */
+
         .messages-container {
             display: flex;
             flex-direction: column;
@@ -250,7 +250,7 @@
             border: 1px solid #fecaca;
         }
 
-        /* Cabeçalho da Página */
+
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -294,7 +294,7 @@
             transform: translateY(-1px);
         }
 
-        /* 3 Cards de KPIs Reais */
+
         .kpi-grid-3 {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -373,7 +373,7 @@
             color: var(--text-muted);
         }
 
-        /* Tabela Planos Cadastrados */
+
         .card-tabela {
             background: var(--card-bg);
             border-radius: var(--card-radius);
@@ -523,7 +523,7 @@
             font-size: 0.95rem;
         }
 
-        /* ================= MODAL PADRONIZADO (REFERÊNCIA NOVA TURMA) ================= */
+
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -572,7 +572,7 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* Cabeçalho Limpo: Título direto em negrito à esquerda e ✕ no canto direito */
+
         .modal-header {
             padding: 20px 24px 14px;
             border-bottom: 1px solid #f1f5f9;
@@ -687,7 +687,7 @@
             color: #1e293b;
         }
 
-        /* Rodapé de Botões Alinhados à Direita */
+
         .modal-footer {
             padding: 16px 24px;
             border-top: 1px solid #f1f5f9;
@@ -734,7 +734,7 @@
             transform: translateY(-1px);
         }
 
-        /* Responsividade */
+
         @media (max-width: 900px) {
             .kpi-grid-3 {
                 grid-template-columns: 1fr;
@@ -747,14 +747,14 @@
 </head>
 
 <body>
-    <!-- Sidebar Navegação Lateral -->
+
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
                 <span>SheFit</span>
             </div>
-            <!-- SEM ícone de menu hambúrguer conforme especificação -->
+
         </div>
 
         <nav class="sidebar-nav">
@@ -789,9 +789,9 @@
         </div>
     </aside>
 
-    <!-- Área Principal -->
+
     <main class="main-content">
-        <!-- Topbar Padronizada com outros painéis (Recepção / Admin / Professor) -->
+
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -807,7 +807,7 @@
             </div>
         </header>
 
-        <!-- Mensagens do Django -->
+
         {% if messages %}
             <div class="messages-container">
                 {% for message in messages %}
@@ -819,7 +819,7 @@
             </div>
         {% endif %}
 
-        <!-- Cabeçalho da Página com Botão + Novo plano -->
+
         <div class="page-header">
             <div class="page-header-text">
                 <h1>Planos & Modalidades</h1>
@@ -831,9 +831,9 @@
             </button>
         </div>
 
-        <!-- Linha de 3 Cards de KPIs Reais do Banco -->
+
         <div class="kpi-grid-3">
-            <!-- KPI 1: Planos ativos -->
+
             <div class="kpi-card">
                 <div class="kpi-top">
                     <span class="kpi-title">Planos ativos</span>
@@ -847,7 +847,7 @@
                 </div>
             </div>
 
-            <!-- KPI 2: Periodicidades -->
+
             <div class="kpi-card">
                 <div class="kpi-top">
                     <span class="kpi-title">Periodicidades</span>
@@ -861,7 +861,7 @@
                 </div>
             </div>
 
-            <!-- KPI 3: Ticket inicial -->
+
             <div class="kpi-card">
                 <div class="kpi-top">
                     <span class="kpi-title">Ticket inicial</span>
@@ -876,7 +876,7 @@
             </div>
         </div>
 
-        <!-- Tabela Planos Cadastrados Reais do Banco -->
+
         <div class="card-tabela">
             <div class="card-tabela-header">
                 <h3>Planos cadastrados</h3>
@@ -925,8 +925,8 @@
                                 </td>
                                 <td style="text-align: right;">
                                     <div class="acoes-col">
-                                        <!-- Botão Editar: Abre o Modal padronizado preenchido -->
-                                        <button type="button" 
+
+                                        <button type="button"
                                                 class="btn-acao-editar"
                                                 onclick="openEditarPlanoModal({
                                                     id: '{{ plano.id }}',
@@ -943,7 +943,7 @@
                                                 })">
                                             Editar
                                         </button>
-                                        <!-- Form de Alternar Status -->
+
                                         <form method="post" action="{% url 'alternar_status_plano' plano.id %}" style="display: inline;">
                                             {% csrf_token %}
                                             <button type="submit" class="btn-acao-status">
@@ -966,42 +966,42 @@
         </div>
     </main>
 
-    <!-- ================= MODAL DE FORMULÁRIO (PADRÃO NOVA TURMA) ================= -->
+
     <div id="modalPlanoOverlay" class="modal-overlay">
         <div class="modal-card">
-            <!-- Cabeçalho Limpo -->
+
             <div class="modal-header">
                 <h3 id="modalTitle" class="modal-header-title">Novo Plano</h3>
                 <button type="button" class="btn-modal-fechar" onclick="closePlanoModal()" title="Fechar">✕</button>
             </div>
 
-            <!-- Formulário Completo Conforme Requisitos -->
+
             <form id="formPlano" method="POST" action="{% url 'cadastrar_plano' %}">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <!-- Linha 1 (largura total): Nome do plano -->
+
                     <div class="form-group">
                         <label for="id_nome">Nome do plano</label>
-                        <input type="text" 
-                               name="nome" 
-                               id="id_nome" 
-                               class="form-control" 
-                               placeholder="Ex: Plano Gold SheFit" 
+                        <input type="text"
+                               name="nome"
+                               id="id_nome"
+                               class="form-control"
+                               placeholder="Ex: Plano Gold SheFit"
                                required>
                     </div>
 
-                    <!-- Linha 2 (largura total): Modalidades incluídas -->
+
                     <div class="form-group">
                         <label for="id_modalidades_incluidas">Modalidades incluídas</label>
-                        <textarea name="modalidades_incluidas" 
-                                  id="id_modalidades_incluidas" 
-                                  rows="2" 
-                                  class="form-control" 
-                                  placeholder="Ex: Musculação, Dança, Pilates" 
+                        <textarea name="modalidades_incluidas"
+                                  id="id_modalidades_incluidas"
+                                  rows="2"
+                                  class="form-control"
+                                  placeholder="Ex: Musculação, Dança, Pilates"
                                   required></textarea>
                     </div>
 
-                    <!-- Linha 3 (2 colunas lado a lado): Periodicidade e Valor (R$) -->
+
                     <div class="form-row-2">
                         <div class="form-group">
                             <label for="id_periodicidade">Periodicidade</label>
@@ -1014,18 +1014,18 @@
                         </div>
                         <div class="form-group">
                             <label for="id_valor">Valor (R$)</label>
-                            <input type="number" 
-                                   name="valor" 
-                                   id="id_valor" 
-                                   step="0.01" 
-                                   min="0" 
-                                   class="form-control" 
-                                   placeholder="0,00" 
+                            <input type="number"
+                                   name="valor"
+                                   id="id_valor"
+                                   step="0.01"
+                                   min="0"
+                                   class="form-control"
+                                   placeholder="0,00"
                                    required>
                         </div>
                     </div>
 
-                    <!-- Linha 4 (2 colunas lado a lado): Fidelidade e Dia de vencimento -->
+
                     <div class="form-row-2">
                         <div class="form-group">
                             <label for="id_fidelidade_meses">Fidelidade</label>
@@ -1048,28 +1048,28 @@
                         </div>
                     </div>
 
-                    <!-- Linha 5: Descrição do Plano -->
+
                     <div class="form-group">
                         <label for="id_descricao">Descrição do plano (opcional)</label>
-                        <input type="text" 
-                               name="descricao" 
-                               id="id_descricao" 
-                               class="form-control" 
+                        <input type="text"
+                               name="descricao"
+                               id="id_descricao"
+                               class="form-control"
                                placeholder="Descrição ou regras do plano...">
                     </div>
 
-                    <!-- Campos ocultos/padrão do model -->
+
                     <input type="hidden" name="taxa_adesao" id="id_taxa_adesao" value="0.00">
                     <input type="hidden" name="multa_cancelamento" id="id_multa_cancelamento" value="0.00">
 
-                    <!-- Checkbox de Status Ativo -->
+
                     <label class="checkbox-container">
                         <input type="checkbox" name="ativo" id="id_ativo" checked>
                         <span>Plano Ativo (disponível para novas matrículas)</span>
                     </label>
                 </div>
 
-                <!-- Rodapé de Botões Alinhados à Direita -->
+
                 <div class="modal-footer">
                     <button type="button" class="btn-modal-cancelar" onclick="closePlanoModal()">Cancelar</button>
                     <button type="submit" id="btnSubmitModal" class="btn-modal-salvar">Salvar plano</button>
@@ -1079,10 +1079,7 @@
     </div>
 
     <script>
-        // Inicialização de ícones Lucide
         lucide.createIcons();
-
-        // Data atual padronizada com os outros painéis (Recepção / Admin / Professor)
         const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
         const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
@@ -1090,8 +1087,6 @@
         if (elData) {
             elData.innerText = dataCapitalizada;
         }
-
-        // Funções do Modal de Planos (Abertura / Fechamento / Edição)
         const modalOverlay = document.getElementById('modalPlanoOverlay');
         const formPlano = document.getElementById('formPlano');
         const modalTitle = document.getElementById('modalTitle');
