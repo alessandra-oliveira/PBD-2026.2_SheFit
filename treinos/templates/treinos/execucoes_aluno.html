@@ -1,84 +1,569 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execuções de {{ aluno.nome }} - SheFit</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>Execuções de {{ aluno.nome }} - SheFit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 28px 16px; min-height: 100vh; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #1f2937; }
-        main { max-width: 860px; margin: auto; }
-        .card { background: #fff; border-radius: 16px; padding: 28px; margin-bottom: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
-        h1, h2 { color: #6d28d9; }
-        h2 { font-size: 1.05rem; margin: 22px 0 6px; }
-        .filtro { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin: 14px 0; }
-        .filtro label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: 4px; }
-        .filtro input { padding: 9px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; }
-        .filtro button { padding: 10px 18px; border: none; border-radius: 8px; background: #7c3aed; color: #fff; font-weight: 600; cursor: pointer; }
-        .aderencia { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 12px; padding: 16px; }
-        .aderencia strong { font-size: 1.6rem; color: #6d28d9; }
-        .dica { font-size: .82rem; color: #6b7280; margin: 6px 0 0; }
-        table { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: 6px; }
-        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
-        th { color: #6d28d9; font-size: .8rem; }
-        .obs { font-size: .88rem; color: #4b5563; font-style: italic; }
-        .botao { display: inline-block; border-radius: 8px; padding: 11px 15px; background: #f3f4f6; color: #374151; text-decoration: none; }
-        .aviso { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .nav-item.active a {
+            background: #ffffff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            color: #ef4444;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fee2e2;
+            transform: translateY(-1px);
+        }
+
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin: 0;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin: 0;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .card-execucoes {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-section h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .filtro-form {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .filtro-campo {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filtro-campo label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .filtro-campo input {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            background: #ffffff;
+        }
+
+        .filtro-campo input:focus {
+            border-color: #8b3dff;
+        }
+
+        .btn-filtrar {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 8px;
+            background: var(--btn-gradient);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-filtrar:hover {
+            opacity: 0.95;
+        }
+
+        .aderencia-box {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.06) 0%, rgba(217, 70, 239, 0.06) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.15);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .aderencia-taxa {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #7c3aed;
+        }
+
+        .aderencia-texto {
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .execucao-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            background: #ffffff;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .execucao-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .execucao-data {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1rem;
+        }
+
+        .execucao-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            color: #6d28d9;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            color: #334155;
+        }
+
+        .obs {
+            font-size: 0.88rem;
+            color: #64748b;
+            font-style: italic;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .aviso {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 10px;
+            padding: 16px;
+            color: #92400e;
+            font-size: 0.95rem;
+        }
+
+        .btn-voltar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            align-self: flex-start;
+            transition: all 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-wrapper { margin-left: 0; padding: 16px; }
+        }
     </style>
 </head>
+
 <body>
-<main>
-    <section class="card">
-        <h1>Execuções de {{ aluno.nome }}</h1>
 
-        <form method="get" class="filtro">
-            <div>
-                <label for="inicio">De</label>
-                <input type="date" id="inicio" name="inicio" value="{{ inicio|date:'Y-m-d' }}">
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                    <span>SheFit</span>
+                </div>
             </div>
-            <div>
-                <label for="fim">Até</label>
-                <input type="date" id="fim" name="fim" value="{{ fim|date:'Y-m-d' }}">
-            </div>
-            <button type="submit">Filtrar</button>
-        </form>
 
-        <div class="aderencia">
-            <strong>{{ aderencia.percentual }}%</strong> de aderência
-            <p class="dica">
-                {{ aderencia.feitos }} exercício{{ aderencia.feitos|pluralize }} feito{{ aderencia.feitos|pluralize }}
-                de {{ aderencia.prescritos }} prescrito{{ aderencia.prescritos|pluralize }}
-                em {{ aderencia.treinos }} treino{{ aderencia.treinos|pluralize }} registrado{{ aderencia.treinos|pluralize }}.
-            </p>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                            <span>Painel</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'minhas_turmas_professor' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                            <span>Minhas Turmas</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_turmas' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Aulas / Modalidades</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'listar_fichas' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                            <span>Consultar Fichas de Treino</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'avaliacoes_alunos' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
+                            <span>Avaliações Físicas</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
         </div>
 
-        <h2>Histórico de execuções</h2>
-        {% for execucao in execucoes %}
-            <div style="margin-top: 16px;">
-                <strong>{{ execucao.data|date:"d/m/Y" }}</strong>
-                <span class="dica">· {{ execucao.itens.all|length }} de {{ execucao.total_prescritos }} exercício{{ execucao.total_prescritos|pluralize }}</span>
-                <table>
-                    <thead><tr><th>Exercício</th><th>Carga prescrita</th><th>Carga usada</th></tr></thead>
-                    <tbody>
-                        {% for item in execucao.itens.all %}
-                            <tr>
-                                <td>{{ item.nome }}</td>
-                                <td>{{ item.carga_prescrita|default_if_none:"—" }}</td>
-                                <td>{{ item.carga_efetiva|default_if_none:"—" }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% if execucao.observacoes %}<p class="obs">Obs: {{ execucao.observacoes }}</p>{% endif %}
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
             </div>
-        {% empty %}
-            <p class="aviso">Nenhuma execução registrada neste período.</p>
-        {% endfor %}
-    </section>
-    <a class="botao" href="{% url 'listar_fichas' %}">Voltar para Fichas</a>
-</main>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="role">Professor</div>
+                </div>
+            </div>
+        </header>
+
+        <section class="card-execucoes">
+            <div class="header-section">
+                <div>
+                    <h1>Execuções de {{ aluno.nome }}</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Histórico de treinos e acompanhamento de cargas</p>
+                </div>
+                <a class="btn-voltar" href="{% url 'listar_fichas' %}">
+                    <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                    <span>Voltar para Fichas</span>
+                </a>
+            </div>
+
+            <form method="get" class="filtro-form">
+                <div class="filtro-campo">
+                    <label for="inicio">De</label>
+                    <input type="date" id="inicio" name="inicio" value="{{ inicio|date:'Y-m-d' }}">
+                </div>
+                <div class="filtro-campo">
+                    <label for="fim">Até</label>
+                    <input type="date" id="fim" name="fim" value="{{ fim|date:'Y-m-d' }}">
+                </div>
+                <button type="submit" class="btn-filtrar">Filtrar</button>
+            </form>
+
+            <div class="aderencia-box">
+                <div class="aderencia-taxa">{{ aderencia.percentual }}% <span style="font-size: 1rem; font-weight: 600; color: #6d28d9;">de aderência</span></div>
+                <p class="aderencia-texto">
+                    {{ aderencia.feitos }} exercício{{ aderencia.feitos|pluralize }} feito{{ aderencia.feitos|pluralize }}
+                    de {{ aderencia.prescritos }} prescrito{{ aderencia.prescritos|pluralize }}
+                    em {{ aderencia.treinos }} treino{{ aderencia.treinos|pluralize }} registrado{{ aderencia.treinos|pluralize }}.
+                </p>
+            </div>
+
+            <div>
+                <h2 style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin-bottom: 12px;">Histórico de execuções</h2>
+                {% for execucao in execucoes %}
+                    <div class="execucao-card">
+                        <div class="execucao-header">
+                            <span class="execucao-data">{{ execucao.data|date:"d/m/Y" }}</span>
+                            <span class="execucao-meta">{{ execucao.itens.all|length }} de {{ execucao.total_prescritos }} exercício{{ execucao.total_prescritos|pluralize }}</span>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Exercício</th>
+                                    <th>Carga prescrita</th>
+                                    <th>Carga usada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in execucao.itens.all %}
+                                    <tr>
+                                        <td><strong>{{ item.nome }}</strong></td>
+                                        <td>{{ item.carga_prescrita|default_if_none:"—" }}</td>
+                                        <td>{{ item.carga_efetiva|default_if_none:"—" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if execucao.observacoes %}
+                            <p class="obs"><strong>Obs:</strong> {{ execucao.observacoes }}</p>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="aviso">Nenhuma execução registrada neste período.</div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+    </script>
 </body>
+
 </html>

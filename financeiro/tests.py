@@ -2330,3 +2330,41 @@ class TarefaT16TelaTests(TestCase):
 
         self.assertEqual(outro.get(self.url).status_code, 302)
         self.assertEqual(Client().get(self.url).status_code, 302)
+
+
+class HistoricoLiberacoesFinanceiroTests(TestCase):
+    def setUp(self):
+        self.usuario = criar_usuario('fin_lib', Perfil.FINANCEIRO)
+        self.client.force_login(self.usuario)
+        self.url = reverse('historico_liberacoes_financeiro')
+
+    def test_financeiro_acessa(self):
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_recepcao_nao_acessa_financeiro(self):
+        self.client.force_login(criar_usuario('rec_bloq', Perfil.RECEPCAO))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_aluna_nao_acessa(self):
+        self.client.force_login(criar_usuario('aluna_bloq', Perfil.ALUNO))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_lista_liberacoes_excepcionais(self):
+        from recepcao.models import Frequencia
+        aluna = criar_aluno_valido()
+        Frequencia.objects.create(
+            aluno=aluna,
+            liberado=True,
+            excepcional=True,
+            motivo_excepcional='Esqueceu a senha',
+            liberado_por=self.usuario,
+        )
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context['liberacoes']), 1)
+        self.assertContains(resp, aluna.nome)
+        self.assertContains(resp, 'Esqueceu a senha')
+

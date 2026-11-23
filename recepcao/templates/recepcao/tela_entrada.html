@@ -4,52 +4,292 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Recepção - Controle de Entrada - SheFit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Entrada - SheFit</title>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
             display: flex;
-            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
         }
 
-        .card {
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
             background: white;
-            border-radius: 16px;
-            padding: 32px;
-            width: 100%;
-            max-width: 550px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        h1 {
-            color: #7c3aed;
-            text-align: center;
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
             margin-bottom: 4px;
-            font-size: 1.8rem;
         }
 
-        p.subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 24px;
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Modal com fundo borrado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 620px;
+            padding: 34px 38px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 22px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            color: #8b3dff;
+        }
+
+        .brand-text h2 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #8b5cf6;
+            line-height: 1.2;
+        }
+
+        .brand-text p {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, background-color 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-close:hover {
+            color: #1e293b;
+            background-color: #f1f5f9;
         }
 
         label {
             display: block;
-            font-weight: bold;
-            margin-top: 12px;
-            margin-bottom: 4px;
-            font-size: 0.95rem;
-            color: #333;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: #1e293b;
         }
 
         .search-box {
@@ -58,44 +298,47 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"] {
+        .search-box input[type="text"] {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 12px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        input[type="text"]:focus {
-            border-color: #7c3aed;
+        .search-box input[type="text"]:focus {
+            border-color: #8b3dff;
+            box-shadow: 0 0 0 3px rgba(139, 61, 255, 0.12);
         }
 
-        button {
-            padding: 12px 20px;
-            background: #7c3aed;
+        .search-box button {
+            padding: 12px 22px;
+            background: var(--btn-gradient);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        button:hover {
-            background: #6d28d9;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(124, 58, 237, 0.35);
+        .search-box button:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
         }
-
 
         .alert {
             padding: 16px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 0.95rem;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            font-size: 0.92rem;
             line-height: 1.5;
         }
 
@@ -117,42 +360,23 @@
             border: 1px solid #fecaca;
         }
 
-        .alert h4 {
-            margin-top: 0;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            margin: 12px 0;
-        }
-
-        .btn-voltar {
-            display: block;
-            width: 100%;
-            margin-top: 20px;
-            padding: 12px;
-            text-align: center;
-            text-decoration: none;
-            color: #7c3aed;
-            border: 2px solid #7c3aed;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
-            transition: background 0.2s, color 0.2s, transform 0.2s;
-        }
-
-        .btn-voltar:hover {
-            background: #7c3aed;
-            color: white;
-            transform: translateY(-2px);
-        }
         .alert-info {
             background: #e0f2fe;
             color: #075985;
             border: 1px solid #bae6fd;
+        }
+
+        .alert h4 {
+            margin-top: 0;
+            margin-bottom: 6px;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            margin: 10px 0;
         }
 
         .candidatos {
@@ -164,15 +388,14 @@
         .candidatos li {
             display: flex;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 4px 12px;
+            align-items: center;
             padding: 8px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.08);
         }
 
         .candidatos a {
-            color: #075985;
-            font-weight: bold;
+            color: #0369a1;
+            font-weight: 700;
             text-decoration: none;
         }
 
@@ -180,183 +403,377 @@
             text-decoration: underline;
         }
 
-        .candidatos span {
-            font-size: 0.85rem;
-            opacity: 0.8;
-        }
-
         .form-registrar {
-            margin-top: 12px;
+            margin-top: 16px;
         }
 
-        .form-registrar button {
+        .btn-registrar-entrada {
             width: 100%;
+            padding: 13px;
+            background: var(--btn-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            transition: opacity 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-registrar-entrada:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
         }
 
         .dica {
             margin: 8px 0 0;
-            font-size: 0.85rem;
-            color: #666;
+            font-size: 0.82rem;
+            color: #64748b;
             text-align: center;
         }
 
         .form-liberar {
-            margin-top: 12px;
+            margin-top: 16px;
         }
 
         .form-liberar textarea {
             width: 100%;
             padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: Arial, sans-serif;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
             resize: vertical;
             outline: none;
             transition: border-color 0.2s;
         }
 
         .form-liberar textarea:focus {
-            border-color: #7c3aed;
+            border-color: #8b3dff;
         }
 
         .form-liberar button {
             width: 100%;
             margin-top: 10px;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            padding: 12px;
+            background: var(--btn-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
         }
 
-        .form-liberar button:hover {
-            background: linear-gradient(135deg, #6d28d9, #db2777);
-            box-shadow: 0 6px 12px rgba(124, 58, 237, 0.35);
+        .modal-footer {
+            margin-top: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
         }
 
-        @media (max-width: 480px) {
-            .card {
+        .btn-cancelar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            color: #334155;
+            border: 1.5px solid #cbd5e1;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancelar:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            color: #475569;
+            border: 1.5px solid #cbd5e1;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        @media (max-width: 640px) {
+            .modal-card {
                 padding: 24px 20px;
             }
             .search-box {
                 flex-direction: column;
+            }
+            .modal-footer {
+                flex-direction: column-reverse;
+            }
+            .btn-cancelar, .btn-secondary {
+                width: 100%;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>SheFit</h1>
-        <p class="subtitle">Recepção - Controle de Entrada</p>
 
-
-        {% for message in messages %}
-            <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
-                {{ message }}
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
             </div>
-        {% endfor %}
+        </div>
 
+        <ul class="nav-list">
+            <li class="nav-item active">
+                <a href="{% url 'painel_recepcao' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'gestao_estudantes' %}">
+                    <i data-lucide="users"></i>
+                    <span>Estudantes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_cobrancas_pagamento' %}">
+                    <i data-lucide="credit-card"></i>
+                    <span>Pagamentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'buscar_matricula_cancelamento' %}">
+                    <i data-lucide="file-x"></i>
+                    <span>Gestão de Matrículas</span>
+                </a>
+            </li>
+        </ul>
 
-        <form method="GET" action="" autocomplete="off">
-            <label for="q">Identificar Aluno (CPF ou Nome):</label>
-            <div class="search-box">
-                <input type="text" id="q" name="q" placeholder="Digite o CPF ou Nome..." value="{{ query|default:'' }}" required>
-                <button type="submit">Buscar</button>
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
             </div>
-        </form>
-
-        {% if nao_encontrado %}
-            <div class="alert alert-danger">
-                <h4>🔎 Aluna não encontrada</h4>
-                <p style="margin: 0;">Confira o CPF (11 números) ou digite parte do nome.</p>
-            </div>
-        {% endif %}
-
-        {% if candidatos %}
-            <div class="alert alert-info">
-                <h4>Mais de uma aluna encontrada</h4>
-                <p style="margin: 0;">
-                    Escolha a aluna correta{% if truncado %} (mostrando as primeiras {{ limite }}; refine a busca){% endif %}:
-                </p>
-                <ul class="candidatos">
-                    {% for a in candidatos %}
-                        <li>
-                            <a href="?q={{ query|urlencode }}&aluno={{ a.id }}">{{ a.nome }}</a>
-                            <span>CPF final {{ a.cpf|slice:"-4:" }}{% if not a.ativo %} · inativa{% endif %}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-
-
-        {% if resultado %}
-            {% if resultado.sucesso %}
-                {% if resultado.status == 'liberado_com_aviso' %}
-                    <div class="alert alert-warning">
-                        <h4>⚠️ Atenção: Acesso Liberado com Aviso</h4>
-                        <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
-                        <p><strong>Situação:</strong> {{ resultado.mensagem }}</p>
-                        <hr>
-                        <p style="margin: 0;">
-                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}<br>
-                            <strong>Vencimento:</strong> {{ resultado.detalhes.vencimento|date:"d/m/Y" }}<br>
-                            <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}<br>
-                            <strong>Prazo para bloqueio:</strong> Faltam <strong>{{ resultado.detalhes.dias_restantes_bloqueio }} dias</strong>.
-                        </p>
-                    </div>
-                {% else %}
-                    <div class="alert alert-success">
-                        <h4>✅ Acesso Liberado</h4>
-                        <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
-                        <p style="margin: 0;"><strong>Situação:</strong> {{ resultado.mensagem }}</p>
-                    </div>
-                {% endif %}
-
-
-                <form method="post" action="{% url 'tela_entrada_recepcao' %}" class="form-registrar">
-                    {% csrf_token %}
-                    <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">
-                    <button type="submit">Registrar entrada</button>
-                </form>
-                <p class="dica">A presença só é registrada ao clicar em "Registrar entrada".</p>
-            {% else %}
-                <div class="alert alert-danger">
-                    <h4>Acesso Bloqueado</h4>
-                    <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
-                    <p><strong>Motivo:</strong> {{ resultado.mensagem }}</p>
-                    {% if resultado.detalhes %}
-                        <hr>
-                        <p style="margin: 0;">
-                            <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}<br>
-                            <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}
-                        </p>
-                    {% endif %}
-                    <hr>
-                    <p style="margin: 0; color: #666; font-size: 0.9rem;">Oriente a aluna a dirigir-se à recepção/tesouraria para regularizar.</p>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
                 </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
+                    <div class="role">Recepção</div>
+                </div>
+            </div>
+        </header>
 
-                {% if liberacao_hoje %}
-                    <div class="alert alert-info">
-                        <strong>Liberação excepcional registrada hoje</strong> às
-                        {{ liberacao_hoje.data_hora|time:"H:i" }}
-                        por {{ liberacao_hoje.liberado_por }}.<br>
-                        Motivo: {{ liberacao_hoje.motivo_excepcional }}
+        <div class="page-header">
+            <div>
+                <h1>Visão Geral do Painel</h1>
+                <p>Confira o que está acontecendo na academia hoje.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Controle de Entrada com Fundo Borrado -->
+    <div id="modalOverlayEntrada" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="header-brand">
+                    <i data-lucide="log-in" class="brand-icon" style="width: 30px; height: 30px;"></i>
+                    <div class="brand-text">
+                        <h2>SheFit</h2>
+                        <p>Recepção - Controle de Entrada</p>
                     </div>
-                {% endif %}
+                </div>
+                <a href="{% url 'painel_recepcao' %}" class="btn-close" title="Fechar">
+                    <i data-lucide="x" style="width: 22px; height: 22px;"></i>
+                </a>
+            </div>
 
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
 
-                <form method="post" action="{% url 'liberar_excepcional_recepcao' %}" class="form-liberar">
-                    {% csrf_token %}
-                    <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">
-                    <label for="motivo">Motivo da liberação excepcional:</label>
-                    <textarea id="motivo" name="motivo" rows="2" maxlength="255" required placeholder="Ex.: vai pagar agora no caixa"></textarea>
-                    <button type="submit">Liberar excepcionalmente</button>
-                </form>
-                <p class="dica">Registra a entrada com o motivo e o seu usuário. Não altera matrícula nem cobrança.</p>
+            <form method="GET" action="" autocomplete="off">
+                <label for="q">Identificar Aluna (CPF ou Nome):</label>
+                <div class="search-box">
+                    <input type="text" id="q" name="q" placeholder="Digite o CPF ou Nome da aluna..." value="{{ query|default:'' }}" required autofocus>
+                    <button type="submit">
+                        <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                        Buscar
+                    </button>
+                </div>
+            </form>
+
+            {% if nao_encontrado %}
+                <div class="alert alert-danger">
+                    <h4>🔎 Aluna não encontrada</h4>
+                    <p style="margin: 0;">Confira o CPF (11 números) ou digite parte do nome da aluna.</p>
+                </div>
             {% endif %}
-        {% endif %}
 
-        <a href="{% url 'painel_recepcao' %}" class="btn-voltar">Voltar ao painel</a>
+            {% if candidatos %}
+                <div class="alert alert-info">
+                    <h4>Mais de uma aluna encontrada</h4>
+                    <p style="margin: 0;">
+                        Escolha a aluna correta{% if truncado %} (mostrando as primeiras {{ limite }}; refine a busca){% endif %}:
+                    </p>
+                    <ul class="candidatos">
+                        {% for a in candidatos %}
+                            <li>
+                                <a href="?q={{ query|urlencode }}&aluno={{ a.id }}">{{ a.nome }}</a>
+                                <span>CPF final {{ a.cpf|slice:"-4:" }}{% if not a.ativo %} · inativa{% endif %}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if resultado %}
+                {% if resultado.sucesso %}
+                    {% if resultado.status == 'liberado_com_aviso' %}
+                        <div class="alert alert-warning">
+                            <h4>⚠️ Atenção: Acesso Liberado com Aviso</h4>
+                            <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
+                            <p><strong>Situação:</strong> {{ resultado.mensagem }}</p>
+                            <hr>
+                            <p style="margin: 0;">
+                                <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}<br>
+                                <strong>Vencimento:</strong> {{ resultado.detalhes.vencimento|date:"d/m/Y" }}<br>
+                                <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}<br>
+                                <strong>Prazo para bloqueio:</strong> Faltam <strong>{{ resultado.detalhes.dias_restantes_bloqueio }} dias</strong>.
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <h4>✅ Acesso Liberado</h4>
+                            <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
+                            <p style="margin: 0;"><strong>Situação:</strong> {{ resultado.mensagem }}</p>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'tela_entrada_recepcao' %}" class="form-registrar">
+                        {% csrf_token %}
+                        <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">
+                        <button type="submit" class="btn-registrar-entrada">
+                            <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                            Registrar entrada
+                        </button>
+                    </form>
+                    <p class="dica">A presença só é registrada ao clicar em "Registrar entrada".</p>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <h4>Acesso Bloqueado</h4>
+                        <p><strong>Aluna:</strong> {{ resultado.aluno.nome }}</p>
+                        <p><strong>Motivo:</strong> {{ resultado.mensagem }}</p>
+                        {% if resultado.detalhes %}
+                            <hr>
+                            <p style="margin: 0;">
+                                <strong>Valor Pendente:</strong> R$ {{ resultado.detalhes.valor_pendente|floatformat:2 }}<br>
+                                <strong>Dias de Atraso:</strong> {{ resultado.detalhes.dias_atraso }}
+                            </p>
+                        {% endif %}
+                        <hr>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Oriente a aluna a regularizar sua situação na recepção.</p>
+                    </div>
+
+                    {% if liberacao_hoje %}
+                        <div class="alert alert-info">
+                            <strong>Liberação excepcional registrada hoje</strong> às
+                            {{ liberacao_hoje.data_hora|time:"H:i" }}
+                            por {{ liberacao_hoje.liberado_por }}.<br>
+                            Motivo: {{ liberacao_hoje.motivo_excepcional }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'liberar_excepcional_recepcao' %}" class="form-liberar">
+                        {% csrf_token %}
+                        <input type="hidden" name="aluno_id" value="{{ resultado.aluno.id }}">
+                        <label for="motivo">Motivo da liberação excepcional:</label>
+                        <textarea id="motivo" name="motivo" rows="2" maxlength="255" required placeholder="Ex.: vai pagar agora no caixa"></textarea>
+                        <button type="submit">Liberar excepcionalmente</button>
+                    </form>
+                    <p class="dica">Registra a entrada com o motivo e o seu usuário. Não altera matrícula nem cobrança.</p>
+                {% endif %}
+            {% endif %}
+
+            <div class="modal-footer">
+                <a href="{% url 'painel_recepcao' %}" class="btn-cancelar">Cancelar</a>
+                <a href="{% url 'historico_liberacoes' %}" class="btn-secondary">
+                    <i data-lucide="history" style="width: 16px; height: 16px;"></i>
+                    Histórico de Liberações
+                </a>
+            </div>
+        </div>
     </div>
+
+    <script>
+        lucide.createIcons();
+
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+
+        // Fechar ao clicar fora do card
+        document.getElementById('modalOverlayEntrada').addEventListener('click', function (e) {
+            if (e.target === this) {
+                window.location.href = "{% url 'painel_recepcao' %}";
+            }
+        });
+
+        // Fechar com tecla ESC
+        window.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                window.location.href = "{% url 'painel_recepcao' %}";
+            }
+        });
+    </script>
 </body>
 
 </html>

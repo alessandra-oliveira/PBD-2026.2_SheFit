@@ -21,7 +21,7 @@
             --primary-purple: #9333ea;
             --primary-pink: #d946ef;
             --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
-            --btn-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
             --bg-color: #f8fafc;
             --card-border: #f1f5f9;
             --text-dark: #0f172a;
@@ -127,22 +127,139 @@
             background: #fef2f2;
         }
 
-
-        .main-content {
+        /* ================= ÁREA CENTRAL ================= */
+        .main-wrapper {
             margin-left: var(--sidebar-width);
             flex: 1;
             padding: 24px 36px 60px;
             display: flex;
             flex-direction: column;
-            gap: 28px;
-            max-width: 1400px;
+            gap: 24px;
+            min-height: 100vh;
+            max-width: calc(100vw - var(--sidebar-width));
+            box-sizing: border-box;
         }
 
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
 
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.2;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 1400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Mensagens de Feedback */
+        .message {
+            padding: 14px 18px;
+            color: #065f46;
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Cabeçalho da Página e Breadcrumbs */
         .page-header {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 10px;
+        }
+
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-link {
+            color: #64748b;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.15s;
+        }
+
+        .breadcrumb-link:hover {
+            color: #7c3aed;
+        }
+
+        .breadcrumb-sep {
+            color: #cbd5e1;
+        }
+
+        .breadcrumb-current {
+            color: #1e293b;
+        }
+
+        .header-title-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .page-header h1 {
@@ -152,74 +269,211 @@
             letter-spacing: -0.5px;
         }
 
-        .page-header p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
+        .turma-meta-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid var(--card-border);
-            padding: 26px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        .badge-turma-info {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ================= 1. CARD PRINCIPAL ================= */
+        .card-principal {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            padding: 32px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
         }
 
-        .message {
-            padding: 14px 18px;
-            color: #065f46;
-            background: #d1fae5;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
+        .card-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 4px;
         }
 
-        .form-control-date {
-            padding: 10px 14px;
+        .card-section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.3px;
+        }
+
+        .badge-total-alunos {
+            background: #f3e8ff;
+            color: #9333ea;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* ================= 2. BARRA DE FILTRO DE DATA ================= */
+        .filtro-data-bar {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .filtro-data-form {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .filtro-data-label {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: #1e293b;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-data-filtro {
             border: 1px solid #cbd5e1;
             border-radius: 10px;
+            padding: 10px 14px;
             font-size: 0.95rem;
+            color: #0f172a;
+            background: #ffffff;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
+            font-family: inherit;
         }
 
-        .form-control-date:focus {
-            border-color: #9333ea;
-            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+        .input-data-filtro:focus {
+            border-color: #8b3dff;
+            box-shadow: 0 0 0 3px rgba(139, 61, 255, 0.12);
         }
 
+        .btn-filtrar-data {
+            background: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.92rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(139, 61, 255, 0.2);
+            transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
 
-        .table-container {
+        .btn-filtrar-data:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 61, 255, 0.28);
+        }
+
+        .data-selecionada-info {
+            color: #64748b;
+            font-size: 0.88rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .data-selecionada-info strong {
+            color: #1e293b;
+        }
+
+        /* ================= 3. TABELA DE ALUNOS ================= */
+        .tabela-card-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .table-responsive {
             overflow-x: auto;
         }
 
         .frequencia-table {
             width: 100%;
             border-collapse: collapse;
-        }
-
-        .frequencia-table th, .frequencia-table td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #f1f5f9;
             text-align: left;
-            vertical-align: middle;
         }
 
         .frequencia-table th {
-            color: var(--text-muted);
-            font-size: 0.82rem;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.78rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.05em;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .frequencia-table td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #f1f5f9;
             font-size: 0.95rem;
+            color: #1e293b;
+            vertical-align: middle;
+        }
+
+        .frequencia-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .frequencia-table tbody tr:hover td {
+            background: #fafafc;
+        }
+
+        .student-name-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .student-avatar-mini {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #f3e8ff;
+            color: #7c3aed;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .student-name-text {
             font-weight: 600;
-            color: var(--text-dark);
+            color: #0f172a;
         }
 
         .badge-agendado {
@@ -227,72 +481,128 @@
             color: #9333ea;
             font-size: 0.78rem;
             font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 8px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-presenca-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .checkbox-presenca {
-            width: 20px;
-            height: 20px;
-            accent-color: #9333ea;
+            width: 22px;
+            height: 22px;
+            accent-color: #8b3dff;
             cursor: pointer;
+            border-radius: 6px;
         }
 
-
-        .actions-row {
+        /* Botões de Ação na Tabela */
+        .acoes-frequencia {
             display: flex;
-            gap: 12px;
             align-items: center;
-            margin-top: 10px;
+            gap: 12px;
+            margin-top: 6px;
+            flex-wrap: wrap;
         }
 
-        .btn-primary-shefit {
-            padding: 12px 24px;
-            background: var(--btn-gradient);
-            color: white;
-            border: none;
-            border-radius: 12px;
+        .btn-salvar-chamada {
+            background: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            color: #ffffff;
             font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
             font-size: 0.95rem;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
-            transition: transform 0.2s, opacity 0.2s;
-            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
             display: inline-flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+            font-family: inherit;
         }
 
-        .btn-primary-shefit:hover {
+        .btn-salvar-chamada:hover {
             opacity: 0.95;
             transform: translateY(-1px);
         }
 
-        .btn-secondary-shefit {
-            padding: 12px 24px;
-            background: #f1f5f9;
-            color: var(--text-muted);
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
+        .btn-secundario-voltar {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            border-radius: 10px;
+            padding: 12px 22px;
+            font-size: 0.92rem;
+            font-weight: 600;
             text-decoration: none;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            font-family: inherit;
         }
 
-        .btn-secondary-shefit:hover {
-            background: #e2e8f0;
-            color: var(--text-dark);
+        .btn-secundario-voltar:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
+        /* ================= ESTADO VAZIO ================= */
+        .empty-state-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 56px 24px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 16px;
+            gap: 16px;
+        }
+
+        .empty-state-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state-text h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .empty-state-text p {
+            font-size: 0.9rem;
+            color: #64748b;
+            max-width: 420px;
+            margin: 0;
         }
 
         @media (max-width: 960px) {
             .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 20px 16px; }
+            .main-wrapper { margin-left: 0; }
+            .topbar { padding: 0 16px; }
+            .main-content { padding: 20px 16px; }
+            .card-principal { padding: 20px 16px; }
         }
     </style>
 </head>
@@ -300,35 +610,45 @@
 <body>
 
     <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <i data-lucide="dumbbell" style="width: 28px; height: 28px;"></i>
-                    <span>SheFit</span>
-                </div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
             </div>
-
-            <ul class="nav-list">
-                <li class="nav-item">
-                    <a href="{% url 'painel_professor' %}">
-                        <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
-                        <span>Painel</span>
-                    </a>
-                </li>
-                <li class="nav-item active">
-                    <a href="{% url 'minhas_turmas_professor' %}">
-                        <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
-                        <span>Minhas Turmas</span>
-                    </a>
-                </li>
-                <li class="nav-item" style="opacity: 0.7; cursor: default;">
-                    <a href="#" onclick="event.preventDefault();" style="cursor: default;">
-                        <i data-lucide="users" style="width: 20px; height: 20px;"></i>
-                        <span>Estudantes</span>
-                    </a>
-                </li>
-            </ul>
         </div>
+
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_professor' %}">
+                    <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'minhas_turmas_professor' %}">
+                    <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                    <span>Minhas Turmas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_fichas' %}">
+                    <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                    <span>Consultar Fichas de Treino</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'avaliacoes_alunos' %}">
+                    <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
+                    <span>Avaliações Físicas</span>
+                </a>
+            </li>
+        </ul>
 
         <div class="sidebar-footer">
             <a href="{% url 'sair' %}" class="btn-sidebar-sair">
@@ -338,79 +658,190 @@
         </div>
     </aside>
 
+    <!-- ================= ÁREA PRINCIPAL COM TOPBAR ================= -->
+    <div class="main-wrapper">
+        <!-- Topbar Superior Padronizada -->
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="role">Professor</div>
+                </div>
+            </div>
+        </header>
 
-    <main class="main-content">
+        <main class="main-content">
+
         {% if messages %}
             {% for message in messages %}
-                <div class="message">{{ message }}</div>
+                <div class="message">
+                    <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                    <span>{{ message }}</span>
+                </div>
             {% endfor %}
         {% endif %}
 
         <section class="page-header">
-            <h1>Chamada: {{ turma.modalidade.nome }}</h1>
-            <p>{{ turma.get_dia_semana_display }} às {{ turma.horario|time:"H:i" }} &bull; Sala: {{ turma.sala }}</p>
+            <div class="breadcrumb-nav">
+                <a href="{% url 'minhas_turmas_professor' %}" class="breadcrumb-link">
+                    <i data-lucide="arrow-left" style="width: 15px; height: 15px;"></i>
+                    <span>Minhas Turmas</span>
+                </a>
+                <span class="breadcrumb-sep">/</span>
+                <span class="breadcrumb-current">Registro de Frequência</span>
+            </div>
+
+            <div class="header-title-box">
+                <div>
+                    <h1>Chamada: {{ turma.modalidade.nome }}</h1>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">
+                        {{ turma.get_dia_semana_display }} às {{ turma.horario|time:"H:i" }} &bull; Sala: {{ turma.sala }}
+                    </p>
+                </div>
+                <div class="turma-meta-badges">
+                    <span class="badge-turma-info">
+                        <i data-lucide="calendar" style="width: 15px; height: 15px; color: #7c3aed;"></i>
+                        <span>{{ turma.get_dia_semana_display }}</span>
+                    </span>
+                    <span class="badge-turma-info">
+                        <i data-lucide="clock" style="width: 15px; height: 15px; color: #7c3aed;"></i>
+                        <span>{{ turma.horario|time:"H:i" }}</span>
+                    </span>
+                    <span class="badge-turma-info">
+                        <i data-lucide="map-pin" style="width: 15px; height: 15px; color: #7c3aed;"></i>
+                        <span>{{ turma.sala }}</span>
+                    </span>
+                </div>
+            </div>
         </section>
 
+        <!-- ================= 1. CARD PRINCIPAL ================= -->
+        <section class="card-principal">
+            <div class="card-section-header">
+                <h2>Alunos Agendados</h2>
+                {% if agendamentos %}
+                    <span class="badge-total-alunos">
+                        {{ agendamentos|length }} {% if agendamentos|length == 1 %}aluna agendada{% else %}alunas agendadas{% endif %}
+                    </span>
+                {% endif %}
+            </div>
 
-        <section class="card" style="padding: 20px;">
-            <form method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <label for="data" style="font-weight: 700; font-size: 0.9rem; color: var(--text-dark);">Data da Aula:</label>
-                <input type="date" id="data" name="data" value="{{ data_chamada }}" class="form-control-date" onchange="this.form.submit()">
-                <button type="submit" class="btn-secondary-shefit" style="padding: 10px 16px; font-size: 0.88rem;">Filtrar Data</button>
-            </form>
-        </section>
+            <!-- ================= 2. BARRA DE FILTRO DE DATA ================= -->
+            <div class="filtro-data-bar">
+                <form method="get" class="filtro-data-form">
+                    <label for="data" class="filtro-data-label">
+                        <i data-lucide="calendar" style="width: 18px; height: 18px; color: #8b3dff;"></i>
+                        <span>Data da Aula:</span>
+                    </label>
+                    <input type="date" id="data" name="data" value="{{ data_chamada }}" class="input-data-filtro" onchange="this.form.submit()">
+                    <button type="submit" class="btn-filtrar-data">
+                        <i data-lucide="filter" style="width: 16px; height: 16px;"></i>
+                        <span>Filtrar Data</span>
+                    </button>
+                </form>
+                <div class="data-selecionada-info">
+                    <i data-lucide="clock" style="width: 15px; height: 15px; color: #94a3b8;"></i>
+                    <span>Data selecionada: <strong>{{ data_chamada }}</strong></span>
+                </div>
+            </div>
 
-
-        <section class="card">
-            <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--text-dark);">Alunos Agendados</h2>
-
+            <!-- ================= 3. TABELA DE ALUNOS E ESTADO VAZIO ================= -->
             <form method="post">
                 {% csrf_token %}
                 {% if agendamentos %}
-                    <div class="table-container">
-                        <table class="frequencia-table">
-                            <thead>
-                                <tr>
-                                    <th>Estudante</th>
-                                    <th>Status</th>
-                                    <th style="text-align: center;">Presente?</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for agendamento in agendamentos %}
+                    <div class="tabela-card-container">
+                        <div class="table-responsive">
+                            <table class="frequencia-table">
+                                <thead>
                                     <tr>
-                                        <td>{{ agendamento.aluno.get_full_name|default:agendamento.aluno.nome }}</td>
-                                        <td><span class="badge-agendado">Agendado</span></td>
-                                        <td style="text-align: center;">
-                                            <input type="checkbox" name="presente_{{ agendamento.aluno.id }}" value="1"
-                                                   class="checkbox-presenca"
-                                                   {% if agendamento.foi_presente %}checked{% endif %}>
-                                        </td>
+                                        <th style="width: 50%;">Estudante</th>
+                                        <th style="width: 25%;">Status</th>
+                                        <th style="width: 25%; text-align: center;">Presente?</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for agendamento in agendamentos %}
+                                        <tr>
+                                            <td>
+                                                <div class="student-name-box">
+                                                    <div class="student-avatar-mini">
+                                                        {{ agendamento.aluno.get_full_name|default:agendamento.aluno.nome|slice:":1"|upper }}
+                                                    </div>
+                                                    <span class="student-name-text">
+                                                        {{ agendamento.aluno.get_full_name|default:agendamento.aluno.nome }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge-agendado">
+                                                    <i data-lucide="check-circle" style="width: 13px; height: 13px;"></i>
+                                                    <span>Agendado</span>
+                                                </span>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <div class="checkbox-presenca-wrapper">
+                                                    <input type="checkbox" name="presente_{{ agendamento.aluno.id }}" value="1" 
+                                                           class="checkbox-presenca"
+                                                           {% if agendamento.foi_presente %}checked{% endif %}
+                                                           id="presenca_{{ agendamento.aluno.id }}">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <div class="actions-row">
-                        <button type="submit" class="btn-primary-shefit">
+                    <div class="acoes-frequencia">
+                        <button type="submit" class="btn-salvar-chamada">
                             <i data-lucide="check" style="width: 18px; height: 18px;"></i>
                             <span>Salvar Chamada</span>
                         </button>
-                        <a href="{% url 'minhas_turmas_professor' %}" class="btn-secondary-shefit">Voltar</a>
+                        <a href="{% url 'minhas_turmas_professor' %}" class="btn-secundario-voltar">
+                            <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                            <span>Voltar</span>
+                        </a>
                     </div>
                 {% else %}
-                    <p style="color: var(--text-muted); font-size: 0.95rem;">Nenhum aluno agendado para esta data.</p>
-                    <div style="margin-top: 10px;">
-                        <a href="{% url 'minhas_turmas_professor' %}" class="btn-secondary-shefit">Voltar para Minhas Turmas</a>
+                    <div class="empty-state-container">
+                        <div class="empty-state-icon">
+                            <i data-lucide="users" style="width: 28px; height: 28px; color: #94a3b8;"></i>
+                        </div>
+                        <div class="empty-state-text">
+                            <h3>Nenhum aluno agendado para esta data</h3>
+                            <p>Selecione outra data no filtro acima para visualizar ou registrar presenças.</p>
+                        </div>
+                        <a href="{% url 'minhas_turmas_professor' %}" class="btn-secundario-voltar">
+                            <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                            <span>Voltar para Minhas Turmas</span>
+                        </a>
                     </div>
                 {% endif %}
             </form>
         </section>
     </main>
+</div>
 
     <script>
         lucide.createIcons();
+
+        // Formatação dinâmica da data no padrão SheFit
+        const opcoesCompleta = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date();
+        const dataFormatada = dataHoje.toLocaleDateString('pt-BR', opcoesCompleta);
+        const dataCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+
+        const elDataAtual = document.getElementById('data-atual');
+        if (elDataAtual) {
+            elDataAtual.innerText = dataCapitalizada;
+        }
     </script>
 </body>
 

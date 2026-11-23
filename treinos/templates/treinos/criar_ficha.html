@@ -116,6 +116,7 @@
             padding-top: 16px;
         }
 
+        .btn-sidebar-sair,
         .btn-sair-sidebar {
             display: flex;
             align-items: center;
@@ -131,11 +132,11 @@
             transition: background 0.2s, transform 0.1s;
         }
 
+        .btn-sidebar-sair:hover,
         .btn-sair-sidebar:hover {
             background: #fee2e2;
             transform: translateY(-1px);
         }
-
 
         .main-wrapper {
             margin-left: var(--sidebar-width);
@@ -146,7 +147,6 @@
             gap: 24px;
             min-height: 100vh;
         }
-
 
         .topbar {
             display: flex;
@@ -159,12 +159,17 @@
             color: #475569;
             font-size: 0.95rem;
             font-weight: 500;
+            margin: 0;
+            line-height: 1;
+            display: flex;
+            align-items: center;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 12px;
+            margin: 0;
         }
 
         .avatar {
@@ -178,17 +183,39 @@
             align-items: center;
             justify-content: center;
             font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin: 0;
         }
 
         .user-info .name {
             font-size: 0.95rem;
             font-weight: 700;
             color: #1e293b;
+            line-height: 1.2;
+            margin: 0;
         }
 
         .user-info .role {
             font-size: 0.8rem;
             color: var(--text-muted);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 1400px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .card {
@@ -299,7 +326,9 @@
 
         @media (max-width: 900px) {
             .sidebar { display: none; }
-            .main-wrapper { margin-left: 0; padding: 20px 16px; }
+            .main-wrapper { margin-left: 0; }
+            .topbar { padding: 0 16px; }
+            .content-area { padding: 20px 16px; }
         }
     </style>
 </head>
@@ -332,18 +361,26 @@
                         </div>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_turmas' %}">
+                        <div class="nav-item-left">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Aulas / Modalidades</span>
+                        </div>
+                    </a>
+                </li>
                 <li class="nav-item active">
                     <a href="{% url 'listar_fichas' %}">
                         <div class="nav-item-left">
                             <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
-                            <span>Consultar Fichas e Histórico</span>
+                            <span>Consultar Fichas de Treino</span>
                         </div>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{% url 'avaliacoes_alunos' %}">
                         <div class="nav-item-left">
-                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
                             <span>Avaliações Físicas</span>
                         </div>
                     </a>
@@ -352,15 +389,15 @@
         </div>
 
         <div class="sidebar-footer">
-            <a href="{% url 'sair' %}" class="btn-sair-sidebar">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
                 <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
                 <span>Sair</span>
             </a>
         </div>
     </aside>
 
-
-    <main class="main-wrapper">
+    <!-- Área Principal -->
+    <div class="main-wrapper">
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -370,11 +407,13 @@
                     {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
                 <div class="user-info">
-                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
                     <div class="role">Professor</div>
                 </div>
             </div>
         </header>
+
+        <main class="content-area">
 
         <section class="card">
             <h1>Montar Ficha de Treino</h1>
@@ -448,6 +487,7 @@
             </form>
         </section>
     </main>
+</div>
 
     <script>
         lucide.createIcons();

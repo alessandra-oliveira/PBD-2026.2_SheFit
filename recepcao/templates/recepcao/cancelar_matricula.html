@@ -1,129 +1,556 @@
-{% load l10n %}<!DOCTYPE html>
+{% load static %}{% load l10n %}
+<!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cancelar matrícula - Recepção SheFit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancelar Matrícula - SheFit</title>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
-        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
-        main { max-width: 760px; margin: 32px auto; padding: 0 18px; }
-        .card { margin-bottom: 16px; padding: 22px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
-        h1 { margin: 0; font-size: 1.4rem; }
-        h2 { margin: 0 0 10px; font-size: 1.15rem; }
-        .field { margin: 14px 0; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; }
-        textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; resize: vertical; }
-        .button { display: inline-block; margin-top: 8px; padding: 11px 15px; border: 0; border-radius: 8px; background: #b91c1c; color: white; cursor: pointer; font: inherit; font-weight: 700; text-decoration: none; }
-        .secondary { background: #475569; }
-        .link { background: #7c3aed; margin: 0; padding: 7px 11px; font-size: .9rem; }
-        .error { color: #b91c1c; }
-        .message { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
-        .message.warning { color: #92400e; background: #fef3c7; }
-        .message.error { color: #991b1b; background: #fee2e2; }
-        .muted { color: #64748b; }
-        .multa { text-align: center; padding: 18px; background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; }
-        .multa .valor { display: block; margin: 6px 0; font-size: 2.2rem; font-weight: 800; color: #b91c1c; }
-        .multa.zero { background: #f0fdf4; border-color: #bbf7d0; }
-        .multa.zero .valor { color: #166534; }
-        ul { margin: 8px 0 0; padding-left: 20px; }
-        li { margin: 6px 0; }
-        .linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            max-width: 900px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(139, 61, 255, 0.35);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #334155;
+            border: 1.5px solid #cbd5e1;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            margin: 16px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.92rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #8b3dff;
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .message {
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .message.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fef08a;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .muted {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .multa {
+            text-align: center;
+            padding: 24px;
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+            border-radius: 16px;
+            margin-bottom: 8px;
+        }
+
+        .multa .valor {
+            display: block;
+            margin: 8px 0;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #b91c1c;
+        }
+
+        .multa.zero {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .multa.zero .valor {
+            color: #166534;
+        }
+
+        ul {
+            margin: 8px 0 0;
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 8px 0;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+
+        .linha {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
     </style>
 </head>
+
 <body>
-    <header><h1>SheFit · Recepção</h1></header>
-    <main>
-        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+        </div>
+
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_recepcao' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'gestao_estudantes' %}">
+                    <i data-lucide="users"></i>
+                    <span>Estudantes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_cobrancas_pagamento' %}">
+                    <i data-lucide="credit-card"></i>
+                    <span>Pagamentos</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'buscar_matricula_cancelamento' %}">
+                    <i data-lucide="file-x"></i>
+                    <span>Gestão de Matrículas</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
+                    <div class="role">Recepção</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <div>
+                <h1>{% if cancelamento %}Matrícula cancelada{% else %}Cancelamento de Matrícula{% endif %}</h1>
+                <p>Matrícula #{{ matricula.id }} — {{ matricula.aluno.nome }}</p>
+            </div>
+            <div>
+                <a href="{% url 'buscar_matricula_cancelamento' %}" class="btn-secondary">
+                    <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                    Voltar às matrículas
+                </a>
+            </div>
+        </div>
+
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                <i data-lucide="info" style="width: 18px; height: 18px;"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
 
         <section class="card">
-            <h2>{% if cancelamento %}Matrícula cancelada{% else %}Cancelar matrícula{% endif %} #{{ matricula.id }}</h2>
+            <h2 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+                {{ matricula.aluno.nome }}
+            </h2>
             <p class="muted">
-                {{ matricula.aluno.nome }} · {{ matricula.plano.nome }}
-                · início {{ matricula.data_inicio|date:"d/m/Y" }}
+                Matrícula #{{ matricula.id }} · Plano: <strong>{{ matricula.plano.nome }}</strong>
+                · Início: {{ matricula.data_inicio|date:"d/m/Y" }}
             </p>
         </section>
 
         {% if cancelamento %}
             <section class="card">
+                <h2 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Cancelamento Registrado</h2>
                 <p><strong>Cancelada em {{ cancelamento.data|date:"d/m/Y" }}.</strong></p>
-                <p class="muted">Motivo: {{ cancelamento.motivo }}</p>
-                <p class="muted">Nenhuma cobrança nova será gerada para esta matrícula.</p>
+                <p class="muted" style="margin-top: 6px;">Motivo informado: {{ cancelamento.motivo }}</p>
+                <p class="muted" style="margin-top: 4px;">Nenhuma cobrança nova será gerada para esta matrícula.</p>
             </section>
 
             <section class="card">
-                <h2>Ainda em aberto</h2>
+                <h2 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Cobranças em Aberto</h2>
                 {% if em_aberto %}
-                    <p class="muted">Cancelar não perdoa o que já estava devendo.</p>
-                    <ul>
-                    {% for item in em_aberto %}
-                        <li class="linha">
-                            <span>
-                                {{ item.cobranca.get_tipo_display }}{% if item.cobranca.competencia %} {{ item.cobranca.competencia }}{% endif %}
-                                · vence {{ item.cobranca.vencimento|date:"d/m/Y" }}
-                                · <strong>R$ {{ item.saldo|floatformat:2 }}</strong>
-                            </span>
-                            <a class="button link" href="{% url 'registrar_pagamento' item.cobranca.id %}">Registrar pagamento</a>
-                        </li>
-                    {% endfor %}
+                    <p class="muted">O cancelamento da matrícula não quita pendências prévias.</p>
+                    <ul style="margin-top: 14px;">
+                        {% for item in em_aberto %}
+                            <li class="linha" style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+                                <span>
+                                    {{ item.cobranca.get_tipo_display }}{% if item.cobranca.competencia %} ({{ item.cobranca.competencia }}){% endif %}
+                                    · Vence: {{ item.cobranca.vencimento|date:"d/m/Y" }}
+                                    · <strong>R$ {{ item.saldo|floatformat:2 }}</strong>
+                                </span>
+                                <a href="{% url 'registrar_pagamento' item.cobranca.pk %}" class="btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">
+                                    Registrar pagamento
+                                </a>
+                            </li>
+                        {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="muted">Nenhuma cobrança em aberto.</p>
+                    <p class="muted">Nenhuma cobrança em aberto para esta aluna.</p>
                 {% endif %}
             </section>
 
             {% if canceladas %}
                 <section class="card">
-                    <h2>Cobranças futuras canceladas</h2>
+                    <h2 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Cobranças Futuras Canceladas</h2>
                     <ul>
-                    {% for cobranca in canceladas %}
-                        <li>{{ cobranca.get_tipo_display }}{% if cobranca.competencia %} {{ cobranca.competencia }}{% endif %} · vencia {{ cobranca.vencimento|date:"d/m/Y" }} · R$ {{ cobranca.valor|floatformat:2 }}</li>
-                    {% endfor %}
+                        {% for cobranca in canceladas %}
+                            <li>{{ cobranca.get_tipo_display }}{% if cobranca.competencia %} ({{ cobranca.competencia }}){% endif %} · Vencia em {{ cobranca.vencimento|date:"d/m/Y" }} · R$ {{ cobranca.valor|floatformat:2 }}</li>
+                        {% endfor %}
                     </ul>
                 </section>
             {% endif %}
 
-            <a class="button secondary" href="{% url 'buscar_matricula_cancelamento' %}">Voltar à busca</a>
+            <div style="margin-top: 12px;">
+                <a class="btn-secondary" href="{% url 'buscar_matricula_cancelamento' %}">
+                    <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                    Voltar à busca de matrículas
+                </a>
+            </div>
         {% else %}
             {% with multa=previsao.multa %}
-            <section class="card">
-                <div class="multa {% if not multa.multa %}zero{% endif %}">
-                    <span class="muted">Multa por cancelamento</span>
-                    <span class="valor">R$ {{ multa.multa|floatformat:2 }}</span>
+                <section class="card">
+                    <div class="multa {% if not multa.multa %}zero{% endif %}">
+                        <span class="muted">Multa Rescisória Prevista</span>
+                        <span class="valor">R$ {{ multa.multa|floatformat:2 }}</span>
+                        {% if multa.em_fidelidade %}
+                            <span class="muted">
+                                Fidelidade de {{ multa.fidelidade_meses }} meses até {{ multa.fim_fidelidade|date:"d/m/Y" }}.
+                                Restam {{ multa.dias_restantes }} de {{ multa.dias_totais }} dias.
+                            </span>
+                        {% elif multa.fidelidade_meses %}
+                            <span class="muted">A fidelidade contratual terminou em {{ multa.fim_fidelidade|date:"d/m/Y" }}: isento de multa rescisória.</span>
+                        {% else %}
+                            <span class="muted">Plano sem cláusula de fidelidade: isento de multa.</span>
+                        {% endif %}
+                    </div>
                     {% if multa.em_fidelidade %}
-                        <span class="muted">
-                            Fidelidade de {{ multa.fidelidade_meses }} meses, até {{ multa.fim_fidelidade|date:"d/m/Y" }}.
-                            Faltam {{ multa.dias_restantes }} de {{ multa.dias_totais }} dias.
-                        </span>
-                    {% elif multa.fidelidade_meses %}
-                        <span class="muted">A fidelidade terminou em {{ multa.fim_fidelidade|date:"d/m/Y" }}: sem multa.</span>
-                    {% else %}
-                        <span class="muted">Plano sem fidelidade: sem multa.</span>
+                        <p class="muted" style="margin-top: 10px; font-size: 0.88rem;">
+                            Cálculo: R$ {{ multa.valor_contrato|floatformat:2 }} (total contrato)
+                            × {{ multa.percentual|floatformat:2 }}% (multa)
+                            × {{ multa.dias_restantes }}/{{ multa.dias_totais }} (dias restantes).
+                            A multa será gerada como cobrança com vencimento na data de hoje.
+                        </p>
                     {% endif %}
-                </div>
-                {% if multa.em_fidelidade %}
-                    <p class="muted">
-                        Cálculo: R$ {{ multa.valor_contrato|floatformat:2 }} (contrato de fidelidade)
-                        × {{ multa.percentual|floatformat:2 }}% (multa do plano)
-                        × {{ multa.dias_restantes }}/{{ multa.dias_totais }} (tempo restante).
-                        A multa será registrada como uma cobrança, com vencimento no dia do cancelamento.
-                    </p>
-                {% endif %}
-            </section>
+                </section>
             {% endwith %}
 
             <section class="card">
-                <h2>O que acontece ao confirmar</h2>
+                <h2 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">O que acontece ao confirmar</h2>
                 <ul>
-                    <li>A matrícula passa a <strong>cancelada</strong> e nenhuma cobrança nova é gerada.</li>
+                    <li>A matrícula passa para a situação <strong>Cancelada</strong> e nenhum novo ciclo será gerado.</li>
                     <li>
                         {% if previsao.a_cancelar %}
                             {{ previsao.a_cancelar|length }} cobrança(s) futura(s) ainda não vencida(s) será(ão) cancelada(s):
                             <ul>
-                            {% for cobranca in previsao.a_cancelar %}
-                                <li>{{ cobranca.get_tipo_display }}{% if cobranca.competencia %} {{ cobranca.competencia }}{% endif %} · vence {{ cobranca.vencimento|date:"d/m/Y" }} · R$ {{ cobranca.valor|floatformat:2 }}</li>
-                            {% endfor %}
+                                {% for cobranca in previsao.a_cancelar %}
+                                    <li>{{ cobranca.get_tipo_display }}{% if cobranca.competencia %} ({{ cobranca.competencia }}){% endif %} · Vence em {{ cobranca.vencimento|date:"d/m/Y" }} · R$ {{ cobranca.valor|floatformat:2 }}</li>
+                                {% endfor %}
                             </ul>
                         {% else %}
                             Não há cobranças futuras a cancelar.
@@ -131,14 +558,14 @@
                     </li>
                     <li>
                         {% if previsao.dividas %}
-                            <strong>Continuam como dívida</strong> (cancelar não perdoa o que já estava devendo), total R$ {{ previsao.total_dividas|floatformat:2 }}:
+                            <strong>Continuam como dívida em aberto</strong> (total de R$ {{ previsao.total_dividas|floatformat:2 }}):
                             <ul>
-                            {% for item in previsao.dividas %}
-                                <li>{{ item.cobranca.get_tipo_display }}{% if item.cobranca.competencia %} {{ item.cobranca.competencia }}{% endif %} · venceu {{ item.cobranca.vencimento|date:"d/m/Y" }} · R$ {{ item.saldo|floatformat:2 }}</li>
-                            {% endfor %}
+                                {% for item in previsao.dividas %}
+                                    <li>{{ item.cobranca.get_tipo_display }}{% if item.cobranca.competencia %} ({{ item.cobranca.competencia }}){% endif %} · Venceu em {{ item.cobranca.vencimento|date:"d/m/Y" }} · Saldo: R$ {{ item.saldo|floatformat:2 }}</li>
+                                {% endfor %}
                             </ul>
                         {% else %}
-                            Não há cobranças vencidas em aberto.
+                            Não há cobranças vencidas pendentes.
                         {% endif %}
                     </li>
                 </ul>
@@ -148,20 +575,45 @@
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="multa_exibida" value="{{ previsao.multa.multa|unlocalize }}">
-                    {% for error in form.non_field_errors %}<div class="error">{{ error }}</div>{% endfor %}
-                    {% for error in form.multa_exibida.errors %}<div class="error">{{ error }}</div>{% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <div class="error">{{ error }}</div>
+                    {% endfor %}
+                    {% for error in form.multa_exibida.errors %}
+                        <div class="error">{{ error }}</div>
+                    {% endfor %}
                     {% for field in form.visible_fields %}
                         <div class="field">
                             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                             {{ field }}
-                            {% for error in field.errors %}<div class="error">{{ error }}</div>{% endfor %}
+                            {% for error in field.errors %}
+                                <div class="error">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     {% endfor %}
-                    <button class="button" type="submit">Confirmar cancelamento (multa de R$ {{ previsao.multa.multa|floatformat:2 }})</button>
-                    <a class="button secondary" href="{% url 'buscar_matricula_cancelamento' %}">Voltar sem cancelar</a>
+                    <div class="btn-row">
+                        <a class="btn-secondary" href="{% url 'buscar_matricula_cancelamento' %}">
+                            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                            Voltar sem cancelar
+                        </a>
+                        <button class="btn-primary" type="submit">
+                            <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
+                            Confirmar cancelamento (multa: R$ {{ previsao.multa.multa|floatformat:2 }})
+                        </button>
+                    </div>
                 </form>
             </section>
         {% endif %}
     </main>
+
+    <script>
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const hoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataEl = document.getElementById('data-atual');
+        if (dataEl) {
+            dataEl.textContent = hoje.charAt(0).toUpperCase() + hoje.slice(1);
+        }
+        lucide.createIcons();
+    </script>
 </body>
+
 </html>

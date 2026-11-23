@@ -149,12 +149,17 @@
                 <li class="nav-item active">
                     <a href="{% url 'relatorios_retencao' %}"><i data-lucide="bar-chart-3"></i><span>Relatórios</span></a>
                 </li>
+                <li class="nav-item">
+                    <a href="{% url 'relatorios_financeiros' %}"><i data-lucide="file-chart-column"></i><span>Relatórios Financeiros</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'historico_liberacoes_financeiro' %}"><i data-lucide="clipboard-list"></i><span>Liberações</span></a>
+                </li>
             </ul>
         </nav>
 
         <div class="sidebar-footer">
             <a href="{% url 'sair' %}" class="btn-sidebar-sair"><i data-lucide="log-out"></i><span>Sair</span></a>
-            <div class="portal-label">Portal financeiro</div>
         </div>
     </aside>
 

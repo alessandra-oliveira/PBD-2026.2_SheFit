@@ -115,6 +115,13 @@ class PainelTests(TestCase):
             with self.subTest(rota=rota):
                 self.assertEqual(self.client.get(reverse(rota)).status_code, 403)
 
+    def test_aluno_sem_staff_nem_superuser_acessa_painel_com_sucesso(self):
+        usuario = User.objects.create_user(username='camila_aluno', password='123', is_staff=False, is_superuser=False)
+        Perfil.objects.create(usuario=usuario, tipo=Perfil.ALUNO)
+        self.client.force_login(usuario)
+        resposta = self.client.get(reverse('painel_aluno'))
+        self.assertEqual(resposta.status_code, 200)
+
 
 class PainelRecepcaoTests(TestCase):
     def _aluna(self, nome):

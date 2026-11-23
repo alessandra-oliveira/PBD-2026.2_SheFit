@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Sum, Q
 
 from alunos.models import Aluno
+from alunos.forms import AlunoForm, MatriculaForm
 from accounts.models import Perfil
 from treinos.models import FichaTreino
 from django.utils import timezone
@@ -166,10 +167,16 @@ def alternar_status_usuario(request, user_id):
 
 @login_required(login_url='entrar')
 def painel_aluno(request):
-    if not hasattr(request.user, 'perfil') or request.user.perfil.tipo != 'aluno':
+    perfil = getattr(request.user, 'perfil', None)
+    if not perfil or perfil.tipo != 'aluno':
         raise PermissionDenied
 
-    aluno = getattr(request.user.perfil, 'aluno', None)
+    aluno = getattr(request.user, 'aluno', None)
+    if not aluno and perfil:
+        aluno = getattr(perfil, 'aluno', None)
+    if not aluno:
+        aluno = Aluno.objects.filter(perfil__usuario=request.user).first()
+
     ficha_ativa = None
     if aluno:
         ficha_ativa = (
@@ -337,6 +344,7 @@ def painel_recepcao(request):
         'agenda_semana': agenda_semana,
         'inadimplentes_hoje': inadimplentes_hoje,
         'renovacoes_vencendo': renovacoes_vencendo,
+        'form_matricula': MatriculaForm(),
     }
 
     return render(request, 'accounts/painel_recepcao.html', contexto)
@@ -429,6 +437,7 @@ def gestao_estudantes_view(request):
 
         'total_alunos': total_estudantes,
         'alunos_ativos': estudantes_ativos,
+        'form_cadastro': AlunoForm(),
     }
 
     return render(request, 'accounts/gestao_estudantes.html', contexto)

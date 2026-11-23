@@ -16,23 +16,203 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
         body {
-            background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
             display: flex;
-            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
             align-items: center;
-            padding: 40px 20px;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Modal com fundo borrado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
         }
 
         .modal-card {
             background: #ffffff;
-            border-radius: 24px;
+            border-radius: 20px;
             width: 100%;
             max-width: 680px;
-            padding: 36px 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            padding: 34px 38px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
 
@@ -237,7 +417,7 @@
         .modal-footer {
             margin-top: 32px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             gap: 12px;
         }
@@ -245,7 +425,7 @@
         .btn-cancelar {
             background: #ffffff;
             color: #334155;
-            border: 1px solid #cbd5e1;
+            border: 1.5px solid #cbd5e1;
             padding: 11px 22px;
             border-radius: 10px;
             font-size: 0.92rem;
@@ -261,7 +441,7 @@
         }
 
         .btn-salvar {
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            background: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
             color: white;
             border: none;
             padding: 12px 28px;
@@ -269,13 +449,14 @@
             font-size: 0.92rem;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(217, 70, 239, 0.25);
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
             transition: opacity 0.2s, transform 0.1s;
         }
 
         .btn-salvar:hover {
             opacity: 0.95;
             transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(139, 61, 255, 0.35);
         }
 
         @media (max-width: 640px) {
@@ -307,7 +488,83 @@
 </head>
 
 <body>
-    <div class="modal-card">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+        </div>
+
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_recepcao' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'gestao_estudantes' %}">
+                    <i data-lucide="users"></i>
+                    <span>Estudantes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_cobrancas_pagamento' %}">
+                    <i data-lucide="credit-card"></i>
+                    <span>Pagamentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'buscar_matricula_cancelamento' %}">
+                    <i data-lucide="file-x"></i>
+                    <span>Gestão de Matrículas</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
+                    <div class="role">Recepção</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <div>
+                <h1>Gestão de Estudantes</h1>
+                <p>Gerencie estudantes, planos e dados cadastrais.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Editar Estudante com Fundo Borrado -->
+    <div id="modalOverlayEditar" class="modal-overlay">
+        <div class="modal-card">
 
         <div class="modal-header">
             <div class="header-brand">
@@ -444,9 +701,39 @@
             </div>
         </form>
     </div>
+</div>
 
     <script>
         lucide.createIcons();
+
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+
+        function updateFileName(input) {
+            const fileNameText = document.getElementById('foto-filename');
+            if (input.files && input.files[0]) {
+                fileNameText.textContent = input.files[0].name;
+            } else {
+                fileNameText.textContent = 'Nenhum arquivo selecionado';
+            }
+        }
+
+        document.getElementById('modalOverlayEditar').addEventListener('click', function (e) {
+            if (e.target === this) {
+                window.location.href = "{% url 'gestao_estudantes' %}";
+            }
+        });
+
+        window.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                window.location.href = "{% url 'gestao_estudantes' %}";
+            }
+        });
     </script>
 </body>
 

@@ -7,6 +7,7 @@ urlpatterns = [
     path('turmas/<int:turma_id>/editar/', views.editar_turma, name='editar_turma'),
     path('turmas/<int:turma_id>/desativar/', views.desativar_turma, name='desativar_turma'),
     path('modalidades/nova/', views.criar_modalidade, name='criar_modalidade'),
+    path('modalidades/<int:modalidade_id>/editar/', views.editar_modalidade, name='editar_modalidade'),
     path('minhas/', views.minhas_turmas_professor, name='minhas_turmas_professor'),
     path('turmas/<int:turma_id>/frequencia/', views.gerenciar_frequencia, name='gerenciar_frequencia'),
 ]

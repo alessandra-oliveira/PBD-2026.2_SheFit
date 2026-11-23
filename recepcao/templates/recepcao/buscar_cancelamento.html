@@ -1,71 +1,632 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cancelar matrícula - Recepção SheFit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Matrículas - SheFit</title>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
-        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
-        main { max-width: 1000px; margin: 32px auto; padding: 0 18px; }
-        .card { margin-bottom: 16px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
-        h1 { margin: 0; font-size: 1.5rem; }
-        h2 { margin: 0 0 8px; font-size: 1.1rem; }
-        p { color: #64748b; }
-        form.busca { display: flex; gap: 8px; }
-        input[type=text] { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
-        .item { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
-        .button { display: inline-block; padding: 10px 14px; color: white; text-decoration: none; background: #7c3aed; border: 0; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
-        .danger { background: #b91c1c; }
-        .secondary { background: #475569; }
-        .muted { color: #64748b; font-size: .9rem; }
-        .message { margin-bottom: 12px; padding: 12px; color: #166534; background: #dcfce7; border-radius: 8px; }
-        .message.warning { color: #92400e; background: #fef3c7; }
-        .message.error { color: #991b1b; background: #fee2e2; }
-        @media (max-width: 600px) { .item { grid-template-columns: 1fr; } }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(139, 61, 255, 0.35);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #334155;
+            border: 1.5px solid #cbd5e1;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .operations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .operation-card {
+            background: white;
+            border: 1px solid #f1f5f9;
+            border-radius: 20px;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .operation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .op-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .op-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #f3e8ff;
+            color: #9333ea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .op-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .op-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .busca-form {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .input-busca {
+            flex: 1;
+            min-width: 280px;
+            padding: 12px 18px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-busca:focus {
+            border-color: #8b3dff;
+        }
+
+        .message {
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .message.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fef08a;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 14px;
+            margin-top: 12px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .result-info h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .result-meta {
+            font-size: 0.88rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge-situacao {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .situacao-ativa {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .situacao-trancada {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .situacao-cancelada {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .situacao-encerrada {
+            background: #e2e8f0;
+            color: #475569;
+        }
     </style>
 </head>
+
 <body>
-    <header><h1>SheFit · Recepção</h1></header>
-    <main>
-        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
 
-        <section class="card">
-            <h2>Cancelar matrícula</h2>
-            <p>Busque a aluna por CPF ou nome e escolha a matrícula. O valor da multa é mostrado antes de confirmar.</p>
-            <form class="busca" method="get">
-                <input type="text" name="q" value="{{ query }}" placeholder="CPF ou nome da aluna" autofocus>
-                <button class="button" type="submit">Buscar</button>
-                <a class="button secondary" href="{% url 'painel_recepcao' %}">Voltar</a>
-            </form>
-        </section>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+        </div>
 
-        {% if query %}
-            {% if truncado %}
-                <div class="message warning">Mostrando só as primeiras {{ limite }} alunas. Refine a busca ou use o CPF.</div>
-            {% endif %}
-            {% for matricula in matriculas %}
-                <article class="card item">
-                    <div>
-                        <h2>{{ matricula.aluno.nome }}</h2>
-                        <div class="muted">
-                            Matrícula #{{ matricula.id }} · {{ matricula.plano.nome }}
-                            · início {{ matricula.data_inicio|date:"d/m/Y" }}
-                            · {% if matricula.plano.fidelidade_meses %}fidelidade de {{ matricula.plano.fidelidade_meses }} meses{% else %}sem fidelidade{% endif %}
-                            · situação: {{ matricula.situacao_display }}
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_recepcao' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'gestao_estudantes' %}">
+                    <i data-lucide="users"></i>
+                    <span>Estudantes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_cobrancas_pagamento' %}">
+                    <i data-lucide="credit-card"></i>
+                    <span>Pagamentos</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'buscar_matricula_cancelamento' %}">
+                    <i data-lucide="file-x"></i>
+                    <span>Gestão de Matrículas</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
+                    <div class="role">Recepção</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <div>
+                <h1>Gestão de Matrículas</h1>
+                <p>Consulte alunas, efetue cancelamentos, gerencie trancamentos, renovações e liberações.</p>
+            </div>
+        </div>
+
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                <i data-lucide="info" style="width: 18px; height: 18px;"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+
+        <!-- Operações de Matrícula (Renovações, Liberações, Trancamentos) -->
+        <section class="operations-grid">
+            <div class="operation-card">
+                <div>
+                    <div class="op-header">
+                        <div class="op-icon-box">
+                            <i data-lucide="refresh-cw" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div>
+                            <div class="op-title">Renovações</div>
+                            <span style="font-size: 0.78rem; color: #8b3dff; font-weight: 600;">Planos e Ciclos</span>
                         </div>
                     </div>
-                    <div>
-                        <a class="button danger" href="{% url 'cancelar_matricula' matricula.id %}">Cancelar matrícula</a>
-                        <a class="button" href="{% url 'trancar_matricula' matricula.id %}">Trancar</a>
-                        <a class="button secondary" href="{% url 'historico_trancamentos' matricula.id %}">Histórico</a>
+                    <p class="op-desc">Consulte matrículas com renovação por confirmação vencendo ou vencida e confirme novos ciclos.</p>
+                </div>
+                <a href="{% url 'listar_renovacoes' %}" class="btn-secondary" style="justify-content: center; width: 100%;">
+                    <i data-lucide="external-link" style="width: 16px; height: 16px;"></i>
+                    Ver Renovações
+                </a>
+            </div>
+
+            <div class="operation-card">
+                <div>
+                    <div class="op-header">
+                        <div class="op-icon-box">
+                            <i data-lucide="shield-check" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div>
+                            <div class="op-title">Liberações</div>
+                            <span style="font-size: 0.78rem; color: #8b3dff; font-weight: 600;">Portaria e Acesso</span>
+                        </div>
                     </div>
-                </article>
-            {% empty %}
-                <section class="card"><p>Nenhuma matrícula ativa encontrada para essa busca.</p></section>
-            {% endfor %}
-        {% endif %}
+                    <p class="op-desc">Acompanhe o relatório de liberações excepcionais concedidas na entrada com histórico por atendente.</p>
+                </div>
+                <a href="{% url 'historico_liberacoes' %}" class="btn-secondary" style="justify-content: center; width: 100%;">
+                    <i data-lucide="external-link" style="width: 16px; height: 16px;"></i>
+                    Ver Liberações
+                </a>
+            </div>
+
+            <div class="operation-card">
+                <div>
+                    <div class="op-header">
+                        <div class="op-icon-box">
+                            <i data-lucide="pause-circle" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div>
+                            <div class="op-title">Trancamentos</div>
+                            <span style="font-size: 0.78rem; color: #8b3dff; font-weight: 600;">Suspensão Temporária</span>
+                        </div>
+                    </div>
+                    <p class="op-desc">Consulte o histórico geral de períodos trancados, suspensão de cobranças e prorrogações de vigência.</p>
+                </div>
+                <a href="{% url 'historico_geral_trancamentos' %}" class="btn-secondary" style="justify-content: center; width: 100%;">
+                    <i data-lucide="external-link" style="width: 16px; height: 16px;"></i>
+                    Histórico de Trancamentos
+                </a>
+            </div>
+        </section>
+
+        <!-- Busca de Matrícula -->
+        <section class="card">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;">Buscar Matrícula</h2>
+            <p style="color: var(--text-muted); font-size: 0.92rem;">Busque a aluna por CPF ou nome para consultar situação, calcular multa de cancelamento ou registrar trancamento.</p>
+
+            <form class="busca-form" method="get">
+                <input type="text" name="q" value="{{ query }}" class="input-busca" placeholder="Digite o CPF (somente números) ou nome da aluna" autofocus>
+                <button class="btn-primary" type="submit">
+                    <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+                    Buscar
+                </button>
+                {% if query %}
+                    <a href="{% url 'buscar_matricula_cancelamento' %}" class="btn-secondary">Limpar Busca</a>
+                {% endif %}
+            </form>
+
+            {% if query %}
+                <div style="margin-top: 24px;">
+                    {% if truncado %}
+                        <div class="message warning" style="margin-bottom: 16px;">
+                            <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                            <span>Mostrando só as primeiras {{ limite }} alunas. Refine a busca ou digite o CPF exato.</span>
+                        </div>
+                    {% endif %}
+
+                    {% for matricula in matriculas %}
+                        <article class="result-item">
+                            <div class="result-info">
+                                <h3>{{ matricula.aluno.nome }}</h3>
+                                <div class="result-meta">
+                                    Matrícula <strong>#{{ matricula.id }}</strong> · CPF: {{ matricula.aluno.cpf }}
+                                    · Plano: <strong>{{ matricula.plano.nome }}</strong>
+                                    · Início: {{ matricula.data_inicio|date:"d/m/Y" }}
+                                    · {% if matricula.plano.fidelidade_meses %}Fidelidade: {{ matricula.plano.fidelidade_meses }} meses{% else %}Sem fidelidade{% endif %}
+                                    · Situação: 
+                                    <span class="badge-situacao {% if matricula.situacao == 'ativa' %}situacao-ativa{% elif matricula.situacao == 'trancada' %}situacao-trancada{% elif matricula.situacao == 'cancelada' %}situacao-cancelada{% else %}situacao-encerrada{% endif %}">
+                                        {{ matricula.situacao_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <a class="btn-primary" href="{% url 'cancelar_matricula' matricula.id %}">
+                                    <i data-lucide="x-circle" style="width: 16px; height: 16px;"></i>
+                                    Cancelar Matrícula
+                                </a>
+                                <a class="btn-secondary" href="{% url 'trancar_matricula' matricula.id %}">
+                                    <i data-lucide="pause-circle" style="width: 16px; height: 16px;"></i>
+                                    Trancar
+                                </a>
+                                <a class="btn-secondary" href="{% url 'historico_trancamentos' matricula.id %}">
+                                    <i data-lucide="history" style="width: 16px; height: 16px;"></i>
+                                    Histórico
+                                </a>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <div style="text-align: center; padding: 36px 20px; color: #94a3b8; background: #f8fafc; border-radius: 14px; border: 1px dashed #cbd5e1; margin-top: 16px;">
+                            <i data-lucide="users" style="width: 36px; height: 36px; margin-bottom: 8px; color: #cbd5e1;"></i>
+                            <p style="font-weight: 600; color: #64748b;">Nenhuma matrícula encontrada para "{{ query }}".</p>
+                            <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Verifique a grafia do nome ou os dígitos do CPF informado.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </section>
     </main>
+
+    <script>
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const hoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataEl = document.getElementById('data-atual');
+        if (dataEl) {
+            dataEl.textContent = hoje.charAt(0).toUpperCase() + hoje.slice(1);
+        }
+        lucide.createIcons();
+    </script>
 </body>
+
 </html>

@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'recepcao',
     'treinos',
     'agendamentos',
-    'corsheaders',
     'avaliacoes',
     'retencao',
 ]

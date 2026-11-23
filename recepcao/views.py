@@ -467,7 +467,7 @@ def _data_ou_none(texto):
 
 
 @login_required
-@perfil_requerido('recepcao', 'financeiro')
+@perfil_requerido('recepcao')
 def historico_liberacoes(request):
     """Tarefa T10: histórico de liberações excepcionais e total por atendente.
 

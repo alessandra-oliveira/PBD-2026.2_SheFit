@@ -142,17 +142,18 @@
             background: #fef2f2;
         }
 
-
-        .main-content {
+        /* ================= ÁREA CENTRAL ================= */
+        .main-wrapper {
             margin-left: var(--sidebar-width);
             flex: 1;
             padding: 24px 36px 60px;
             display: flex;
             flex-direction: column;
-            gap: 28px;
-            max-width: 1400px;
+            gap: 24px;
+            min-height: 100vh;
+            max-width: calc(100vw - var(--sidebar-width));
+            box-sizing: border-box;
         }
-
 
         .topbar {
             display: flex;
@@ -184,37 +185,37 @@
             align-items: center;
             justify-content: center;
             font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .user-info .name {
             font-size: 0.95rem;
             font-weight: 700;
             color: #1e293b;
+            line-height: 1.2;
         }
 
         .user-info .role {
             font-size: 0.8rem;
             color: var(--text-muted);
-        }
-            background: #8b5cf6;
-            color: white;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.05rem;
-            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+            line-height: 1.2;
         }
 
-        .status-indicator-online {
-            position: absolute;
-            bottom: 1px;
-            right: 1px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #10b981;
-            border: 2px solid #ffffff;
+        .main-content {
+            flex: 1;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            max-width: 1400px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
 
@@ -556,8 +557,15 @@
                 display: none;
             }
 
-            .main-content {
+            .main-wrapper {
                 margin-left: 0;
+            }
+
+            .topbar {
+                padding: 0 16px;
+            }
+
+            .main-content {
                 padding: 20px 16px;
             }
         }
@@ -567,50 +575,45 @@
 <body>
 
     <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
-                    <span>SheFit</span>
-                </div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
             </div>
-
-
-            <ul class="nav-list">
-                <li class="nav-item">
-                    <a href="{% url 'painel_professor' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
-                            <span>Painel</span>
-                        </div>
-                    </a>
-                </li>
-                <li class="nav-item active">
-                    <a href="{% url 'minhas_turmas_professor' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
-                            <span>Minhas Turmas</span>
-                        </div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'listar_fichas' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
-                            <span>Consultar Fichas e Histórico</span>
-                        </div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'avaliacoes_alunos' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
-                            <span>Avaliações Físicas</span>
-                        </div>
-                    </a>
-                </li>
-            </ul>
         </div>
+
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_professor' %}">
+                    <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'minhas_turmas_professor' %}">
+                    <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                    <span>Minhas Turmas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_fichas' %}">
+                    <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                    <span>Consultar Fichas de Treino</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'avaliacoes_alunos' %}">
+                    <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
+                    <span>Avaliações Físicas</span>
+                </a>
+            </li>
+        </ul>
 
         <div class="sidebar-footer">
             <a href="{% url 'sair' %}" class="btn-sidebar-sair">
@@ -620,9 +623,9 @@
         </div>
     </aside>
 
-
-    <main class="main-content">
-
+    <!-- ================= ÁREA PRINCIPAL COM TOPBAR ================= -->
+    <div class="main-wrapper">
+        <!-- Topbar Superior Padronizada -->
         <header class="topbar">
             <div class="date-display" id="data-atual">
                 Hoje
@@ -632,13 +635,15 @@
                     {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                 </div>
                 <div class="user-info">
-                    <div class="name">{{ request.user.get_full_name|default:request.user.username }} (Professor)</div>
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
                     <div class="role">Professor</div>
                 </div>
             </div>
         </header>
 
+        <main class="main-content">
 
+        <!-- Cabeçalho -->
         <section class="page-header">
             <h1>Minhas Turmas</h1>
             <p>Consulte sua agenda, acompanhe a ocupação e registre presenças.</p>
@@ -715,8 +720,8 @@
 
             <div class="turmas-grid" id="turmas-grid-container">
 
-                {% if turmas %}
-                    {% for turma in turmas %}
+                {% for turma in turmas %}
+                    {% if turmas %}
                         <article class="turma-card" data-dia="{{ turma.dia_semana }}">
                             <div class="turma-card-header">
                                 <h3 class="turma-card-title">{{ turma.modalidade.nome }}</h3>
@@ -755,7 +760,6 @@
                                 </a>
                             </div>
                         </article>
-                    {% endfor %}
                 {% else %}
 
 
@@ -797,6 +801,7 @@
                             </button>
                         </div>
                     </article>
+                {% endif %}
                 {% empty %}
                     <div class="agenda-empty-state" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; color: var(--text-muted); background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 16px; gap: 10px;">
                         <i data-lucide="calendar" style="width: 36px; height: 36px; color: #94a3b8;"></i>
@@ -806,6 +811,7 @@
             </div>
         </section>
     </main>
+</div>
 
     <script>
         lucide.createIcons();

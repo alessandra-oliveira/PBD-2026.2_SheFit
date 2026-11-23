@@ -251,7 +251,7 @@
 
         .stat-card {
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 24px;
             border: 1px solid #f1f5f9;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
@@ -310,7 +310,7 @@
 
         .table-card {
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 20px;
             border: 1px solid #f1f5f9;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
             overflow: hidden;
@@ -427,7 +427,7 @@
 
         .modalidade-card {
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 24px;
             border: 1px solid #f1f5f9;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
@@ -469,6 +469,211 @@
             color: #94a3b8;
         }
 
+        /* Modal com fundo borrado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            padding: 34px 38px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+
+        .modal-card.modal-turma-card {
+            max-width: 680px;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 22px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            color: #8b3dff;
+        }
+
+        .brand-text h2 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #8b3dff;
+            line-height: 1.1;
+        }
+
+        .brand-text p {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: color 0.2s, background-color 0.2s;
+        }
+
+        .btn-close:hover {
+            color: #0f172a;
+            background-color: #f1f5f9;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .form-grid .form-group {
+            margin-bottom: 0;
+        }
+
+        .col-full {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .modal-card input[type="text"],
+        .modal-card input[type="time"],
+        .modal-card input[type="number"],
+        .modal-card select,
+        .modal-card textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #1e293b;
+            outline: none;
+            background: #ffffff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .modal-card textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-card input:focus,
+        .modal-card select:focus,
+        .modal-card textarea:focus {
+            border-color: #8b3dff;
+            box-shadow: 0 0 0 3px rgba(139, 61, 255, 0.12);
+        }
+
+        .modal-footer {
+            margin-top: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+        }
+
+        .btn-cancelar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            color: #334155;
+            border: 1.5px solid #cbd5e1;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancelar:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-salvar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            color: white;
+            border: none;
+            padding: 12px 26px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .btn-salvar:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(139, 61, 255, 0.35);
+        }
+
         @media (max-width: 900px) {
             .stats-grid-2,
             .modalidades-grid {
@@ -476,6 +681,18 @@
             }
             .sidebar {
                 display: none;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .col-full {
+                grid-column: span 1;
+            }
+            .modal-footer {
+                flex-direction: column-reverse;
+            }
+            .btn-cancelar, .btn-salvar {
+                width: 100%;
             }
         }
     </style>
@@ -490,28 +707,72 @@
                     <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
                     <span class="brand-name">SheFit</span>
                 </div>
-                <i data-lucide="menu" style="width: 20px; height: 20px; cursor: pointer;"></i>
             </div>
 
             <ul class="sidebar-menu">
-                <li class="nav-item">
-                    <a href="{% url 'painel_recepcao' %}">
-                        <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
-                        <span>Painel</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'gestao_estudantes' %}">
-                        <i data-lucide="users" style="width: 20px; height: 20px;"></i>
-                        <span>Estudantes</span>
-                    </a>
-                </li>
-                <li class="nav-item active">
-                    <a href="{% url 'listar_turmas' %}">
-                        <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
-                        <span>Aulas/Modalidades</span>
-                    </a>
-                </li>
+                {% if request.user.perfil.tipo == 'professor' %}
+                    <li class="nav-item">
+                        <a href="{% url 'painel_professor' %}">
+                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                            <span>Painel</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'minhas_turmas_professor' %}">
+                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                            <span>Minhas Turmas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{% url 'listar_turmas' %}">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Aulas / Modalidades</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'listar_fichas' %}">
+                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                            <span>Consultar Fichas de Treino</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'avaliacoes_alunos' %}">
+                            <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
+                            <span>Avaliações Físicas</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a href="{% url 'painel_recepcao' %}">
+                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                            <span>Painel</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'gestao_estudantes' %}">
+                            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+                            <span>Estudantes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="{% url 'listar_turmas' %}">
+                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                            <span>Aulas / Modalidades</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'listar_cobrancas_pagamento' %}">
+                            <i data-lucide="credit-card" style="width: 20px; height: 20px;"></i>
+                            <span>Pagamentos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'buscar_matricula_cancelamento' %}">
+                            <i data-lucide="file-x" style="width: 20px; height: 20px;"></i>
+                            <span>Gestão de Matrículas</span>
+                        </a>
+                    </li>
+                {% endif %}
             </ul>
         </div>
 
@@ -534,11 +795,16 @@
                 </div>
                 <div class="user-profile">
                     <div class="avatar">
-                        {{ request.user.username|slice:":1"|upper }}
+                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                     </div>
                     <div class="user-info">
-                        <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
-                        <div class="role">Recepção</div>
+                        {% if request.user.perfil.tipo == 'professor' %}
+                            <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                            <div class="role">Professor</div>
+                        {% else %}
+                            <div class="name">{{ request.user.first_name|default:request.user.username }} (Recepção)</div>
+                            <div class="role">Recepção</div>
+                        {% endif %}
                     </div>
                 </div>
             </header>
@@ -552,11 +818,11 @@
 
                 <div class="header-actions">
                     {% if request.user.perfil.tipo != 'professor' %}
-                        <a href="{% url 'criar_modalidade' %}" class="btn-outline-modalidade">
+                        <a href="{% url 'criar_modalidade' %}" class="btn-outline-modalidade" onclick="abrirModal('modalNovaModalidade'); return false;">
                             <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
                             Nova modalidade
                         </a>
-                        <a href="{% url 'criar_turma' %}" class="btn-solid-turma">
+                        <a href="{% url 'criar_turma' %}" class="btn-solid-turma" onclick="abrirModal('modalNovaTurma'); return false;">
                             <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
                             Nova turma
                         </a>
@@ -564,12 +830,21 @@
                 </div>
             </div>
 
+            {% if messages %}
+                <div style="margin-bottom: 20px;">
+                    {% for message in messages %}
+                        <div style="padding: 12px 18px; border-radius: 12px; margin-bottom: 10px; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 10px; {% if message.tags == 'error' %}background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;{% else %}background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;{% endif %}">
+                            <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" style="width: 20px; height: 20px;"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
             <section class="stats-grid-2">
                 <div class="stat-card">
                     <div class="stat-card-label">Modalidades</div>
-
-                    <div class="stat-card-number" id="card-total-modalidades">-</div>
+                    <div class="stat-card-number" id="card-total-modalidades">{{ modalidades|length }}</div>
                     <div class="stat-card-sub">Opções disponíveis</div>
                 </div>
 
@@ -624,7 +899,10 @@
                                     <td>
                                         <div class="actions-group">
                                             <a href="{% url 'editar_turma' turma.id %}" class="btn-edit-turma">Editar</a>
-                                            <a href="{% url 'desativar_turma' turma.id %}" class="btn-desativar-turma">Desativar</a>
+                                            <form method="post" action="{% url 'desativar_turma' turma.id %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-desativar-turma" style="border: none; cursor: pointer;" onclick="return confirm('Deseja realmente desativar esta turma?')">Desativar</button>
+                                            </form>
                                         </div>
                                     </td>
                                 {% endif %}
@@ -642,11 +920,138 @@
 
 
             <section id="conteudo-modalidades" class="modalidades-grid" style="display: none;">
-
+                {% for mod in modalidades %}
+                    <div class="modalidade-card">
+                        <div class="modalidade-card-header">
+                            <h3 class="modalidade-card-title">{{ mod.nome }}</h3>
+                            <span class="modalidade-badge-turmas">
+                                {{ mod.turmas.count }} turma{{ mod.turmas.count|pluralize }}
+                            </span>
+                        </div>
+                        <p class="modalidade-card-desc">
+                            {{ mod.descricao|default:"Fortalecimento, postura, mobilidade e exercícios corporais." }}
+                        </p>
+                        {% if request.user.perfil.tipo != 'professor' %}
+                            <div style="margin-top: auto; display: flex; justify-content: flex-end; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+                                <a href="{% url 'editar_modalidade' mod.id %}" class="btn-edit-turma" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                                    Editar
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="empty-state" style="grid-column: span 2; background: white; border-radius: 16px; padding: 32px;">
+                        Nenhuma modalidade cadastrada no momento.
+                    </div>
+                {% endfor %}
             </section>
         </main>
     </div>
 
+    <!-- Modal Nova Modalidade com Fundo Borrado -->
+    <div id="modalNovaModalidade" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="header-brand">
+                    <div class="brand-icon">
+                        <i data-lucide="sparkles" style="width: 30px; height: 30px;"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>SheFit</h2>
+                        <p>Nova Modalidade</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" onclick="fecharModal('modalNovaModalidade')" title="Fechar">
+                    <i data-lucide="x" style="width: 22px; height: 22px;"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'criar_modalidade' %}" autocomplete="off">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_nome_mod">Nome da Modalidade <span style="color: #ec4899;">*</span></label>
+                    <input type="text" name="nome" id="id_nome_mod" required placeholder="Ex: Pilates, Jump, Musculação...">
+                </div>
+
+                <div class="form-group">
+                    <label for="id_desc_mod">Descrição</label>
+                    <textarea name="descricao" id="id_desc_mod" placeholder="Breve descrição dos objetivos ou foco da modalidade..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" onclick="fecharModal('modalNovaModalidade')" class="btn-cancelar">Cancelar</button>
+                    <button type="submit" class="btn-salvar">
+                        <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                        Salvar Modalidade
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Nova Turma com Fundo Borrado -->
+    <div id="modalNovaTurma" class="modal-overlay" style="display: none;">
+        <div class="modal-card modal-turma-card">
+            <div class="modal-header">
+                <div class="header-brand">
+                    <div class="brand-icon">
+                        <i data-lucide="activity" style="width: 30px; height: 30px;"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>SheFit</h2>
+                        <p>Nova Turma</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" onclick="fecharModal('modalNovaTurma')" title="Fechar">
+                    <i data-lucide="x" style="width: 22px; height: 22px;"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'criar_turma' %}" autocomplete="off">
+                {% csrf_token %}
+                <div class="form-grid">
+                    <div class="form-group col-full">
+                        <label for="{{ form_turma.modalidade.id_for_label }}">{{ form_turma.modalidade.label }} <span style="color: #ec4899;">*</span></label>
+                        {{ form_turma.modalidade }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form_turma.dia_semana.id_for_label }}">{{ form_turma.dia_semana.label }} <span style="color: #ec4899;">*</span></label>
+                        {{ form_turma.dia_semana }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form_turma.horario.id_for_label }}">{{ form_turma.horario.label }} <span style="color: #ec4899;">*</span></label>
+                        {{ form_turma.horario }}
+                    </div>
+
+                    <div class="form-group col-full">
+                        <label for="{{ form_turma.professor.id_for_label }}">{{ form_turma.professor.label }} <span style="color: #ec4899;">*</span></label>
+                        {{ form_turma.professor }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form_turma.sala.id_for_label }}">{{ form_turma.sala.label }} <span style="color: #ec4899;">*</span></label>
+                        {{ form_turma.sala }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form_turma.capacidade_maxima.id_for_label }}">{{ form_turma.capacidade_maxima.label }} <span style="color: #ec4899;">*</span></label>
+                        {{ form_turma.capacidade_maxima }}
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" onclick="fecharModal('modalNovaTurma')" class="btn-cancelar">Cancelar</button>
+                    <button type="submit" class="btn-salvar">
+                        <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                        Salvar Turma
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         lucide.createIcons();
@@ -658,54 +1063,34 @@
         if (elData) {
             elData.innerText = dataCapitalizada;
         }
-        const modalidadesMap = new Map();
 
-        {% for t in turmas %}
-            (function() {
-                const nomeMod = "{{ t.modalidade.nome|escapejs }}";
-                const descMod = "{{ t.modalidade.descricao|escapejs }}";
-                if (!modalidadesMap.has(nomeMod)) {
-                    modalidadesMap.set(nomeMod, {
-                        nome: nomeMod,
-                        descricao: descMod || "Fortalecimento, postura, mobilidade e exercícios corporais.",
-                        totalTurmas: 0
-                    });
-                }
-                modalidadesMap.get(nomeMod).totalTurmas += 1;
-            })();
-        {% endfor %}
-        const cardTotal = document.getElementById('card-total-modalidades');
-        if (cardTotal) {
-            cardTotal.innerText = modalidadesMap.size;
-        }
-        const containerModalidades = document.getElementById('conteudo-modalidades');
-        if (containerModalidades) {
-            if (modalidadesMap.size === 0) {
-                containerModalidades.innerHTML = `
-                    <div class="empty-state" style="grid-column: span 2; background: white; border-radius: 16px; padding: 32px;">
-                        Nenhuma modalidade com turmas ativas no momento.
-                    </div>
-                `;
-            } else {
-                let htmlCards = '';
-                modalidadesMap.forEach(mod => {
-                    htmlCards += `
-                        <div class="modalidade-card">
-                            <div class="modalidade-card-header">
-                                <h3 class="modalidade-card-title">${mod.nome}</h3>
-                                <span class="modalidade-badge-turmas">
-                                    ${mod.totalTurmas} ${mod.totalTurmas === 1 ? 'turma' : 'turmas'}
-                                </span>
-                            </div>
-                            <p class="modalidade-card-desc">
-                                ${mod.descricao}
-                            </p>
-                        </div>
-                    `;
-                });
-                containerModalidades.innerHTML = htmlCards;
+        function abrirModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.style.display = 'flex';
+                lucide.createIcons();
             }
         }
+
+        function fecharModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+            }
+        });
+
         function mostrarAba(aba) {
             const btnTurmas = document.getElementById('btn-aba-turmas');
             const btnModalidades = document.getElementById('btn-aba-modalidades');
