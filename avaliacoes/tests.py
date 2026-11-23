@@ -12,6 +12,8 @@ from alunos.models import Aluno
 from .models import AvaliacaoFisica, RegistroImutavelError, TesteFisico
 from .servicos import comparar_avaliacoes
 
+from agendamentos.models import Agendamento
+from turmas.models import Modalidade, Turma
 
 class BaseAvaliacaoTest(TestCase):
     def setUp(self):
@@ -19,6 +21,17 @@ class BaseAvaliacaoTest(TestCase):
         self.aluno = self.criar_aluno('ana', '12345678901', 'Ana Souza')
         self.outro = self.criar_aluno('bia', '12345678902', 'Bia Lima')
         self.hoje = timezone.localdate()
+        self.turma = self.criar_turma(self.professor)
+        Agendamento.objects.create(
+            turma=self.turma, aluno=self.aluno, status=Agendamento.Status.RESERVADO,
+        )
+
+    def criar_turma(self, professor, nome='Yoga'):
+        modalidade, _ = Modalidade.objects.get_or_create(nome=nome)
+        return Turma.objects.create(
+            modalidade=modalidade, dia_semana=Turma.SEGUNDA, horario='08:00',
+            professor=professor, sala='1', capacidade_maxima=15,
+        )
 
     def criar_usuario(self, username, tipo):
         u = User.objects.create_user(username=username, password='senha12345')
@@ -262,3 +275,50 @@ class ComparacaoServicoTests(BaseAvaliacaoTest):
         self.assertEqual(testes['flexões'].diferenca, Decimal('5'))
         self.assertIsNone(testes['corrida'].diferenca)
         self.assertTrue(testes['corrida'].aviso)
+
+class EscopoDoProfessorTests(BaseAvaliacaoTest):
+    def setUp(self):
+        super().setUp()
+        self.client.login(username='prof', password='senha12345')
+
+    def test_lista_so_alunos_das_turmas_do_professor(self):
+        r = self.client.get(reverse('avaliacoes_alunos'))
+        nomes = [a.nome for a in r.context['alunos']]
+        self.assertEqual(nomes, ['Ana Souza'])
+
+    def test_aluno_de_turma_de_outro_professor_nao_aparece(self):
+        outro_prof = self.criar_usuario('prof2', Perfil.PROFESSOR)
+        Agendamento.objects.create(
+            turma=self.criar_turma(outro_prof, 'Spinning'), aluno=self.outro,
+            status=Agendamento.Status.RESERVADO,
+        )
+        r = self.client.get(reverse('avaliacoes_alunos'))
+        self.assertEqual([a.nome for a in r.context['alunos']], ['Ana Souza'])
+
+    def test_agendamento_cancelado_ou_turma_inativa_nao_vincula(self):
+        Agendamento.objects.filter(aluno=self.aluno).update(status='cancelado')
+        r = self.client.get(reverse('avaliacoes_alunos'))
+        self.assertEqual(list(r.context['alunos']), [])
+        Agendamento.objects.filter(aluno=self.aluno).update(status='reservado')
+        Turma.objects.filter(pk=self.turma.pk).update(ativo=False)
+        r = self.client.get(reverse('avaliacoes_alunos'))
+        self.assertEqual(list(r.context['alunos']), [])
+
+    def test_rotas_de_aluno_fora_da_turma_dao_404(self):
+        av = self.avaliacao(aluno=self.outro)
+        for nome, args in [
+            ('avaliacoes_aluno', [self.outro.pk]),
+            ('registrar_avaliacao', [self.outro.pk]),
+            ('comparar_avaliacoes_aluno', [self.outro.pk]),
+            ('corrigir_avaliacao', [av.pk]),
+        ]:
+            with self.subTest(rota=nome):
+                self.assertEqual(self.client.get(reverse(nome, args=args)).status_code, 404)
+
+    def test_aluno_em_duas_turmas_aparece_uma_vez(self):
+        Agendamento.objects.create(
+            turma=self.criar_turma(self.professor, 'Pilates'), aluno=self.aluno,
+            status=Agendamento.Status.ESPERA,
+        )
+        r = self.client.get(reverse('avaliacoes_alunos'))
+        self.assertEqual(len(r.context['alunos']), 1)

@@ -17,15 +17,7 @@ ORDEM_DOS_DIAS = {dia: posicao for posicao, (dia, _) in enumerate(Turma.DIAS_SEM
 
 
 def _aluno_logado(request):
-    aluno = getattr(request.user, 'aluno', None)
-    if not aluno:
-        perfil = getattr(request.user, 'perfil', None)
-        if perfil:
-            aluno = getattr(perfil, 'aluno', None)
-    if not aluno:
-        from alunos.models import Aluno
-        aluno = Aluno.objects.filter(perfil__usuario=request.user).first()
-    return aluno
+    return getattr(request.user.perfil, 'aluno', None)
 
 
 def _ordenar(turmas):
@@ -49,7 +41,7 @@ def minhas_aulas(request):
     }
 
     disponiveis = []
-    if matricula is not None and getattr(matricula, 'plano', None) is not None:
+    if matricula is not None:
         turmas = (Turma.objects.filter(ativo=True)
                   .select_related('modalidade', 'professor')
                   .annotate(
@@ -57,12 +49,9 @@ def minhas_aulas(request):
                       na_fila=Count('agendamentos', filter=Q(agendamentos__status=Status.ESPERA)),
                   ))
         for turma in _ordenar(t for t in turmas if modalidade_esta_no_plano(t.modalidade, matricula.plano)):
-            vagas = max(turma.capacidade_maxima - turma.reservados, 0)
-            turma.vagas_restantes_calculadas = vagas
             disponiveis.append({
                 'turma': turma,
-                'vagas': vagas,
-                'vagas_restantes': vagas,
+                'vagas': max(turma.capacidade_maxima - turma.reservados, 0),
                 'na_fila': turma.na_fila,
                 'meu': meus_ativos.get(turma.id),
             })
@@ -84,9 +73,10 @@ def minhas_aulas(request):
         'matricula': matricula,
         'impedimento': impedimento,
         'disponiveis': disponiveis,
-        'turmas_plano': disponiveis,
         'minhas_reservas': minhas_reservas,
         'total_reservadas': total_reservadas,
+        'total_na_fila': len(minhas_reservas) - total_reservadas,
+
     })
 
 

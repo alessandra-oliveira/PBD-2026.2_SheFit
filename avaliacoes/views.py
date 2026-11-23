@@ -30,10 +30,26 @@ def _historico(aluno):
 
 
 
+def _alunos_do_professor(professor):
+    """Alunos com vaga reservada (ou na espera) em turma ATIVA do professor.
+    Só esses aparecem para ele; os demais nem por URL direta."""
+    return Aluno.objects.filter(
+        agendamentos__turma__professor=professor,
+        agendamentos__turma__ativo=True,
+        agendamentos__status__in=['reservado', 'espera'],
+    ).distinct()
+
+
+def _aluno_do_professor_ou_404(request, aluno_id):
+    return get_object_or_404(_alunos_do_professor(request.user), pk=aluno_id)
+
+
 @perfil_requerido('professor')
 def listar_alunos(request):
     busca = request.GET.get('q', '').strip()
-    alunos = Aluno.objects.annotate(
+    alunos = Aluno.objects.filter(
+        pk__in=_alunos_do_professor(request.user).values('pk'),
+    ).annotate(
         total_avaliacoes=Count('avaliacoes_fisicas'),
         ultima_avaliacao=Max('avaliacoes_fisicas__data_avaliacao'),
     )
@@ -47,7 +63,7 @@ def listar_alunos(request):
 
 @perfil_requerido('professor')
 def evolucao_aluno(request, aluno_id):
-    aluno = get_object_or_404(Aluno, pk=aluno_id)
+    aluno = _aluno_do_professor_ou_404(request, aluno_id)
     return render(request, 'avaliacoes/evolucao.html', {
         'aluno': aluno,
         'avaliacoes': _historico(aluno),
@@ -59,7 +75,7 @@ def evolucao_aluno(request, aluno_id):
 
 @perfil_requerido('professor')
 def registrar_avaliacao(request, aluno_id):
-    aluno = get_object_or_404(Aluno, pk=aluno_id)
+    aluno = _aluno_do_professor_ou_404(request, aluno_id)
     FormSetTestes = testes_formset(extra=3)
 
     if request.method == 'POST':
@@ -94,7 +110,7 @@ def corrigir_avaliacao(request, avaliacao_id):
         AvaliacaoFisica.objects.select_related('aluno').prefetch_related('testes', 'correcoes'),
         pk=avaliacao_id,
     )
-    aluno = original.aluno
+    aluno = _aluno_do_professor_ou_404(request, original.aluno_id)
 
     if not original.vigente:
         messages.error(
@@ -152,7 +168,7 @@ def corrigir_avaliacao(request, avaliacao_id):
 
 @perfil_requerido('professor')
 def comparar_avaliacoes_aluno(request, aluno_id):
-    aluno = get_object_or_404(Aluno, pk=aluno_id)
+    aluno = _aluno_do_professor_ou_404(request, aluno_id)
     return _comparar(
         request, aluno,
         eh_professor=True,
