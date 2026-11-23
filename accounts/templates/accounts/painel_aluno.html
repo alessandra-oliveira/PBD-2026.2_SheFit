@@ -1,154 +1,260 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>Painel da Aluna - SheFit</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 40px 32px;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            text-align: center;
-        }
-        .logo {
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -1px;
-            color: #7c3aed;
-            margin-bottom: 4px;
-        }
-        .badge {
-            display: inline-block;
-            background: #fdf2f8;
-            color: #db2777;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .saudacao {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 8px;
-        }
-        .descricao {
-            color: #6b7280;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 28px;
-        }
+{% extends "accounts/base_aluno.html" %}
 
-        .botao-menu {
-            display: block;
-            width: 100%;
-            padding: 13px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            transition: all 0.2s ease-in-out;
-        }
-        .botao-menu:hover {
-            transform: translateY(-1px);
-            filter: brightness(0.95);
-        }
+{% block titulo %}Painel da Aluna{% endblock %}
+{% block nav_painel %}active{% endblock %}
 
-        .btn-ficha { background: #fdf2f8; color: #db2777; }
-        .btn-aulas { background: #ede9fe; color: #6d28d9; }
-        .btn-evolucao { background: #fdf2f8; color: #db2777; }
-        .btn-financeiro { background: #e0f2fe; color: #0284c7; }
+{% block extra_css %}
+<style>
+    .card-ficha {
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid var(--card-border);
+        padding: 28px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
 
-        .botao-sair {
-            display: block;
-            width: 100%;
-            padding: 13px;
-            background: #f3f4f6;
-            color: #4b5563;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            transition: background 0.2s, color 0.2s;
-        }
-        .botao-sair:hover {
-            background: #fee2e2;
-            color: #dc2626;
-        }
+    .card-ficha-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #f1f5f9;
+    }
 
-        .alerta-aviso {
-            background: #fffbeb;
-            border: 1px solid #fef3c7;
-            color: #92400e;
-            padding: 12px 14px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            margin: 16px 0;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <div class="logo">SheFit</div>
-        <div class="badge">Aluna</div>
-        <h2 class="saudacao">Olá, {{ request.user.username }}!</h2>
-        <p class="descricao">Bem-vinda ao seu espaço de treinos e evolução na SheFit.</p>
+    .ficha-header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
 
-        {% if aluno and not aluno.apto_para_treino %}
-            <div class="alerta-aviso">
+    .ficha-icon-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #ede9fe;
+        color: #7c3aed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .card-ficha-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        letter-spacing: -0.3px;
+    }
+
+    .ficha-meta-revisao {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+
+    .ficha-meta-revisao strong {
+        color: #6d28d9;
+    }
+
+    .btn-abrir-ficha {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--btn-gradient);
+        color: #ffffff;
+        padding: 10px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.92rem;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+        transition: all 0.2s ease;
+    }
+
+    .btn-abrir-ficha:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(124, 58, 237, 0.3);
+        filter: brightness(1.05);
+    }
+
+    .exercicios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .exercicio-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .exercicio-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .exercicio-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .exercicio-badge {
+        background: #ede9fe;
+        color: #6d28d9;
+        font-weight: 700;
+        font-size: 0.75rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+
+    .exercicio-nome {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .exercicio-info-row {
+        font-size: 0.88rem;
+        color: #475569;
+        line-height: 1.4;
+    }
+
+    .exercicio-info-row strong {
+        color: #1e293b;
+    }
+
+    .exercicio-observacoes {
+        font-size: 0.82rem;
+        color: #64748b;
+        background: #ffffff;
+        border: 1px solid #f1f5f9;
+        padding: 8px 12px;
+        border-radius: 8px;
+    }
+
+    .empty-exercicios {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        padding: 16px 0;
+        text-align: center;
+    }
+
+    .sem-ficha-container {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 24px;
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-radius: 14px;
+        color: #92400e;
+    }
+
+    .sem-ficha-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: #fef3c7;
+        color: #d97706;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .sem-ficha-texto {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+    <!-- Saudação da Aluna com nome completo e fallback -->
+    <div class="page-header" style="margin-bottom: 24px;">
+        <div>
+            <h1>Olá, {{ aluno.nome|default:request.user.perfil.aluno.nome|default:request.user.get_full_name|default:request.user.username }}!</h1>
+            <p>Bem-vinda ao seu espaço de treinos e evolução na SheFit.</p>
+        </div>
+    </div>
+
+    {% if aluno and not aluno.apto_para_treino %}
+        <div class="alerta-aviso" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <div style="color: #d97706; display: flex; align-items: center; flex-shrink: 0;">
+                <i data-lucide="alert-triangle" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
                 <strong>Aviso de Matrícula:</strong> Sua matrícula está pendente de anamnese médica. Por favor, procure a recepção para regularizar seu cadastro.
             </div>
-        {% endif %}
+        </div>
+    {% endif %}
 
-        <section style="text-align: left; margin: 20px 0;">
-            <h3 style="color: #6d28d9; margin-bottom: 10px;">Minha ficha de treino</h3>
+    <!-- Seção Minha Ficha de Treino em Card com border-radius: 20px -->
+    <section class="card-ficha">
+        <div class="card-ficha-header">
+            <div class="ficha-header-left">
+                <div class="ficha-icon-box">
+                    <i data-lucide="clipboard-list" style="width: 22px; height: 22px;"></i>
+                </div>
+                <div>
+                    <h2 class="card-ficha-title">Minha ficha de treino</h2>
+                    {% if ficha_ativa %}
+                        <p class="ficha-meta-revisao">Revisão prevista para <strong>{{ ficha_ativa.data_revisao|date:"d/m/Y" }}</strong></p>
+                    {% endif %}
+                </div>
+            </div>
             {% if ficha_ativa %}
-                <p>Revisão prevista para {{ ficha_ativa.data_revisao|date:"d/m/Y" }}</p>
+                <a href="{% url 'ficha_ativa_aluno' %}" class="btn-abrir-ficha botao-menu btn-ficha">
+                    <i data-lucide="external-link" style="width: 16px; height: 16px;"></i>
+                    <span>Abrir ficha</span>
+                </a>
+            {% endif %}
+        </div>
+
+        {% if ficha_ativa %}
+            <div class="exercicios-grid">
                 {% for exercicio in ficha_ativa.exercicios.all %}
-                    <div style="border-top: 1px solid #e5e7eb; padding: 10px 0;">
-                        <strong>{{ exercicio.nome }}</strong>
-                        <p>Séries: {{ exercicio.series|default_if_none:"Não informado" }} · Repetições: {{ exercicio.repeticoes|default_if_none:"Não informado" }}</p>
-                        <p>Carga sugerida: {{ exercicio.carga_sugerida|default_if_none:"Não informada" }}</p>
-                        <p>Observações: {{ exercicio.observacoes|default:"Nenhuma" }}</p>
+                    <div class="exercicio-card">
+                        <div class="exercicio-header">
+                            <span class="exercicio-badge">#{{ forloop.counter }}</span>
+                            <strong class="exercicio-nome">{{ exercicio.nome }}</strong>
+                        </div>
+                        <div class="exercicio-info-row">
+                            <p>Séries: <strong>{{ exercicio.series|default_if_none:"Não informado" }}</strong> · Repetições: <strong>{{ exercicio.repeticoes|default_if_none:"Não informado" }}</strong></p>
+                        </div>
+                        <div class="exercicio-info-row">
+                            <p>Carga sugerida: <strong>{{ exercicio.carga_sugerida|default_if_none:"Não informada" }}</strong></p>
+                        </div>
+                        <div class="exercicio-observacoes">
+                            <p>Observações: <strong>{{ exercicio.observacoes|default:"Nenhuma" }}</strong></p>
+                        </div>
                     </div>
                 {% empty %}
-                    <p>Sua ficha ainda não possui exercícios.</p>
+                    <p class="empty-exercicios">Sua ficha ainda não possui exercícios.</p>
                 {% endfor %}
-                <a href="{% url 'ficha_ativa_aluno' %}" class="botao-menu btn-ficha" style="margin-top: 10px;">Abrir ficha</a>
-            {% else %}
-                <div class="alerta-aviso">Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais informações.</div>
-            {% endif %}
-        </section>
-
-        <a href="{% url 'minhas_aulas' %}" class="botao-menu btn-aulas" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Minhas aulas</a>
-        <a href="{% url 'minha_evolucao' %}" class="botao-menu btn-evolucao" style="background: #fdf2f8; color: #db2777; margin-bottom: 10px;">Minha evolução</a>
-        <a href="{% url 'minha_situacao_financeira' %}" class="botao-menu btn-financeiro" style="margin-bottom: 10px;">Minha Situação Financeira</a>
-        <a href="{% url 'numeros_da_academia' %}" class="botao-menu" style="background: #ede9fe; color: #6d28d9; margin-bottom: 10px;">Meus resultados</a>
-        <a href="{% url 'sair' %}" class="botao-sair">Sair da conta</a>
-
-    </div>
-</body>
-</html>
+            </div>
+        {% else %}
+            <div class="sem-ficha-container alerta-aviso" style="margin-bottom: 0;">
+                <div class="sem-ficha-icon">
+                    <i data-lucide="clipboard-x" style="width: 22px; height: 22px;"></i>
+                </div>
+                <div class="sem-ficha-texto">
+                    Você ainda não possui uma ficha de treino ativa. Procure seu professor para mais informações.
+                </div>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -36,25 +36,98 @@ def _normalizar(texto):
 
 
 def modalidade_esta_no_plano(modalidade, plano):
-    """`Plano.modalidades_incluidas` é texto livre ("Musculação, Dança, Pilates").
+    """Verifica se a modalidade está incluída no plano da aluna.
 
-    Compara sem diferenciar acento nem maiúscula e exige a palavra inteira,
-    então "Yoga" é achada em "musculacao; YOGA e dança", e "Dança" não é
-    achada em "Dançarino". Limitação: "Yoga" também é achada em "Hot Yoga".
-    O ideal, no futuro, é trocar o texto por uma relação com Modalidade.
+    Suporta:
+    1. Relação ManyToMany com Modalidade no modelo Plano (se houver).
+    2. Campo texto modalidades_incluidas:
+       - Expressões abrangentes como 'Todas as modalidades', 'Todas', 'Acesso total', 'Livre'.
+       - Correspondência exata da modalidade inteira como palavra no texto.
+       - Correspondência flexível por palavras-chave / nomes parciais (ex.: 'Dança' em
+         'Ritmos & Dança', 'Pilates' em 'Pilates Solo', ou 'Ritmos & Dança' para 'Dança').
     """
-    nome = _normalizar(modalidade.nome)
-    if not nome:
+    if not modalidade or not plano:
         return False
-    texto = _normalizar(plano.modalidades_incluidas)
-    return re.search(rf'(?<![a-z0-9]){re.escape(nome)}(?![a-z0-9])', texto) is not None
+
+    # 1. Relação ManyToMany com Modalidade se houver no modelo Plano
+    if hasattr(plano, 'modalidades'):
+        try:
+            m2m = getattr(plano, 'modalidades')
+            if hasattr(m2m, 'filter'):
+                pk = getattr(modalidade, 'pk', None)
+                if pk and m2m.filter(pk=pk).exists():
+                    return True
+        except Exception:
+            pass
+
+    try:
+        for field in getattr(plano._meta, 'many_to_many', []):
+            if getattr(field, 'related_model', None) and field.related_model.__name__ == 'Modalidade':
+                m2m_field = getattr(plano, field.name, None)
+                pk = getattr(modalidade, 'pk', None)
+                if m2m_field and pk and m2m_field.filter(pk=pk).exists():
+                    return True
+    except Exception:
+        pass
+
+    # 2. Campo texto modalidades_incluidas
+    texto_raw = getattr(plano, 'modalidades_incluidas', '') or ''
+    nome_raw = getattr(modalidade, 'nome', '') or ''
+    texto = _normalizar(texto_raw)
+    nome = _normalizar(nome_raw)
+
+    if not nome or not texto:
+        return False
+
+    # 2.1. Textos abrangentes como "Todas as modalidades", "Todas", "Acesso total", etc.
+    padroes_todas = [
+        r'\btodas?\s+(as?\s+)?modalidades?\b',
+        r'\btodas?\s+(as?\s+)?aulas?\b',
+        r'\bacesso\s+total\b',
+        r'\blivre\b',
+        r'^todas?$',
+    ]
+    if any(re.search(p, texto) for p in padroes_todas):
+        return True
+
+    # 2.2. Modalidade inteira contida como palavra no texto do plano
+    if re.search(rf'(?<![a-z0-9]){re.escape(nome)}(?![a-z0-9])', texto):
+        return True
+
+    # 2.3. Cruzamento flexível por itens / nomes parciais
+    entradas = [e.strip() for e in re.split(r'[,;/\n+]|\s+e\s+', texto) if e.strip()]
+    for entrada in entradas:
+        if not entrada:
+            continue
+        # Igualdade direta
+        if entrada == nome:
+            return True
+        # Entrada do plano contida como palavra inteira no nome da modalidade
+        # Ex: "danca" contida em "ritmos & danca", "pilates" em "pilates solo"
+        if len(entrada) >= 3 and re.search(rf'(?<![a-z0-9]){re.escape(entrada)}(?![a-z0-9])', nome):
+            return True
+        # Nome da modalidade contido como palavra inteira na entrada do plano
+        # Ex: "danca" contida em "aulas de danca"
+        if len(nome) >= 3 and re.search(rf'(?<![a-z0-9]){re.escape(nome)}(?![a-z0-9])', entrada):
+            return True
+
+    return False
 
 
 
 def matricula_do_aluno(aluno):
-    """A matrícula mais recente, a mesma escolha que a recepção (T09) faz."""
-    return (Matricula.objects.select_related('plano')
-            .filter(aluno=aluno).order_by('-data_inicio', '-id').first())
+    """Considera o plano da matrícula mais recente/ativa da aluna."""
+    if aluno is None:
+        return None
+    matriculas = list(
+        Matricula.objects.select_related('plano')
+        .filter(aluno=aluno)
+        .order_by('-data_inicio', '-id')
+    )
+    for m in matriculas:
+        if m.situacao in SITUACOES_QUE_PODEM_AGENDAR:
+            return m
+    return matriculas[0] if matriculas else None
 
 
 def verificar_matricula(aluno):

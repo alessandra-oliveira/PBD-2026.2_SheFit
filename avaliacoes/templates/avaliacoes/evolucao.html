@@ -10,8 +10,8 @@
             {% endif %}
             {% if eh_professor %}
                 <a class="botao primario" href="{% url 'registrar_avaliacao' aluno.pk %}">Nova avaliação</a>
+                <a class="botao secundario" href="{{ url_voltar }}">Voltar</a>
             {% endif %}
-            <a class="botao secundario" href="{{ url_voltar }}">Voltar</a>
         </div>
     </div>
     <p class="discreto">

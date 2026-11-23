@@ -1,55 +1,91 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>Minha evolução - SheFit</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 28px 16px; min-height: 100vh; font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #1f2937; }
-        main { max-width: 760px; margin: auto; }
-        .card { background: #fff; border-radius: 16px; padding: 28px; margin-bottom: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
-        h1, h2 { color: #6d28d9; }
-        h2 { font-size: 1.1rem; margin: 0 0 8px; }
-        .resumo { color: #4b5563; font-size: .92rem; margin: 0 0 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: .92rem; }
-        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
-        th { color: #6d28d9; font-size: .8rem; }
-        .sobe { color: #166534; font-weight: 600; }
-        .desce { color: #991b1b; font-weight: 600; }
-        .botao { display: inline-block; border-radius: 8px; padding: 11px 15px; background: #f3f4f6; color: #374151; text-decoration: none; }
-        .aviso { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; }
-    </style>
-</head>
-<body>
-<main>
+{% extends "accounts/base_aluno.html" %}
+
+{% block titulo %}Minha Evolução de Carga{% endblock %}
+{% block nav_ficha %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exercicio-bloco {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .exercicio-bloco:first-of-type {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .exercicio-bloco h2 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+
+    .resumo {
+        color: #4b5563;
+        font-size: 0.92rem;
+        margin-bottom: 14px;
+    }
+
+    .sobe {
+        color: #166534;
+        font-weight: 700;
+    }
+
+    .desce {
+        color: #991b1b;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+    <div class="page-header" style="margin-bottom: 24px;">
+        <div>
+            <h1>Minha evolução de carga</h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">Acompanhe o aumento de carga nos seus exercícios com o passar dos treinos.</p>
+        </div>
+    </div>
+
+    <!-- Card: Evolução de Carga (border-radius: 20px) -->
     <section class="card">
-        <h1>Minha evolução de carga</h1>
         {% for ex in exercicios %}
-            <div style="margin-top: 22px;">
+            <div class="exercicio-bloco">
                 <h2>{{ ex.nome }}</h2>
                 <p class="resumo">
-                    Começou com {{ ex.inicial|floatformat:2 }} kg e está em {{ ex.atual|floatformat:2 }} kg
-                    {% if ex.variacao > 0 %}<span class="sobe">(+{{ ex.variacao|floatformat:2 }} kg)</span>
-                    {% elif ex.variacao < 0 %}<span class="desce">({{ ex.variacao|floatformat:2 }} kg)</span>{% endif %}
+                    Começou com <strong>{{ ex.inicial|floatformat:2 }} kg</strong> e está em <strong>{{ ex.atual|floatformat:2 }} kg</strong>
+                    {% if ex.variacao > 0 %}
+                        <span class="sobe">(+{{ ex.variacao|floatformat:2 }} kg)</span>
+                    {% elif ex.variacao < 0 %}
+                        <span class="desce">({{ ex.variacao|floatformat:2 }} kg)</span>
+                    {% endif %}
                 </p>
-                <table>
-                    <thead><tr><th>Data</th><th>Carga usada</th></tr></thead>
-                    <tbody>
-                        {% for data, carga in ex.pontos %}
-                            <tr><td>{{ data|date:"d/m/Y" }}</td><td>{{ carga|floatformat:2 }} kg</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="rolagem">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th style="text-align: right;">Carga usada</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data, carga in ex.pontos %}
+                                <tr>
+                                    <td>{{ data|date:"d/m/Y" }}</td>
+                                    <td style="text-align: right; font-weight: 700;">{{ carga|floatformat:2 }} kg</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         {% empty %}
-            <p class="aviso">Você ainda não registrou nenhum treino com carga. Registre na sua ficha para acompanhar a evolução.</p>
+            <p class="alerta-aviso aviso" style="margin-bottom: 0;">
+                Você ainda não registrou nenhum treino com carga. Registre na sua ficha para acompanhar a evolução.
+            </p>
         {% endfor %}
     </section>
-    <a class="botao" href="{% url 'ficha_ativa_aluno' %}">Voltar à ficha</a>
-</main>
-</body>
-</html>
+{% endblock %}
