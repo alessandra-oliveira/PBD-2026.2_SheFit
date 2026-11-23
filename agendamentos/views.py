@@ -74,6 +74,9 @@ def minhas_aulas(request):
         'impedimento': impedimento,
         'disponiveis': disponiveis,
         'minhas_reservas': minhas_reservas,
+        'total_reservadas': total_reservadas,
+        'total_na_fila': len(minhas_reservas) - total_reservadas,
+
     })
 
 
