@@ -104,6 +104,38 @@ class ModalidadeNoPlanoTests(SimpleTestCase):
         self.assertFalse(self.esta('', 'Yoga'))
         self.assertFalse(self.esta('Yoga', ''))
 
+    def test_todas_as_modalidades(self):
+        for nome in ('Yoga', 'Natação', 'Pilates Solo', 'Ritmos & Dança'):
+            self.assertTrue(self.esta(nome, 'Todas as modalidades'), nome)
+            self.assertTrue(self.esta(nome, 'Todas modalidades'), nome)
+            self.assertTrue(self.esta(nome, 'Todas'), nome)
+
+    def test_cruzamento_flexivel_nomes_parciais(self):
+        texto = 'Musculação, Dança, Pilates'
+        self.assertTrue(self.esta('Ritmos & Dança', texto))
+        self.assertTrue(self.esta('Pilates Solo', texto))
+        self.assertFalse(self.esta('Natação', texto))
+        self.assertFalse(self.esta('Dançarino', texto))
+        self.assertFalse(self.esta('Spinning', texto))
+
+    def test_relacao_many_to_many(self):
+        class MockM2M:
+            def filter(self, pk=None):
+                class MockQuerySet:
+                    def exists(self):
+                        return pk == 42
+                return MockQuerySet()
+
+        class MockPlano:
+            modalidades_incluidas = ''
+            modalidades = MockM2M()
+            _meta = type('Meta', (), {'many_to_many': []})()
+
+        mod_incluida = Modalidade(pk=42, nome='Boxe')
+        mod_excluida = Modalidade(pk=99, nome='Judo')
+        self.assertTrue(modalidade_esta_no_plano(mod_incluida, MockPlano()))
+        self.assertFalse(modalidade_esta_no_plano(mod_excluida, MockPlano()))
+
 
 
 class AgendarEListaDeEsperaTests(Fabrica, TestCase):
@@ -374,6 +406,15 @@ class TelasDoAlunoTests(Fabrica, TestCase):
         self.assertContains(resposta, 'Yoga')
         self.assertNotContains(resposta, 'Natação')
         self.assertContains(resposta, '1 de 1')
+
+    def test_cruzamento_flexivel_na_tela_do_aluno(self):
+        ritmos = Modalidade.objects.create(nome='Ritmos & Dança')
+        self.nova_turma(modalidade=ritmos, capacidade=5)
+        self.plano.modalidades_incluidas = 'Musculação, Dança'
+        self.plano.save()
+        resposta = self.client.get('/agendamentos/')
+        self.assertContains(resposta, 'Ritmos &amp; Dança')
+        self.assertContains(resposta, '5 de 5')
 
     def test_reservar_pela_tela(self):
         resposta = self.client.post(f'/agendamentos/turmas/{self.turma.id}/agendar/', follow=True)

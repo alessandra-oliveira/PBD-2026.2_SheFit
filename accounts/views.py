@@ -178,16 +178,39 @@ def painel_aluno(request):
         aluno = Aluno.objects.filter(perfil__usuario=request.user).first()
 
     ficha_ativa = None
+    turmas_plano = []
     if aluno:
         ficha_ativa = (
             FichaTreino.objects.filter(aluno=aluno, ativa=True)
             .prefetch_related('exercicios')
             .first()
         )
+        try:
+            from agendamentos.servicos import matricula_do_aluno, modalidade_esta_no_plano
+            matricula = matricula_do_aluno(aluno)
+            if matricula and getattr(matricula, 'plano', None):
+                turmas = (Turma.objects.filter(ativo=True)
+                          .select_related('modalidade', 'professor')
+                          .annotate(
+                              reservados=Count('agendamentos', filter=Q(agendamentos__status='reservado')),
+                              na_fila=Count('agendamentos', filter=Q(agendamentos__status='espera')),
+                          ))
+                for turma in turmas:
+                    if modalidade_esta_no_plano(turma.modalidade, matricula.plano):
+                        vagas = max(turma.capacidade_maxima - turma.reservados, 0)
+                        turmas_plano.append({
+                            'turma': turma,
+                            'vagas': vagas,
+                            'vagas_restantes': vagas,
+                            'na_fila': turma.na_fila,
+                        })
+        except Exception:
+            pass
 
     return render(request, 'accounts/painel_aluno.html', {
         'aluno': aluno,
         'ficha_ativa': ficha_ativa,
+        'turmas_plano': turmas_plano,
     })
 
 
