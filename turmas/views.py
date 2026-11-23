@@ -14,13 +14,20 @@ from agendamentos.models import Agendamento
 @perfil_requerido('recepcao', 'financeiro', 'professor')
 def listar_turmas(request):
     if request.user.perfil.tipo == 'professor':
-
         turmas = Turma.objects.filter(professor=request.user, ativo=True)
     else:
-
         turmas = Turma.objects.filter(ativo=True)
 
-    return render(request, 'turmas/listar_turmas.html', {'turmas': turmas})
+    modalidades = Modalidade.objects.all()
+    form_turma = TurmaForm()
+    form_modalidade = ModalidadeForm()
+
+    return render(request, 'turmas/listar_turmas.html', {
+        'turmas': turmas,
+        'modalidades': modalidades,
+        'form_turma': form_turma,
+        'form_modalidade': form_modalidade,
+    })
 
 
 @login_required
@@ -85,6 +92,22 @@ def criar_modalidade(request):
         form = ModalidadeForm()
 
     return render(request, 'turmas/form_modalidade.html', {'form': form})
+
+
+@login_required
+@perfil_requerido('recepcao', 'financeiro')
+def editar_modalidade(request, modalidade_id):
+    modalidade = get_object_or_404(Modalidade, id=modalidade_id)
+    if request.method == 'POST':
+        form = ModalidadeForm(request.POST, instance=modalidade)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Modalidade atualizada com sucesso.')
+            return redirect('listar_turmas')
+    else:
+        form = ModalidadeForm(instance=modalidade)
+
+    return render(request, 'turmas/form_modalidade.html', {'form': form, 'modalidade': modalidade})
 
 
 @login_required

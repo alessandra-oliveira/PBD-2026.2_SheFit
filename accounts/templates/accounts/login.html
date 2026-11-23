@@ -1,135 +1,344 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - SheFit</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>Entrar - SheFit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --primary-purple: #7c2ae8;
+            --primary-purple-hover: #6d28d9;
+            --gradient-bg: linear-gradient(90deg, #7c2ae8 0%, #db2777 100%);
+            --card-radius: 20px;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            background: var(--gradient-bg);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 24px;
         }
 
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 40px 32px;
+        .login-wrapper {
             width: 100%;
-            max-width: 380px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .logo {
-            text-align: center;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -1px;
-            color: #7c3aed;
-            margin-bottom: 4px;
+        /* Logo superior branca centralizada */
+        .logo-superior {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            color: #ffffff;
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
         }
 
-        .subtitulo {
+        .logo-superior img {
+            height: 44px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        /* Cartão branco centralizado */
+        .login-card {
+            background: #ffffff;
+            border-radius: var(--card-radius);
+            padding: 40px 36px;
+            width: 100%;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Cabeçalho do cartão */
+        .card-header {
             text-align: center;
-            color: #6b7280;
-            font-size: 14px;
             margin-bottom: 28px;
         }
 
-        .erro {
+        .card-header h1 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #1e1b4b;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .card-header p {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Alerta de erro */
+        .erro-alerta {
             background: #fef2f2;
+            border: 1px solid #fee2e2;
             color: #b91c1c;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 20px;
-            border: 1px solid #fecaca;
-        }
-
-        .campo {
-            margin-bottom: 18px;
-        }
-
-        .campo label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 6px;
-        }
-
-        .campo input {
-            width: 100%;
             padding: 12px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
         }
 
-        .campo input:focus {
-            border-color: #7c3aed;
+        .erro-alerta svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
         }
 
-        .botao-entrar {
+        /* Formulário */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
             width: 100%;
-            padding: 13px;
-            background: #7c3aed;
+            padding: 13px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            background: #ffffff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(124, 42, 232, 0.12);
+        }
+
+        /* Campo de senha com ícone de olho */
+        .campo-senha-container {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .campo-senha-container input {
+            padding-right: 48px;
+        }
+
+        .btn-toggle-senha {
+            position: absolute;
+            right: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.2s;
+        }
+
+        .btn-toggle-senha:hover {
+            color: #64748b;
+        }
+
+        .btn-toggle-senha svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Linha auxiliar: Lembrar de mim e Esqueci minha senha */
+        .linha-auxiliar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+            margin-bottom: 26px;
+            font-size: 0.88rem;
+        }
+
+        .lembrar-mim {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 500;
+        }
+
+        .lembrar-mim input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-purple);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .link-esqueci {
+            color: var(--primary-purple);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .link-esqueci:hover {
+            color: var(--primary-purple-hover);
+            text-decoration: underline;
+        }
+
+        /* Botão principal */
+        .btn-entrar {
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--primary-purple);
             color: #ffffff;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 8px;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(124, 42, 232, 0.25);
         }
 
-        .botao-entrar:hover {
-            background: #6d28d9;
+        .btn-entrar:hover {
+            background: var(--primary-purple-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 42, 232, 0.35);
+        }
+
+        .btn-entrar:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 32px 24px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="card">
-        <div class="logo">SheFit</div>
-        <div class="subtitulo">Entre com sua conta</div>
+    <div class="login-wrapper">
+        <div class="logo-superior">
+            <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit">
+            <span>SheFit</span>
+        </div>
 
-        {% if erro %}
-            <div class="erro">{{ erro }}</div>
-        {% endif %}
-
-        <form method="POST">
-            {% csrf_token %}
-
-            <div class="campo">
-                <label for="username">Usuário</label>
-                <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+        <div class="login-card">
+            <div class="card-header">
+                <h1>Bem-vindo ao SheFit</h1>
+                <p>Sua academia, organizada em um só lugar</p>
             </div>
 
-            <div class="campo">
-                <label for="password">Senha</label>
-                <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
-            </div>
+            {% if erro %}
+                <div class="erro-alerta">
+                    <i data-lucide="alert-circle"></i>
+                    <span>{{ erro }}</span>
+                </div>
+            {% endif %}
 
-            <button type="submit" class="botao-entrar">Entrar</button>
-        </form>
+            {% for message in messages %}
+                <div class="erro-alerta">
+                    <i data-lucide="alert-circle"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" name="username" placeholder="Digite seu usuário" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <div class="campo-senha-container">
+                        <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+                        <button type="button" id="toggle-senha" class="btn-toggle-senha" aria-label="Alternar visualização da senha">
+                            <i data-lucide="eye" id="eye-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="linha-auxiliar">
+                    <label class="lembrar-mim">
+                        <input type="checkbox" name="lembrar_me" id="lembrar_me">
+                        <span>Lembrar de mim</span>
+                    </label>
+                    <a href="#" class="link-esqueci">Esqueci minha senha</a>
+                </div>
+
+                <button type="submit" class="btn-entrar">Entrar</button>
+            </form>
+        </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+            const btnToggle = document.getElementById('toggle-senha');
+            const inputSenha = document.getElementById('password');
+
+            if (btnToggle && inputSenha) {
+                btnToggle.addEventListener('click', function () {
+                    const isPassword = inputSenha.getAttribute('type') === 'password';
+                    inputSenha.setAttribute('type', isPassword ? 'text' : 'password');
+                    this.innerHTML = isPassword
+                        ? '<i data-lucide="eye-off"></i>'
+                        : '<i data-lucide="eye"></i>';
+                    if (window.lucide) {
+                        lucide.createIcons();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
+
 </html>

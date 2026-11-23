@@ -425,3 +425,58 @@ def historico_geral_trancamentos(request):
     return render(request, 'recepcao/historico_geral_trancamentos.html', {
         'itens': itens,
     })
+
+
+@login_required(login_url='entrar')
+@perfil_requerido('financeiro')
+def historico_liberacoes_financeiro(request):
+    """
+    Histórico de liberações excepcionais para o gestor financeiro (apenas auditoria/consulta).
+    """
+    from collections import Counter
+    from datetime import date
+    from recepcao.models import Frequencia
+
+    hoje = timezone.localdate()
+    inicio_param = request.GET.get('inicio')
+    fim_param = request.GET.get('fim')
+
+    inicio = None
+    if inicio_param:
+        try:
+            inicio = date.fromisoformat(inicio_param)
+        except (TypeError, ValueError):
+            inicio = None
+    if not inicio:
+        inicio = hoje.replace(day=1)
+
+    fim = None
+    if fim_param:
+        try:
+            fim = date.fromisoformat(fim_param)
+        except (TypeError, ValueError):
+            fim = None
+    if not fim:
+        fim = hoje
+
+    liberacoes = list(
+        Frequencia.objects.filter(
+            excepcional=True,
+            data_hora__date__gte=inicio,
+            data_hora__date__lte=fim,
+        )
+        .select_related('aluno', 'liberado_por')
+        .order_by('-data_hora')
+    )
+
+    por_atendente = Counter(
+        str(l.liberado_por) if l.liberado_por else '—' for l in liberacoes
+    ).most_common()
+
+    return render(request, 'financeiro/historico_liberacoes.html', {
+        'liberacoes': liberacoes,
+        'por_atendente': por_atendente,
+        'inicio': inicio,
+        'fim': fim,
+    })
+

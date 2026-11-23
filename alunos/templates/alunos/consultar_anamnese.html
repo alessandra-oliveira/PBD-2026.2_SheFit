@@ -16,25 +16,204 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
+        :root {
+            --sidebar-width: 250px;
+            --primary-purple: #9333ea;
+            --primary-pink: #d946ef;
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --bg-color: #f8fafc;
+            --card-border: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
         body {
-            background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
             display: flex;
-            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
             align-items: center;
-            padding: 40px 20px;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active a {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Modal com fundo borrado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
         }
 
         .modal-card {
             background: #ffffff;
-            border-radius: 24px;
+            border-radius: 20px;
             width: 100%;
             max-width: 680px;
-            padding: 36px 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            padding: 34px 38px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFadeIn 0.25s ease-out;
         }
 
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
 
         .modal-header {
             display: flex;
@@ -50,18 +229,13 @@
         }
 
         .brand-icon {
-            width: 36px;
-            height: 36px;
-            color: #a855f7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: #8b3dff;
         }
 
         .brand-text h2 {
             font-size: 1.45rem;
             font-weight: 800;
-            color: #8b5cf6;
+            color: #8b3dff;
             line-height: 1.1;
         }
 
@@ -81,7 +255,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s, color 0.2s;
             text-decoration: none;
         }
 
@@ -89,30 +262,6 @@
             background: #f1f5f9;
             color: #0f172a;
         }
-
-
-        .progress-bar-container {
-            width: 100%;
-            height: 6px;
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-        }
-
-        .progress-step {
-            flex: 1;
-            height: 100%;
-            border-radius: 6px;
-        }
-
-        .progress-step.step-1 {
-            background: #8b5cf6;
-        }
-
-        .progress-step.step-2 {
-            background: linear-gradient(90deg, #ec4899, #d946ef);
-        }
-
 
         .student-pill {
             background: #f5f3ff;
@@ -122,23 +271,22 @@
             text-align: center;
             font-size: 0.95rem;
             font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.92rem;
             margin-bottom: 24px;
         }
 
-        .status-apto {
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .status-liberado {
             background: #dcfce7;
             color: #15803d;
             border: 1px solid #bbf7d0;
@@ -150,53 +298,28 @@
             border: 1px solid #fecaca;
         }
 
-
-        .msg-erro {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-
-        .msg-sucesso {
-            background: #dcfce7;
-            color: #15803d;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 6px;
+            margin-bottom: 18px;
         }
 
-        label.field-title {
-            font-size: 0.92rem;
+        .field-title {
+            font-size: 0.88rem;
             font-weight: 700;
             color: #1e293b;
         }
 
-
         .readonly-box {
-            width: 100%;
-            min-height: 88px;
-            padding: 14px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
             font-size: 0.92rem;
             color: #334155;
-            background: #f8fafc;
             line-height: 1.5;
-            white-space: pre-wrap;
-            user-select: text;
+            min-height: 48px;
         }
 
         .readonly-box.empty {
@@ -204,62 +327,56 @@
             font-style: italic;
         }
 
-
         .term-box {
-            background: #fffbeb;
-            border: 1px solid #fef3c7;
+            background: #faf5ff;
+            border: 1.5px solid #e9d5ff;
             border-radius: 12px;
-            padding: 16px;
+            padding: 14px 16px;
             display: flex;
             align-items: flex-start;
             gap: 12px;
-            margin-top: 24px;
+            margin-top: 10px;
         }
 
         .term-box input[type="checkbox"] {
+            margin-top: 3px;
+            accent-color: #8b3dff;
             width: 18px;
             height: 18px;
-            margin-top: 2px;
-            accent-color: #8b5cf6;
-            cursor: not-allowed;
-            flex-shrink: 0;
-            pointer-events: none;
         }
 
         .term-box label {
             font-size: 0.88rem;
-            color: #92400e;
-            line-height: 1.45;
-            cursor: default;
+            color: #4c1d95;
+            line-height: 1.4;
         }
-
-        .term-box strong {
-            font-weight: 700;
-            color: #78350f;
-        }
-
 
         .modal-footer {
             margin-top: 32px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
         }
 
-        .btn-voltar {
+        .btn-cancelar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             background: #ffffff;
             color: #334155;
-            border: 1px solid #cbd5e1;
-            padding: 11px 28px;
+            border: 1.5px solid #cbd5e1;
+            padding: 11px 24px;
             border-radius: 10px;
             font-size: 0.92rem;
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
-            transition: background 0.2s, border-color 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .btn-voltar:hover {
+        .btn-cancelar:hover {
             background: #f8fafc;
             border-color: #94a3b8;
         }
@@ -267,114 +384,189 @@
         @media (max-width: 640px) {
             .modal-card {
                 padding: 24px 20px;
-                border-radius: 18px;
             }
-
-            .btn-voltar {
+            .modal-footer {
                 width: 100%;
-                text-align: center;
+            }
+            .btn-cancelar {
+                width: 100%;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="modal-card">
 
-        <div class="modal-header">
-            <div class="header-brand">
-                <div class="brand-icon">
-                    <i data-lucide="dumbbell" style="width: 32px; height: 32px;"></i>
-                </div>
-                <div class="brand-text">
-                    <h2>SheFit</h2>
-                    <p>Consulta de Anamnese e Saúde</p>
-                </div>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
             </div>
-            <a href="javascript:history.back()" class="btn-close" title="Voltar">
-                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </div>
+
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_recepcao' %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'gestao_estudantes' %}">
+                    <i data-lucide="users"></i>
+                    <span>Estudantes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_cobrancas_pagamento' %}">
+                    <i data-lucide="credit-card"></i>
+                    <span>Pagamentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'buscar_matricula_cancelamento' %}">
+                    <i data-lucide="file-x"></i>
+                    <span>Gestão de Matrículas</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
             </a>
         </div>
+    </aside>
 
-
-        <div class="progress-bar-container">
-            <div class="progress-step step-1"></div>
-            <div class="progress-step step-2"></div>
-        </div>
-
-
-        <div class="student-pill">
-            Estudante: {{ aluno.nome }}
-        </div>
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="{% if message.tags == 'error' %}msg-erro{% else %}msg-sucesso{% endif %}">
-                    {{ message }}
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ request.user.username|slice:":1"|upper }}
                 </div>
-            {% endfor %}
-        {% endif %}
+                <div class="user-info">
+                    <div class="name">{{ request.user.first_name|default:request.user.username }}</div>
+                    <div class="role">SheFit</div>
+                </div>
+            </div>
+        </header>
 
-        {% if anamnese %}
+        <div class="page-header">
+            <div>
+                <h1>Gestão de Estudantes</h1>
+                <p>Consulta detalhada da ficha de anamnese.</p>
+            </div>
+        </div>
+    </main>
 
-            {% if anamnese.autorizacao_atividade_fisica %}
-                <div class="status-badge status-apto">
-                    <i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i>
-                    Apto para Atividade Física
+    <!-- Modal Consulta de Anamnese com Fundo Borrado -->
+    <div id="modalOverlayConsulta" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="header-brand">
+                    <div class="brand-icon">
+                        <i data-lucide="file-text" style="width: 32px; height: 32px;"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>SheFit</h2>
+                        <p>Ficha de Anamnese e Saúde</p>
+                    </div>
+                </div>
+                <a href="javascript:history.back()" class="btn-close" title="Fechar">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </a>
+            </div>
+
+            <div class="student-pill">
+                Estudante: <strong>{{ aluno.nome }}</strong> (CPF: {{ aluno.cpf }})
+            </div>
+
+            {% if anamnese %}
+                {% if anamnese.autorizacao_atividade_fisica %}
+                    <div class="status-badge status-liberado">
+                        <i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i>
+                        Atestado / Autorização física confirmada
+                    </div>
+                {% else %}
+                    <div class="status-badge status-bloqueado">
+                        <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                        Pendente de autorização para atividades físicas
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="field-title">Restrições médicas</label>
+                    <div class="readonly-box {% if not anamnese.restricoes_medicas %}empty{% endif %}">
+                        {{ anamnese.restricoes_medicas|default:"Não possui"|linebreaksbr }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-title">Histórico de lesões</label>
+                    <div class="readonly-box {% if not anamnese.historico_lesoes %}empty{% endif %}">
+                        {{ anamnese.historico_lesoes|default:"Nenhuma lesão informada"|linebreaksbr }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-title">Condições crônicas</label>
+                    <div class="readonly-box {% if not anamnese.condicoes_cronicas %}empty{% endif %}">
+                        {{ anamnese.condicoes_cronicas|default:"Nenhuma condição informada"|linebreaksbr }}
+                    </div>
+                </div>
+
+                <div class="term-box">
+                    <input type="checkbox" disabled {% if anamnese.autorizacao_atividade_fisica %}checked{% endif %}>
+                    <label>
+                        <strong>Termo de autorização:</strong> o estudante declara estar apto para a prática de atividades físicas sob orientação profissional.
+                    </label>
                 </div>
             {% else %}
                 <div class="status-badge status-bloqueado">
-                    <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
-                    Não Autorizado / Pendente de Avaliação
+                    <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i>
+                    Ficha de anamnese não cadastrada para esta estudante.
                 </div>
             {% endif %}
 
-
-            <div class="form-group">
-                <label class="field-title">Restrições médicas</label>
-                <div class="readonly-box {% if not anamnese.restricoes_medicas %}empty{% endif %}">
-                    {{ anamnese.restricoes_medicas|default:"Não possui"|linebreaksbr }}
-                </div>
+            <div class="modal-footer">
+                <a href="javascript:history.back()" class="btn-cancelar">Cancelar</a>
             </div>
-
-
-            <div class="form-group">
-                <label class="field-title">Histórico de lesões</label>
-                <div class="readonly-box {% if not anamnese.historico_lesoes %}empty{% endif %}">
-                    {{ anamnese.historico_lesoes|default:"Nenhuma lesão informada"|linebreaksbr }}
-                </div>
-            </div>
-
-
-            <div class="form-group">
-                <label class="field-title">Condições crônicas</label>
-                <div class="readonly-box {% if not anamnese.condicoes_cronicas %}empty{% endif %}">
-                    {{ anamnese.condicoes_cronicas|default:"Nenhuma condição informada"|linebreaksbr }}
-                </div>
-            </div>
-
-
-            <div class="term-box">
-                <input type="checkbox" disabled {% if anamnese.autorizacao_atividade_fisica %}checked{% endif %}>
-                <label>
-                    <strong>Termo de autorização:</strong> o estudante declara estar apto para a prática de atividades físicas sob orientação profissional.
-                </label>
-            </div>
-        {% else %}
-            <div class="status-badge status-bloqueado">
-                <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i>
-                Ficha de anamnese não cadastrada para esta estudante.
-            </div>
-        {% endif %}
-
-
-        <div class="modal-footer">
-            <a href="javascript:history.back()" class="btn-voltar">Voltar</a>
         </div>
     </div>
 
     <script>
         lucide.createIcons();
+
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+
+        document.getElementById('modalOverlayConsulta').addEventListener('click', function (e) {
+            if (e.target === this) {
+                window.history.back();
+            }
+        });
+
+        window.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                window.history.back();
+            }
+        });
     </script>
 </body>
 

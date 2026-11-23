@@ -1,0 +1,576 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Liberações - SheFit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-gradient: linear-gradient(180deg, #7c2ae8 0%, #d63384 100%);
+            --btn-gradient: linear-gradient(135deg, #7c2ae8 0%, #d63384 100%);
+            --primary-purple: #7c2ae8;
+            --primary-pink: #d63384;
+            --bg-color: #f8f7fc;
+            --card-bg: #ffffff;
+            --card-radius: 16px;
+            --card-shadow: 0 4px 20px rgba(124, 42, 232, 0.05);
+            --border-light: #f1f0f7;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --danger: #be123c;
+            --danger-bg: #fff1f2;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 36px;
+            padding: 0 10px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, .88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: .95rem;
+            transition: all .2s ease;
+        }
+
+        .nav-item.active a {
+            background: #fff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .1);
+            font-weight: 700;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, .16);
+            color: #fff;
+        }
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #e11d48;
+            background: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: .95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+        }
+
+        .btn-sidebar-sair svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .portal-label {
+            text-align: center;
+            font-size: .75rem;
+            color: rgba(255, 255, 255, .75);
+            font-weight: 500;
+        }
+
+        /* Conteúdo Principal */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-width: 0;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: .95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: #fff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: .95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: .8rem;
+            color: var(--text-muted);
+        }
+
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: .95rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+        }
+
+        /* Filtro */
+        .filtro-form {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filtro-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filtro-grupo label {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .filtro-grupo input[type="date"] {
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: .92rem;
+            color: #334155;
+            background: #fff;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .filtro-grupo input[type="date"]:focus {
+            border-color: var(--primary-purple);
+        }
+
+        .btn-filtrar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 0;
+            background: var(--btn-gradient);
+            color: #fff;
+            font-weight: 700;
+            font-size: .92rem;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+
+        .btn-filtrar:hover {
+            opacity: .95;
+        }
+
+        .btn-limpar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #475569;
+            font-weight: 600;
+            font-size: .92rem;
+            text-decoration: none;
+            transition: background .2s;
+        }
+
+        .btn-limpar:hover {
+            background: #f1f5f9;
+        }
+
+        /* Resumo Atendentes */
+        .resumo-atendentes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .atendente-badge {
+            background: #faf5ff;
+            border: 1px solid #e9d5ff;
+            color: #581c87;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: .88rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .atendente-badge strong {
+            background: var(--btn-gradient);
+            color: white;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: .78rem;
+        }
+
+        /* Tabela */
+        .tabela-container {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+
+        th {
+            text-align: left;
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--text-muted);
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 14px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #faf9fd;
+        }
+
+        .tag-aluna {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .tag-motivo {
+            color: #475569;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: .85rem;
+            display: inline-block;
+        }
+
+        .tag-atendente {
+            font-weight: 600;
+            color: #6d28d9;
+        }
+
+        .vazio {
+            padding: 32px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: .95rem;
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 18px 16px 48px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_financeiro' %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_planos' %}">
+                        <i data-lucide="layers"></i>
+                        <span>Planos & Modalidades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'regras_financeiras' %}">
+                        <i data-lucide="sliders"></i>
+                        <span>Regras Financeiras</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'relatorios_retencao' %}">
+                        <i data-lucide="bar-chart-3"></i>
+                        <span>Relatórios</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'relatorios_financeiros' %}">
+                        <i data-lucide="file-chart-column"></i>
+                        <span>Relatórios Financeiros</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'historico_liberacoes_financeiro' %}">
+                        <i data-lucide="clipboard-list"></i>
+                        <span>Liberações</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">Hoje</div>
+            <div class="user-profile">
+                <div class="avatar">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="role">Financeiro</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <h1>Liberações Excepcionais</h1>
+            <p>Auditoria de acessos liberados manualmente na portaria com registro de justificativa e atendente responsável.</p>
+        </div>
+
+        <section class="card">
+            <form method="get" class="filtro-form">
+                <div class="filtro-grupo">
+                    <label for="id_inicio">Data Inicial</label>
+                    <input type="date" id="id_inicio" name="inicio" value="{{ inicio|date:'Y-m-d' }}">
+                </div>
+                <div class="filtro-grupo">
+                    <label for="id_fim">Data Final</label>
+                    <input type="date" id="id_fim" name="fim" value="{{ fim|date:'Y-m-d' }}">
+                </div>
+                <button type="submit" class="btn-filtrar">
+                    <i data-lucide="filter" style="width: 16px; height: 16px;"></i>
+                    Filtrar
+                </button>
+                <a href="{% url 'historico_liberacoes_financeiro' %}" class="btn-limpar">
+                    <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+                    Mês Atual
+                </a>
+            </form>
+
+            {% if por_atendente %}
+                <div style="margin-top: 20px;">
+                    <span style="font-size: .8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em;">
+                        Liberações por Atendente
+                    </span>
+                    <div class="resumo-atendentes">
+                        {% for atendente, total in por_atendente %}
+                            <div class="atendente-badge">
+                                <span>{{ atendente }}</span>
+                                <strong>{{ total }}</strong>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="card">
+            <h2 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 16px;">
+                Registros de Liberações
+                <span style="font-size: .9rem; font-weight: 600; color: var(--text-muted); margin-left: 8px;">
+                    ({{ liberacoes|length }} registro{{ liberacoes|length|pluralize:"s" }})
+                </span>
+            </h2>
+
+            {% if liberacoes %}
+                <div class="tabela-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data / Hora</th>
+                                <th>Aluna</th>
+                                <th>Liberado por</th>
+                                <th>Justificativa / Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for l in liberacoes %}
+                                <tr>
+                                    <td style="white-space: nowrap; font-weight: 500;">
+                                        {{ l.data_hora|date:"d/m/Y H:i" }}
+                                    </td>
+                                    <td class="tag-aluna">
+                                        {{ l.aluno.nome }}
+                                    </td>
+                                    <td class="tag-atendente">
+                                        {{ l.liberado_por.get_full_name|default:l.liberado_por.username|default:"—" }}
+                                    </td>
+                                    <td>
+                                        <span class="tag-motivo">{{ l.motivo_excepcional|default:"Sem justificativa informada" }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="vazio">
+                    <i data-lucide="clipboard-check" style="width: 36px; height: 36px; color: #cbd5e1; margin-bottom: 8px;"></i>
+                    <p>Nenhuma liberação excepcional registrada no período selecionado.</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+    </script>
+</body>
+
+</html>

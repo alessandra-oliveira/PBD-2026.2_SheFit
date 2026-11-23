@@ -1,91 +1,692 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Relatórios financeiros - SheFit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios Financeiros - SheFit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #f8fafc; color: #1e293b; font-family: Arial, sans-serif; }
-        header { padding: 18px 24px; color: white; background: linear-gradient(135deg, #7c3aed, #ec4899); }
-        main { max-width: 1200px; margin: 32px auto; padding: 0 18px; }
-        .card { margin-bottom: 18px; padding: 22px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #0f172a0d; }
-        h1, h2 { margin-top: 0; }
-        form { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
-        label { display: block; margin-bottom: 5px; font-weight: 700; }
-        input { padding: 9px; border: 1px solid #cbd5e1; border-radius: 7px; }
-        button, .button { padding: 10px 14px; color: white; background: #7c3aed; border: 0; border-radius: 8px; font-weight: 700; text-decoration: none; cursor: pointer; }
-        .secondary { background: #475569; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .faixa { padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9px; }
-        .valor { font-size: 1.3rem; font-weight: 700; }
-        table { width: 100%; margin-top: 14px; border-collapse: collapse; }
-        th, td { padding: 9px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-        th { color: #64748b; font-size: .85rem; }
-        .error { color: #b91c1c; }
-        @media (max-width: 800px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-gradient: linear-gradient(180deg, #7c2ae8 0%, #d63384 100%);
+            --btn-gradient: linear-gradient(135deg, #7c2ae8 0%, #d63384 100%);
+            --primary-purple: #7c2ae8;
+            --primary-pink: #d63384;
+            --bg-color: #f8f7fc;
+            --card-bg: #ffffff;
+            --card-radius: 16px;
+            --card-shadow: 0 4px 20px rgba(124, 42, 232, 0.05);
+            --border-light: #f1f0f7;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --danger: #be123c;
+            --danger-bg: #fff1f2;
+            --success: #166534;
+            --success-bg: #dcfce7;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-gradient);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 36px;
+            padding: 0 10px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, .88);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: .95rem;
+            transition: all .2s ease;
+        }
+
+        .nav-item.active a {
+            background: #fff;
+            color: var(--primary-purple);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .1);
+            font-weight: 700;
+        }
+
+        .nav-item a:hover:not(.active) {
+            background: rgba(255, 255, 255, .16);
+            color: #fff;
+        }
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 4px;
+        }
+
+        .btn-sidebar-sair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #e11d48;
+            background: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: .95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+        }
+
+        .btn-sidebar-sair svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .portal-label {
+            text-align: center;
+            font-size: .75rem;
+            color: rgba(255, 255, 255, .75);
+            font-weight: 500;
+        }
+
+        /* Conteúdo Principal */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-width: 0;
+            padding: 24px 36px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .date-display {
+            color: #475569;
+            font-size: .95rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            color: #fff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-size: .95rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-info .role {
+            font-size: .8rem;
+            color: var(--text-muted);
+        }
+
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: .95rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-light);
+        }
+
+        /* Filtro */
+        .filtro-form {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filtro-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filtro-grupo label {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .filtro-grupo input {
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: .92rem;
+            color: #334155;
+            background: #fff;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .filtro-grupo input:focus {
+            border-color: var(--primary-purple);
+        }
+
+        .btn-filtrar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 0;
+            background: var(--btn-gradient);
+            color: #fff;
+            font-weight: 700;
+            font-size: .92rem;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+
+        .btn-filtrar:hover {
+            opacity: .95;
+        }
+
+        .btn-exportar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+            font-weight: 700;
+            font-size: .92rem;
+            text-decoration: none;
+            transition: background .2s, border-color .2s;
+        }
+
+        .btn-exportar:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .error {
+            color: var(--danger);
+            font-size: .88rem;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        /* KPI Grid para Inadimplência */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 18px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: #faf9fd;
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--btn-gradient);
+        }
+
+        .kpi-title {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        .kpi-valor {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -.5px;
+            color: var(--text-dark);
+        }
+
+        .kpi-sub {
+            font-size: .85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Tabela */
+        .secao-titulo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: var(--text-dark);
+        }
+
+        .secao-desc {
+            font-size: .9rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .tabela-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+
+        th {
+            text-align: left;
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--text-muted);
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 14px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #faf9fd;
+        }
+
+        .tag-aluna {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .tag-dias {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: .82rem;
+        }
+
+        .badge-positivo {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .badge-negativo {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .receita-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+            margin-bottom: 20px;
+        }
+
+        .receita-kpi {
+            background: #faf9fd;
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .receita-kpi.realizada {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        @media (max-width: 1100px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .receita-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 18px 16px 48px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <header><h1>SheFit · Relatórios Financeiros</h1></header>
-    <main>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'painel_financeiro' %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_planos' %}">
+                        <i data-lucide="layers"></i>
+                        <span>Planos & Modalidades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'regras_financeiras' %}">
+                        <i data-lucide="sliders"></i>
+                        <span>Regras Financeiras</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'relatorios_retencao' %}">
+                        <i data-lucide="bar-chart-3"></i>
+                        <span>Relatórios</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{% url 'relatorios_financeiros' %}">
+                        <i data-lucide="file-chart-column"></i>
+                        <span>Relatórios Financeiros</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'historico_liberacoes_financeiro' %}">
+                        <i data-lucide="clipboard-list"></i>
+                        <span>Liberações</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">Hoje</div>
+            <div class="user-profile">
+                <div class="avatar">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="role">Financeiro</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <h1>Relatórios Financeiros</h1>
+            <p>Acompanhamento de inadimplência por faixas de atraso e conciliação de receita prevista contra realizada.</p>
+        </div>
+
         <section class="card">
-            <h1>Relatórios financeiros</h1>
-            <form method="get">
-                <div><label for="{{ form.inicio.id_for_label }}">Data inicial</label>{{ form.inicio }}</div>
-                <div><label for="{{ form.fim.id_for_label }}">Data final</label>{{ form.fim }}</div>
-                <button type="submit">Aplicar filtro</button>
-                <a class="button secondary" href="{% url 'exportar_relatorio_inadimplencia' %}?inicio={{ inicio|date:'Y-m-d' }}&fim={{ fim|date:'Y-m-d' }}">Exportar inadimplência</a>
-                <a class="button secondary" href="{% url 'painel_financeiro' %}">Voltar ao painel</a>
+            <form method="get" class="filtro-form">
+                <div class="filtro-grupo">
+                    <label for="{{ form.inicio.id_for_label }}">Data Inicial</label>
+                    {{ form.inicio }}
+                </div>
+                <div class="filtro-grupo">
+                    <label for="{{ form.fim.id_for_label }}">Data Final</label>
+                    {{ form.fim }}
+                </div>
+                <button type="submit" class="btn-filtrar">
+                    <i data-lucide="filter" style="width: 16px; height: 16px;"></i>
+                    Aplicar Filtro
+                </button>
+                <a class="btn-exportar" href="{% url 'exportar_relatorio_inadimplencia' %}?inicio={{ inicio|date:'Y-m-d' }}&fim={{ fim|date:'Y-m-d' }}">
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                    Exportar Inadimplência
+                </a>
             </form>
-            {% for error in form.non_field_errors %}<p class="error">{{ error }}</p>{% endfor %}
+            {% for error in form.non_field_errors %}
+                <p class="error">{{ error }}</p>
+            {% endfor %}
         </section>
 
         <section class="card">
-            <h2>Inadimplência por faixa de atraso</h2>
-            <div class="grid">
-            {% for faixa in faixas %}
-                <div class="faixa">
-                    <strong>{{ faixa.nome }}</strong>
-                    <div class="valor">R$ {{ faixa.total|floatformat:2 }}</div>
-                    <div>{{ faixa.quantidade }} cobrança(s)</div>
-                </div>
-            {% endfor %}
+            <h2 class="secao-titulo">Inadimplência por faixa de atraso</h2>
+            <p class="secao-desc">Valores acumulados em aberto e quantidade de títulos vencidos divididos por tempo de atraso.</p>
+
+            <div class="kpi-grid">
+                {% for faixa in faixas %}
+                    <div class="kpi-card">
+                        <div class="kpi-title">{{ faixa.nome }}</div>
+                        <div class="kpi-valor">R$ {{ faixa.total|floatformat:2 }}</div>
+                        <div class="kpi-sub">{{ faixa.quantidade }} cobrança{{ faixa.quantidade|pluralize:"s" }}</div>
+                    </div>
+                {% endfor %}
             </div>
+
             {% for faixa in faixas %}
                 {% if faixa.itens %}
-                    <h3>{{ faixa.nome }}</h3>
-                    <table>
-                        <thead><tr><th>Aluna</th><th>Vencimento</th><th>Valor</th><th>Dias de atraso</th></tr></thead>
-                        <tbody>
-                        {% for item in faixa.itens %}
-                            <tr>
-                                <td>{{ item.aluna }}</td>
-                                <td>{{ item.cobranca.vencimento|date:"d/m/Y" }}</td>
-                                <td>R$ {{ item.valor|floatformat:2 }}</td>
-                                <td>{{ item.dias_atraso }}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                    <div style="margin-top: 24px;">
+                        <h3 style="font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--primary-purple);"></span>
+                            {{ faixa.nome }} ({{ faixa.itens|length }} cobrança{{ faixa.itens|length|pluralize:"s" }})
+                        </h3>
+                        <div class="tabela-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Aluna</th>
+                                        <th>Vencimento</th>
+                                        <th>Valor</th>
+                                        <th>Dias de Atraso</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in faixa.itens %}
+                                        <tr>
+                                            <td class="tag-aluna">{{ item.aluna }}</td>
+                                            <td>{{ item.cobranca.vencimento|date:"d/m/Y" }}</td>
+                                            <td style="font-weight: 700;">R$ {{ item.valor|floatformat:2 }}</td>
+                                            <td><span class="tag-dias">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize:"s" }}</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 {% endif %}
             {% endfor %}
         </section>
 
         <section class="card">
-            <h2>Receita prevista contra realizada</h2>
-            <table>
-                <thead><tr><th>Período</th><th>Prevista</th><th>Realizada</th><th>Diferença</th></tr></thead>
-                <tbody>
-                    <tr>
-                        <td>{{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}</td>
-                        <td>R$ {{ receita.prevista|floatformat:2 }}</td>
-                        <td>R$ {{ receita.realizada|floatformat:2 }}</td>
-                        <td>R$ {{ receita.diferenca|floatformat:2 }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <h2 class="secao-titulo">Receita prevista contra realizada</h2>
+            <p class="secao-desc">Comparação da expectativa de faturamento contra os pagamentos efetivamente confirmados no período.</p>
+
+            <div class="receita-grid">
+                <div class="receita-kpi">
+                    <span class="kpi-title">Receita Prevista</span>
+                    <span class="kpi-valor" style="color: #475569;">R$ {{ receita.prevista|floatformat:2 }}</span>
+                    <span class="kpi-sub">Total de cobranças geradas</span>
+                </div>
+                <div class="receita-kpi realizada">
+                    <span class="kpi-title" style="color: #166534;">Receita Realizada</span>
+                    <span class="kpi-valor" style="color: #166534;">R$ {{ receita.realizada|floatformat:2 }}</span>
+                    <span class="kpi-sub">Pagamentos recebidos</span>
+                </div>
+                <div class="receita-kpi">
+                    <span class="kpi-title">Diferença</span>
+                    <span class="kpi-valor {% if receita.diferenca >= 0 %}badge-positivo{% else %}badge-negativo{% endif %}">
+                        R$ {{ receita.diferenca|floatformat:2 }}
+                    </span>
+                    <span class="kpi-sub">Saldo em aberto / variação</span>
+                </div>
+            </div>
+
+            <div class="tabela-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Período Analisado</th>
+                            <th>Prevista</th>
+                            <th>Realizada</th>
+                            <th>Diferença</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight: 600;">{{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}</td>
+                            <td>R$ {{ receita.prevista|floatformat:2 }}</td>
+                            <td style="font-weight: 700; color: #166534;">R$ {{ receita.realizada|floatformat:2 }}</td>
+                            <td class="{% if receita.diferenca >= 0 %}badge-positivo{% else %}badge-negativo{% endif %}">
+                                R$ {{ receita.diferenca|floatformat:2 }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
+
+    <script>
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataHoje = new Date().toLocaleDateString('pt-BR', opcoes);
+        const dataCapitalizada = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
+        const elData = document.getElementById('data-atual');
+        if (elData) {
+            elData.innerText = dataCapitalizada;
+        }
+    </script>
 </body>
+
 </html>

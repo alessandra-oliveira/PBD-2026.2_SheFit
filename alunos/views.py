@@ -91,6 +91,7 @@ def criar_matricula(request):
     """
     if request.method == 'POST':
         form = MatriculaForm(request.POST)
+        next_url = request.POST.get('next')
         if form.is_valid():
             try:
                 realizar_matricula(
@@ -100,9 +101,19 @@ def criar_matricula(request):
                     forma_pagamento=form.cleaned_data['forma_pagamento']
                 )
                 messages.success(request, "Matrícula realizada com sucesso e cobranças geradas automaticamente!")
+                if next_url:
+                    return redirect(next_url)
                 return redirect('criar_matricula')
             except ValidationError as e:
                 messages.error(request, e.message)
+                if next_url:
+                    return redirect(next_url)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{error}")
+            if next_url:
+                return redirect(next_url)
     else:
         form = MatriculaForm()
 

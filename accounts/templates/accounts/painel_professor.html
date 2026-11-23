@@ -32,38 +32,39 @@
             background-color: var(--bg-color);
             color: var(--text-dark);
             display: flex;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
         }
-
 
         .sidebar {
             width: var(--sidebar-width);
-            height: 100vh;
             background: var(--sidebar-gradient);
             padding: 24px 16px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             color: white;
-            flex-shrink: 0;
-            box-sizing: border-box;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
         }
 
         .sidebar-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 8px 32px 8px;
+            margin-bottom: 32px;
+            padding: 0 8px;
         }
 
         .sidebar-logo {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.45rem;
-            font-weight: 800;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
             letter-spacing: -0.5px;
+            color: #ffffff;
         }
 
         .nav-list {
@@ -71,114 +72,84 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            flex: 1;
         }
 
         .nav-item a {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 12px 18px;
-            border-radius: 14px;
-            color: rgba(255, 255, 255, 0.9);
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.85);
             text-decoration: none;
             font-weight: 600;
             font-size: 0.95rem;
             transition: all 0.2s ease;
         }
 
-        .nav-item-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .nav-item a:hover {
+        .nav-item a:hover:not(.active) {
             background: rgba(255, 255, 255, 0.15);
             color: #ffffff;
         }
 
         .nav-item.active a {
-            background: #ffffff;
+            background: white;
             color: var(--primary-purple);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-        }
-
-        .badge-nav {
-            background: rgba(255, 255, 255, 0.25);
-            color: #ffffff;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 10px;
-        }
-
-        .nav-item.active .badge-nav {
-            background: #f3e8ff;
-            color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .sidebar-footer {
-            padding-top: 16px;
+            margin-top: auto;
         }
 
-        .btn-sair-sidebar {
+        .btn-sidebar-sair {
             display: flex;
             align-items: center;
             gap: 10px;
-            background: #ffffff;
-            color: #ef4444;
-            padding: 12px 20px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 0.95rem;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #dc2626;
+            background: white;
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            font-weight: 600;
+            font-size: 0.95rem;
             transition: background 0.2s;
         }
 
-        .btn-sair-sidebar:hover {
-            background: #fee2e2;
+        .btn-sidebar-sair:hover {
+            background: #fef2f2;
         }
-
 
         .main-wrapper {
+            margin-left: var(--sidebar-width);
             flex: 1;
+            padding: 24px 36px 60px;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow-y: auto;
+            gap: 24px;
+            min-height: 100vh;
+            max-width: calc(100vw - var(--sidebar-width));
+            box-sizing: border-box;
         }
 
-
         .topbar {
-            height: 70px;
-            background: #ffffff;
-            border-bottom: 1px solid #f1f5f9;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 0 36px;
-            margin: 0;
-            box-sizing: border-box;
-            width: 100%;
-            flex-shrink: 0;
+            align-items: center;
+            padding-bottom: 8px;
         }
 
         .date-display {
             color: #475569;
             font-size: 0.95rem;
             font-weight: 500;
-            margin: 0;
-            line-height: 1;
-            display: flex;
-            align-items: center;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin: 0;
         }
 
         .avatar {
@@ -199,27 +170,21 @@
             display: flex;
             flex-direction: column;
             gap: 2px;
-            margin: 0;
         }
 
         .user-info .name {
             font-size: 0.95rem;
             font-weight: 700;
             color: #1e293b;
-            line-height: 1.2;
-            margin: 0;
         }
 
         .user-info .role {
             font-size: 0.8rem;
             color: var(--text-muted);
-            line-height: 1.2;
-            margin: 0;
         }
 
-
         .content-area {
-            padding: 32px 36px 60px;
+            padding: 0;
             max-width: 1400px;
             width: 100%;
             display: flex;
@@ -447,53 +412,48 @@
 <body>
 
     <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
-                    <span>SheFit</span>
-                </div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
             </div>
-
-
-            <ul class="nav-list">
-                <li class="nav-item active">
-                    <a href="{% url 'painel_professor' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
-                            <span>Painel</span>
-                        </div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'minhas_turmas_professor' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
-                            <span>Minhas Turmas</span>
-                        </div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'listar_fichas' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
-                            <span>Consultar Fichas e Histórico</span>
-                        </div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'avaliacoes_alunos' %}">
-                        <div class="nav-item-left">
-                            <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
-                            <span>Avaliações Físicas</span>
-                        </div>
-                    </a>
-                </li>
-            </ul>
         </div>
 
+        <ul class="nav-list">
+            <li class="nav-item active">
+                <a href="{% url 'painel_professor' %}">
+                    <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'minhas_turmas_professor' %}">
+                    <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                    <span>Minhas Turmas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_fichas' %}">
+                    <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                    <span>Consultar Fichas de Treino</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'avaliacoes_alunos' %}">
+                    <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
+                    <span>Avaliações Físicas</span>
+                </a>
+            </li>
+        </ul>
+
         <div class="sidebar-footer">
-            <a href="{% url 'sair' %}" class="btn-sair-sidebar">
+            <a href="{% url 'sair' %}" class="btn-sidebar-sair">
                 <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
                 <span>Sair</span>
             </a>

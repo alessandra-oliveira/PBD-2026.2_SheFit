@@ -443,9 +443,10 @@ class HistoricoLiberacoesViewTests(TestCase):
         resposta = self.client.get(self.url, {'inicio': 'abc', 'fim': 'xyz'})
         self.assertEqual(resposta.status_code, 200)
 
-    def test_financeiro_tambem_acessa(self):
+    def test_financeiro_nao_acessa_liberacoes_recepcao(self):
         self.client.force_login(criar_usuario(Perfil.FINANCEIRO))
-        self.assertEqual(self.client.get(self.url).status_code, 200)
+        resposta = self.client.get(self.url)
+        self.assertEqual(resposta.status_code, 302)
 
     def test_perfil_aluna_nao_acessa(self):
         self.client.force_login(criar_usuario(Perfil.ALUNO))

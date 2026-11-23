@@ -17,5 +17,6 @@ urlpatterns = [
         name='exportar_relatorio_inadimplencia',
     ),
     path('relatorios/retencao/', relatorios_retencao, name='relatorios_retencao'),
+    path('liberacoes/', views.historico_liberacoes_financeiro, name='historico_liberacoes_financeiro'),
 ]
 

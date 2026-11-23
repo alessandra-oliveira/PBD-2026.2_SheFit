@@ -131,41 +131,32 @@
         .main-wrapper {
             margin-left: var(--sidebar-width);
             flex: 1;
+            padding: 24px 36px 60px;
             display: flex;
             flex-direction: column;
+            gap: 24px;
             min-height: 100vh;
+            max-width: calc(100vw - var(--sidebar-width));
+            box-sizing: border-box;
         }
 
-        /* Topbar com Perfil e Data */
         .topbar {
-            height: 70px;
-            background: #ffffff;
-            border-bottom: 1px solid #f1f5f9;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 0 36px;
-            margin: 0;
-            box-sizing: border-box;
-            width: 100%;
-            flex-shrink: 0;
+            align-items: center;
+            padding-bottom: 8px;
         }
 
         .date-display {
             color: #475569;
             font-size: 0.95rem;
             font-weight: 500;
-            margin: 0;
-            line-height: 1;
-            display: flex;
-            align-items: center;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin: 0;
         }
 
         .avatar {
@@ -186,7 +177,6 @@
             display: flex;
             flex-direction: column;
             gap: 2px;
-            margin: 0;
         }
 
         .user-info .name {
@@ -194,19 +184,17 @@
             font-weight: 700;
             color: #1e293b;
             line-height: 1.2;
-            margin: 0;
         }
 
         .user-info .role {
             font-size: 0.8rem;
             color: var(--text-muted);
             line-height: 1.2;
-            margin: 0;
         }
 
         .main-content {
             flex: 1;
-            padding: 32px 36px 60px;
+            padding: 0;
             display: flex;
             flex-direction: column;
             gap: 24px;
@@ -622,42 +610,45 @@
 <body>
 
     <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
-                    <span>SheFit</span>
-                </div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                <span>SheFit</span>
             </div>
-
-            <!-- Menu com os itens estruturados do professor -->
-            <ul class="nav-list">
-                <li class="nav-item">
-                    <a href="{% url 'painel_professor' %}">
-                        <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
-                        <span>Painel</span>
-                    </a>
-                </li>
-                <li class="nav-item active">
-                    <a href="{% url 'minhas_turmas_professor' %}">
-                        <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
-                        <span>Minhas Turmas</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'listar_fichas' %}">
-                        <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
-                        <span>Consultar Fichas e Histórico</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'avaliacoes_alunos' %}">
-                        <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
-                        <span>Avaliações Físicas</span>
-                    </a>
-                </li>
-            </ul>
         </div>
+
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'painel_professor' %}">
+                    <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                    <span>Painel</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'minhas_turmas_professor' %}">
+                    <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                    <span>Minhas Turmas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_turmas' %}">
+                    <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+                    <span>Aulas / Modalidades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listar_fichas' %}">
+                    <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                    <span>Consultar Fichas de Treino</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'avaliacoes_alunos' %}">
+                    <i data-lucide="heart-pulse" style="width: 20px; height: 20px;"></i>
+                    <span>Avaliações Físicas</span>
+                </a>
+            </li>
+        </ul>
 
         <div class="sidebar-footer">
             <a href="{% url 'sair' %}" class="btn-sidebar-sair">
