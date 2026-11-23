@@ -9,7 +9,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -17,15 +17,15 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         :root {
             --sidebar-width: 250px;
             --primary-purple: #9333ea;
             --primary-pink: #d946ef;
-            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 60%, #db2777 100%);
-            --btn-gradient: linear-gradient(90deg, #8b3dff 0%, #e03e9f 100%);
+            --sidebar-gradient: linear-gradient(180deg, #9333ea 0%, #c026d3 50%, #db2777 100%);
+            --btn-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
             --bg-color: #f8fafc;
             --card-border: #f1f5f9;
             --text-dark: #0f172a;
@@ -39,7 +39,7 @@
             min-height: 100vh;
         }
 
-
+        /* Barra Lateral (Sidebar) */
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -139,6 +139,7 @@
             transform: translateY(-1px);
         }
 
+        /* Estrutura Principal */
         .main-wrapper {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -147,15 +148,11 @@
             flex-direction: column;
             gap: 24px;
             min-height: 100vh;
+            max-width: calc(100vw - var(--sidebar-width));
+            box-sizing: border-box;
         }
 
-        .main-wrapper.no-sidebar {
-            margin-left: 0;
-            max-width: 900px;
-            margin: auto;
-            padding: 30px 16px;
-        }
-
+        /* Topbar */
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -226,14 +223,14 @@
             box-sizing: border-box;
         }
 
-
+        /* Cards Uniformes (border-radius: 20px) */
         .card {
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 28px;
             margin-bottom: 18px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--card-border);
         }
 
         .card h1 {
@@ -272,53 +269,59 @@
             gap: 10px;
         }
 
+        /* Botões Padronizados (border-radius: 10px) */
         .botao {
             border: 0;
             border-radius: 10px;
             padding: 10px 18px;
             font: inherit;
             font-weight: 600;
+            font-size: 0.92rem;
             text-decoration: none;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            gap: 8px;
+            transition: all 0.2s ease;
         }
 
         .primario {
             background: var(--btn-gradient);
             color: #ffffff;
-            box-shadow: 0 4px 14px rgba(139, 61, 255, 0.25);
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
         }
 
         .primario:hover {
             opacity: 0.95;
             transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
         }
 
         .secundario {
             background: #ffffff;
-            border: 1px solid #cbd5e1;
-            color: #475569;
+            border: 1.5px solid #cbd5e1;
+            color: #334155;
         }
 
         .secundario:hover {
             background: #f8fafc;
-            color: #1e293b;
+            border-color: #94a3b8;
+            color: #0f172a;
         }
 
         .pequeno {
             padding: 7px 14px;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
+            border-radius: 8px;
         }
 
+        /* Badges */
         .badge {
             display: inline-flex;
             align-items: center;
             border-radius: 20px;
             padding: 4px 12px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 700;
             background: #dcfce7;
             color: #166534;
@@ -337,11 +340,13 @@
 
         .aviso-caixa {
             background: #fffbeb;
-            border: 1px solid #fde68a;
+            border: 1px solid #fef3c7;
             border-radius: 12px;
             padding: 16px;
             margin: 12px 0;
             color: #92400e;
+            font-size: 0.92rem;
+            line-height: 1.5;
         }
 
         .mensagem {
@@ -374,7 +379,7 @@
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 14px 16px;
         }
 
         .metrica span {
@@ -386,7 +391,7 @@
         }
 
         .metrica strong {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             color: #1e293b;
         }
 
@@ -410,27 +415,28 @@
             color: #1e293b;
         }
 
-        .form-control {
+        .form-control,
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
             width: 100%;
-            height: 44px;
-            padding: 0 14px;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
+            padding: 10px 14px;
             font: inherit;
             font-size: 0.95rem;
             background: #ffffff;
             color: #1e293b;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        textarea.form-control {
-            height: auto;
-            min-height: 80px;
-            padding: 10px 14px;
-        }
-
-        .form-control:focus {
+        .form-control:focus,
+        input:focus,
+        select:focus,
+        textarea:focus {
             border-color: #8b3dff;
             box-shadow: 0 0 0 3px rgba(139, 61, 255, 0.15);
         }
@@ -455,19 +461,19 @@
         }
 
         th {
-            background: #faf9fe;
+            background: #f8fafc;
             color: #64748b;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 12px 18px;
+            padding: 14px 20px;
             border-bottom: 1px solid #e2e8f0;
             font-weight: 700;
         }
 
         td {
-            padding: 14px 18px;
-            border-bottom: 1px solid #f1f0f7;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
             font-size: 0.92rem;
             color: var(--text-dark);
             vertical-align: middle;
@@ -478,12 +484,44 @@
         }
 
         tr:hover td {
-            background-color: #faf9fe;
+            background-color: #fcfcfd;
         }
 
         td.num, th.num {
             text-align: right;
             white-space: nowrap;
+        }
+
+        /* Modal com Fundo Borrado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 520px;
+            padding: 32px 36px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+            position: relative;
         }
 
         @media (max-width: 900px) {
@@ -492,23 +530,28 @@
             }
             .main-wrapper {
                 margin-left: 0;
+                padding: 16px;
+                max-width: 100vw;
             }
             .topbar {
-                padding: 0 16px;
+                padding: 0 4px 8px;
             }
             .content-area {
-                padding: 20px 16px;
+                padding: 10px 0;
             }
             .grade {
                 grid-template-columns: 1fr;
+            }
+            .card {
+                padding: 20px 16px;
             }
         }
     </style>
 </head>
 
 <body>
-    {% if eh_professor is not False %}
-
+    {% if eh_professor is not False and request.user.perfil.tipo != 'aluno' %}
+        <!-- Sidebar Professor -->
         <aside class="sidebar">
             <div>
                 <div class="sidebar-header">
@@ -569,17 +612,86 @@
                 </a>
             </div>
         </aside>
+    {% else %}
+        <!-- Sidebar Aluna (sem menu hambúrguer) -->
+        <aside class="sidebar">
+            <div>
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <img src="{% static 'icones/logo.png' %}" alt="Logo SheFit" style="height: 32px; width: auto; object-fit: contain;">
+                        <span>SheFit</span>
+                    </div>
+                </div>
+
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{% url 'painel_aluno' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="layout-grid" style="width: 20px; height: 20px;"></i>
+                                <span>Painel</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'ficha_ativa_aluno' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+                                <span>Minha Ficha</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'minhas_aulas' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+                                <span>Minhas Aulas</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'minha_evolucao' or request.resolver_match.url_name == 'minha_comparacao' %}active{% endif %}">
+                        <a href="{% url 'minha_evolucao' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="trending-up" style="width: 20px; height: 20px;"></i>
+                                <span>Minha Evolução</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'minha_situacao_financeira' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="wallet" style="width: 20px; height: 20px;"></i>
+                                <span>Financeiro</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'numeros_da_academia' %}active{% endif %}">
+                        <a href="{% url 'numeros_da_academia' %}">
+                            <div class="nav-item-left">
+                                <i data-lucide="bar-chart-2" style="width: 20px; height: 20px;"></i>
+                                <span>Meus Resultados</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="{% url 'sair' %}" class="btn-sidebar-sair">
+                    <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                    <span>Sair</span>
+                </a>
+            </div>
+        </aside>
     {% endif %}
 
     <!-- Área Principal de Conteúdo -->
-    <div class="main-wrapper {% if eh_professor is False %}no-sidebar{% endif %}">
-        {% if eh_professor is not False %}
-
-            <header class="topbar">
-                <div class="date-display" id="data-atual">
-                    Hoje
-                </div>
-                <div class="user-profile">
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="date-display" id="data-atual">
+                Hoje
+            </div>
+            <div class="user-profile">
+                {% if eh_professor is not False and request.user.perfil.tipo != 'aluno' %}
                     <div class="avatar">
                         {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
                     </div>
@@ -587,9 +699,17 @@
                         <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
                         <div class="role">Professor</div>
                     </div>
-                </div>
-            </header>
-        {% endif %}
+                {% else %}
+                    <div class="avatar">
+                        {{ aluno.nome|default:request.user.perfil.aluno.nome|default:request.user.get_full_name|default:request.user.username|slice:":1"|upper }}
+                    </div>
+                    <div class="user-info">
+                        <div class="name">{{ aluno.nome|default:request.user.perfil.aluno.nome|default:request.user.get_full_name|default:request.user.username }}</div>
+                        <div class="role">Aluna</div>
+                    </div>
+                {% endif %}
+            </div>
+        </header>
 
         <main class="content-area">
             {% if messages %}

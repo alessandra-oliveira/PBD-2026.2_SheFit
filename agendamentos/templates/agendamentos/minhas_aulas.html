@@ -1,187 +1,240 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>Minhas aulas - SheFit</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
-        .navbar { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; padding: 16px 32px;
-                  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
-                  box-shadow: 0 4px 12px rgba(0,0,0,.1); }
-        .navbar h1 { font-size: 1.5rem; letter-spacing: -.5px; }
-        .navbar .perfil { font-size: .75rem; background: rgba(255,255,255,.2); padding: 3px 10px;
-                          border-radius: 20px; margin-left: 8px; text-transform: uppercase; font-weight: 600; }
-        .navbar a { color: #fff; text-decoration: none; background: rgba(255,255,255,.15); padding: 8px 16px;
-                    border-radius: 8px; font-size: .9rem; font-weight: 600; margin-left: 8px; }
-        .navbar a:hover { background: rgba(255,255,255,.3); }
-        .container { max-width: 1100px; margin: 32px auto; padding: 0 20px; }
-        h2 { font-size: 1.4rem; }
-        .sub { color: #64748b; font-size: .9rem; margin: 4px 0 20px; }
-        .msg { padding: 12px 16px; border-radius: 10px; margin-bottom: 14px; font-size: .92rem; font-weight: 500; }
-        .msg-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .msg-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .msg-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .alerta { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 14px 18px;
-                  border-radius: 12px; margin-bottom: 24px; font-size: .92rem; }
-        .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.05);
-                margin-bottom: 28px; overflow: hidden; }
-        .card-topo { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex;
-                     justify-content: space-between; align-items: center; }
-        .card-topo h3 { font-size: 1.1rem; }
-        .contador { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 12px;
-                    font-size: .8rem; font-weight: 700; }
-        .rolagem { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 720px; }
-        th { background: #f8fafc; color: #64748b; font-size: .75rem; text-transform: uppercase;
-             letter-spacing: .05em; padding: 12px 24px; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 14px 24px; border-bottom: 1px solid #f1f5f9; font-size: .92rem; vertical-align: middle; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: .78rem; font-weight: 700; }
-        .b-verde { background: #dcfce7; color: #166534; }
-        .b-ambar { background: #fef3c7; color: #92400e; }
-        .b-cinza { background: #f1f5f9; color: #475569; }
-        .b-vermelho { background: #fee2e2; color: #991b1b; }
-        .acoes { text-align: right; white-space: nowrap; }
-        button { font-family: inherit; font-size: .82rem; font-weight: 700; border: none; border-radius: 8px;
-                 padding: 8px 14px; cursor: pointer; }
-        .btn-reservar { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; }
-        .btn-espera { background: #fef3c7; color: #92400e; }
-        .btn-cancelar { background: #fee2e2; color: #991b1b; }
-        button:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
-        .vazio { text-align: center; color: #94a3b8; padding: 28px; }
-        small { color: #64748b; margin-left: 6px; }
-        .nota { padding: 14px 24px; color: #64748b; font-size: .85rem; background: #fffbeb; border-top: 1px solid #fef3c7; }
-    </style>
-</head>
-<body>
-    <header class="navbar">
-        <div><h1 style="display:inline">SheFit</h1><span class="perfil">Aluna</span></div>
+{% extends "accounts/base_aluno.html" %}
+
+{% block titulo %}Minhas Aulas{% endblock %}
+{% block nav_aulas %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sub {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-top: 4px;
+    }
+
+    .acoes-cell {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .nota {
+        padding: 14px 20px;
+        color: #92400e;
+        font-size: 0.88rem;
+        background: #fffbeb;
+        border-top: 1px solid #fef3c7;
+        line-height: 1.5;
+        border-radius: 0 0 20px 20px;
+    }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+    <div class="page-header" style="margin-bottom: 24px;">
         <div>
-            <span style="font-size:.9rem">Olá, <strong>{{ request.user.username }}</strong></span>
-            <a href="{% url 'painel_aluno' %}">Meu painel</a>
-            <a href="{% url 'sair' %}">Sair</a>
+            <h1>Minhas aulas</h1>
+            <p class="sub">Reserve a sua vaga para não chegar e encontrar a sala cheia.
+                {% if matricula %}Plano: <strong>{{ matricula.plano.nome }}</strong>.{% endif %}</p>
         </div>
-    </header>
+    </div>
 
-    <main class="container">
-        {% for message in messages %}
-            <div class="msg msg-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-
-        <h2>Minhas aulas</h2>
-        <p class="sub">Reserve a sua vaga para não chegar e encontrar a sala cheia.
-            {% if matricula %}Plano: <strong>{{ matricula.plano.nome }}</strong>.{% endif %}</p>
-
-        {% if impedimento %}
-            <div class="alerta"><strong>Agendamento indisponível:</strong> {{ impedimento }}</div>
-        {% endif %}
-
-        <section class="card">
-            <div class="card-topo">
-                <h3>Minhas reservas</h3>
-                <span class="contador">{{ total_reservadas }} reservada{{ total_reservadas|pluralize }} · {{ total_na_fila }} na fila</span>
+    {% if impedimento %}
+        <div class="alerta-aviso" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <i data-lucide="alert-circle" style="width: 22px; height: 22px; color: #d97706; flex-shrink: 0;"></i>
+            <div>
+                <strong>Agendamento indisponível:</strong> {{ impedimento }}
             </div>
-            <div class="rolagem">
+        </div>
+    {% endif %}
+
+    <!-- Card: Minhas reservas (border-radius: 20px) -->
+    <section class="card" style="margin-bottom: 28px;">
+        <div class="card-topo">
+            <h3>Minhas reservas</h3>
+            <span class="contador">{{ total_reservadas }} reservada{{ total_reservadas|pluralize }} · {{ total_na_fila }} na fila</span>
+        </div>
+        <div class="rolagem">
             <table>
-                <thead><tr><th>Aula</th><th>Dia</th><th>Horário</th><th>Sala</th><th>Situação</th><th></th></tr></thead>
-                <tbody>
-                {% for item in minhas_reservas %}
+                <thead>
                     <tr>
-                        <td><strong>{{ item.turma.modalidade.nome }}</strong></td>
-                        <td>{{ item.turma.get_dia_semana_display }}</td>
-                        <td>{{ item.turma.horario|time:"H:i" }}</td>
-                        <td>{{ item.turma.sala }}</td>
-                        <td>
-                            {% if item.agendamento.status == 'reservado' %}
-                                <span class="badge b-verde">Vaga reservada</span>
-                            {% else %}
-                                <span class="badge b-ambar">Lista de espera · posição {{ item.posicao }}º</span>
-                            {% endif %}
-                        </td>
-                        <td class="acoes">
-                            {% if item.agendamento.status == 'reservado' %}
-                                <form method="post" action="{% url 'cancelar_agendamento' item.agendamento.id %}"
-                                      onsubmit="return confirm('Cancelar esta reserva?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-cancelar">Cancelar reserva</button>
-                                </form>
-                            {% else %}
-                                <form method="post" action="{% url 'cancelar_agendamento' item.agendamento.id %}"
-                                      onsubmit="return confirm('Sair da lista de espera?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-cancelar">Sair da fila</button>
-                                </form>
-                            {% endif %}
-                        </td>
+                        <th>Aula</th>
+                        <th>Dia</th>
+                        <th>Horário</th>
+                        <th>Sala</th>
+                        <th>Situação</th>
+                        <th style="text-align: right;">Ações</th>
                     </tr>
-                {% empty %}
-                    <tr><td colspan="6" class="vazio">Você ainda não reservou nenhuma aula.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            </div>
-            {% if total_na_fila %}
-                <p class="nota">Quem está na lista de espera recebe a vaga automaticamente, na ordem de entrada,
-                    quando alguém desiste. Volte aqui para conferir.</p>
-            {% endif %}
-        </section>
-
-        <section class="card">
-            <div class="card-topo">
-                <h3>Turmas do seu plano</h3>
-                <span class="contador">{{ disponiveis|length }}</span>
-            </div>
-            <div class="rolagem">
-            <table>
-                <thead><tr><th>Modalidade</th><th>Dia</th><th>Horário</th><th>Professor</th><th>Sala</th><th>Vagas restantes</th><th></th></tr></thead>
+                </thead>
                 <tbody>
-                {% for item in disponiveis %}
-                    <tr>
-                        <td><strong>{{ item.turma.modalidade.nome }}</strong></td>
-                        <td>{{ item.turma.get_dia_semana_display }}</td>
-                        <td>{{ item.turma.horario|time:"H:i" }}</td>
-                        <td>{{ item.turma.professor.get_full_name|default:item.turma.professor.username }}</td>
-                        <td>{{ item.turma.sala }}</td>
-                        <td>
-                            {% if item.vagas > 0 %}
-                                <span class="badge b-verde">{{ item.vagas }} de {{ item.turma.capacidade_maxima }} livres</span>
-                            {% else %}
-                                <span class="badge b-vermelho">Lotada</span>
-                                <small>{{ item.na_fila }} na fila</small>
-                            {% endif %}
-                        </td>
-                        <td class="acoes">
-                            {% if item.meu %}
-                                {% if item.meu.status == 'reservado' %}
-                                    <span class="badge b-verde">✓ Vaga reservada</span>
+                    {% for item in minhas_reservas %}
+                        <tr>
+                            <td><strong>{{ item.turma.modalidade.nome }}</strong></td>
+                            <td>{{ item.turma.get_dia_semana_display }}</td>
+                            <td>{{ item.turma.horario|time:"H:i" }}</td>
+                            <td>{{ item.turma.sala }}</td>
+                            <td>
+                                {% if item.agendamento.status == 'reservado' %}
+                                    <span class="badge b-verde">Vaga reservada</span>
                                 {% else %}
-                                    <span class="badge b-ambar">Na fila · {{ item.posicao }}º</span>
+                                    <span class="badge b-ambar">Lista de espera · posição {{ item.posicao }}º</span>
                                 {% endif %}
-                            {% elif impedimento %}
-                                <button type="button" disabled>Indisponível</button>
-                            {% else %}
-                                <form method="post" action="{% url 'agendar_turma' item.turma.id %}">
+                            </td>
+                            <td class="acoes-cell">
+                                <form method="post" action="{% url 'cancelar_agendamento' item.agendamento.id %}" id="form-cancelar-{{ item.agendamento.id }}">
                                     {% csrf_token %}
-                                    {% if item.vagas > 0 %}
-                                        <button type="submit" class="btn-reservar">Reservar vaga</button>
+                                    {% if item.agendamento.status == 'reservado' %}
+                                        <button type="button" class="btn-cancelar" onclick="abrirModalCancelar('form-cancelar-{{ item.agendamento.id }}', 'Deseja realmente cancelar esta reserva de aula?')">
+                                            <i data-lucide="x-circle" style="width: 16px; height: 16px;"></i>
+                                            <span>Cancelar reserva</span>
+                                        </button>
                                     {% else %}
-                                        <button type="submit" class="btn-espera">Entrar na lista de espera</button>
+                                        <button type="button" class="btn-cancelar" onclick="abrirModalCancelar('form-cancelar-{{ item.agendamento.id }}', 'Deseja realmente sair da lista de espera desta aula?')">
+                                            <i data-lucide="x-circle" style="width: 16px; height: 16px;"></i>
+                                            <span>Sair da fila</span>
+                                        </button>
                                     {% endif %}
                                 </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="7" class="vazio">Nenhuma turma disponível para o seu plano no momento.</td></tr>
-                {% endfor %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                                Você ainda não reservou nenhuma aula.
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
+        </div>
+        {% if total_na_fila %}
+            <div class="nota">
+                <strong>Lista de espera:</strong> Quem está na fila de espera recebe a vaga automaticamente, na ordem de entrada, quando alguém desiste. Volte aqui para conferir.
             </div>
-        </section>
-    </main>
-</body>
-</html>
+        {% endif %}
+    </section>
+
+    <!-- Card: Turmas do seu plano (border-radius: 20px) -->
+    <section class="card">
+        <div class="card-topo">
+            <h3>Turmas do seu plano</h3>
+            <span class="contador">{{ disponiveis|length }}</span>
+        </div>
+        <div class="rolagem">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modalidade</th>
+                        <th>Dia</th>
+                        <th>Horário</th>
+                        <th>Professor</th>
+                        <th>Sala</th>
+                        <th>Vagas restantes</th>
+                        <th style="text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in disponiveis %}
+                        <tr>
+                            <td><strong>{{ item.turma.modalidade.nome }}</strong></td>
+                            <td>{{ item.turma.get_dia_semana_display }}</td>
+                            <td>{{ item.turma.horario|time:"H:i" }}</td>
+                            <td>{{ item.turma.professor.get_full_name|default:item.turma.professor.username }}</td>
+                            <td>{{ item.turma.sala }}</td>
+                            <td>
+                                {% if item.vagas > 0 %}
+                                    <span class="badge b-verde">{{ item.vagas }} de {{ item.turma.capacidade_maxima }} livres</span>
+                                {% else %}
+                                    <span class="badge b-vermelho">Lotada</span>
+                                    <small style="color: var(--text-muted); margin-left: 6px;">{{ item.na_fila }} na fila</small>
+                                {% endif %}
+                            </td>
+                            <td class="acoes-cell">
+                                {% if item.meu %}
+                                    {% if item.meu.status == 'reservado' %}
+                                        <span class="badge b-verde">✓ Vaga reservada</span>
+                                    {% else %}
+                                        <span class="badge b-ambar">Na fila · {{ item.posicao }}º</span>
+                                    {% endif %}
+                                {% elif impedimento %}
+                                    <button type="button" disabled>Indisponível</button>
+                                {% else %}
+                                    <form method="post" action="{% url 'agendar_turma' item.turma.id %}">
+                                        {% csrf_token %}
+                                        {% if item.vagas > 0 %}
+                                            <button type="submit" class="btn-reservar">
+                                                <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+                                                <span>Reservar vaga</span>
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="btn-espera">
+                                                <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                                                <span>Entrar na lista de espera</span>
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                                Nenhuma turma disponível para o seu plano no momento.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Modal com Fundo Borrado (Backdrop Filter) -->
+    <div class="modal-overlay" id="modal-confirmacao">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Confirmação de Cancelamento</h3>
+                <button type="button" class="modal-close" onclick="fecharModalCancelar()">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-mensagem">
+                Tem certeza de que deseja realizar esta ação?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secundario" onclick="fecharModalCancelar()">Não cancelar</button>
+                <button type="button" class="btn-cancelar" id="modal-btn-confirmar">Confirmar Cancelamento</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let formPendenteId = null;
+
+    function abrirModalCancelar(formId, mensagem) {
+        formPendenteId = formId;
+        const msgEl = document.getElementById('modal-mensagem');
+        if (msgEl && mensagem) msgEl.innerText = mensagem;
+        const modal = document.getElementById('modal-confirmacao');
+        if (modal) modal.classList.add('active');
+    }
+
+    function fecharModalCancelar() {
+        formPendenteId = null;
+        const modal = document.getElementById('modal-confirmacao');
+        if (modal) modal.classList.remove('active');
+    }
+
+    document.getElementById('modal-btn-confirmar')?.addEventListener('click', function() {
+        if (formPendenteId) {
+            const form = document.getElementById(formPendenteId);
+            if (form) form.submit();
+        }
+    });
+
+    document.getElementById('modal-confirmacao')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            fecharModalCancelar();
+        }
+    });
+</script>
+{% endblock %}

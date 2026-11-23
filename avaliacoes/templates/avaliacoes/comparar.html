@@ -4,7 +4,9 @@
 <section class="card">
     <div class="topo">
         <h1>Comparar avaliações{% if eh_professor %} — {{ aluno.nome }}{% endif %}</h1>
-        <a class="botao secundario" href="{{ url_voltar }}">Voltar</a>
+        {% if eh_professor %}
+            <a class="botao secundario" href="{{ url_voltar }}">Voltar</a>
+        {% endif %}
     </div>
 
     {% if avaliacoes|length < 2 %}
